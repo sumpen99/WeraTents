@@ -6,49 +6,75 @@
 //
 
 import SwiftUI
-import RealityKit
-import ARKit
-import FocusEntity
-import Combine
 
 struct ModelARView: View {
-    @EnvironmentObject var navigationViewModel: NavigationViewModel
-    var content:some View{
-        ZStack(alignment: .bottom) {
-            ARViewContainer()
-            HStack{
-                Button(action: {
-                    ActionManager.shared.actionStream.send(.place3DModel)
-                }, label: {
-                    Text("Put Tent")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                })
-                
-                Button(action: {
-                    ActionManager.shared.actionStream.send(.remove3DModel)
-                }, label: {
-                    Text("Delete Tent")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                })
-            }
-            .padding(.bottom, 50)
-            
-        }
+    var arContent:some View{
+      ZStack(alignment: .bottom) {
+            ARViewRepresentable()
+            bottomButtons
+      }
+      .customBackButton(action: releaseMemory)
+    }
+        
+    var body: some View{
+        ZStack{
+#if targetEnvironment(simulator)
+        EmptyView()
+#else
+        arContent
+#endif
+       }
+
+    }
+}
+
+//MARK: -- FUNCTIONS
+extension ModelARView{
+    func releaseMemory(){
+        ActionManager.shared.actionStream.send(.killSession)
+     }
+    
+    func removeModel(){
+        ActionManager.shared.actionStream.send(.remove3DModel)
     }
     
-    var body: some View{
-        NavigationStack(path:$navigationViewModel.pathTo){
-            content
-                .modifier(NavigationViewModifier(color:.lightGreen))
-            
+    func placeModel(){
+        ActionManager.shared.actionStream.send(.place3DModel)
+    }
+}
+
+//MARK: -- BUTTONS
+extension ModelARView{
+    
+    var placeModelButton:some View{
+        Button(action: placeModel, label: {
+            labelText("Put Tent")
+        })
+    }
+    
+    var removeModelButton:some View{
+        Button(action: removeModel, label: {
+            labelText("Delete Tent")
+        })
+    }
+    
+    var bottomButtons:some View{
+        HStack{
+            placeModelButton
+            removeModelButton
         }
+        .padding(.bottom, 50)
+    }
+}
+
+//MARK: -- TEXT
+extension ModelARView{
+    func labelText(_ text:String) -> some View{
+        return Text(text)
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding()
+            .background(Color.blue)
+            .cornerRadius(10)
     }
 }
