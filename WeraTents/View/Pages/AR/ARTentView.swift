@@ -129,6 +129,7 @@ extension ARTentView{
         DispatchQueue.main.async {
             self.session.pause()
             self.removeModel()
+            self.focusEntity?.destroy()
             self.removeFromSuperview()
          }
     }
