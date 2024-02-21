@@ -9,6 +9,26 @@ import RealityKit
 import ARKit
 import FocusEntity
 import Combine
+
+class MyEntity: Entity, HasAnchoring, HasModel, HasCollision {}
+
+enum Actions {
+    case place3DModel
+    case remove3DModel
+    case rotate3DModelPitch
+    case rotate3DModelYaw
+    case rotate3DModelRoll
+}
+
+class ActionManager {
+    static let shared = ActionManager()
+    
+    private init() { }
+    
+    var actionStream = PassthroughSubject<Actions, Never>()
+}
+
+
 struct ARViewContainer: UIViewRepresentable {
     
     func makeUIView(context: Context) -> TentARView {
@@ -18,12 +38,9 @@ struct ARViewContainer: UIViewRepresentable {
     func updateUIView(_ uiView: TentARView, context: Context) {}
 }
 
-class MyEntity: Entity, HasAnchoring, HasModel, HasCollision {
-    
-}
+
 
 class TentARView: ARView {
-    let radians = Float.pi/2.0
     var focusEntity: FocusEntity?
     var cancellables: Set<AnyCancellable> = []
     
@@ -50,61 +67,28 @@ class TentARView: ARView {
         self.session.run(config)
     }
 
-    
-    func place3DModel() {
-        guard let focusEntity = self.focusEntity else { return }
-
-        guard let modelEntity = try? ModelEntity.load(
-          named: "Assets/tent-2-man-tent.usdz"
-        ) else { fatalError("Cannot load model") }
-        
-        
-        let anchorEntity = MyEntity()
-        anchorEntity.position = focusEntity.position
-        anchorEntity.name = "tentAnchor"
-        anchorEntity.addChild(modelEntity)
-        //anchorEntity.transform = Transform.identity
-        //anchorEntity.transform.translation.z -= 0.3
-        
-        /*let boxShape = ShapeResource.generateBox(width: 1000, height: 1000, depth: 1000)
-        let boxShapeCollisionComponent = CollisionComponent (
-          shapes: [boxShape],
-          mode: .trigger,
-          filter: .default
-        )
-        anchorEntity.collision = boxShapeCollisionComponent*/
-        anchorEntity.generateCollisionShapes(recursive: true)
-        self.installGestures([.rotation,.translation],for: anchorEntity)
-       
-        //let anchorEntity = AnchorEntity(world: focusEntity.position)
-        //anchorEntity.addChild(myEntity)
-        //anchorEntity.name = "tentAnchor"
-        //let radians = 180.0 * Float.pi / 180.0
-        //modelEntity.transform.rotation += simd_quatf(angle: GLKMathDegreesToRadians(180), axis: SIMD3(x: 0, y: 1, z: 0))
-        //modelEntity.transform.translation += SIMD3<Float>(0.0, 1.0, 0.0)  // This is Meters!!!  not CM.
-        //modelEntity.transform.rotation += simd_quatf(angle: radians, axis: SIMD3<Float>(0,1,0))
-        //modelEntity.orientation = simd_quatf(angle: radians, axis: SIMD3(x: 0, y: 1, z: 1))
-        //modelEntity.transform.scale *= 0.5
-        self.scene.addAnchor(anchorEntity)
-    }
-    
     func loadEntityAsync() {
         guard let focusEntity = self.focusEntity else { return }
-        let anchorEntity = MyEntity()
-        anchorEntity.position = focusEntity.position
-        anchorEntity.name = "tentAnchor"
-        self.scene.addAnchor(anchorEntity)
-   
         let usdzPath = "Assets/tent-2-man-tent.usdz"
         var cancellable: AnyCancellable? = nil
         cancellable = ModelEntity.loadModelAsync(named: usdzPath)
         .sink(receiveCompletion: { error in
-          print("Unexpected error: \(error)")
+            debugLog(object:"Error while reading usdz file: \(error)")
           cancellable?.cancel()
         }, receiveValue: { modelEntity in
-            anchorEntity.addChild(modelEntity)
+            self.placeModel(modelEntity: modelEntity, position: focusEntity.position)
           cancellable?.cancel()
         })
+    }
+    
+    func placeModel(modelEntity:ModelEntity,position: SIMD3<Float>){
+        let anchorEntity = MyEntity()
+        anchorEntity.position = position
+        anchorEntity.name = "tentAnchor"
+        anchorEntity.addChild(modelEntity)
+        anchorEntity.generateCollisionShapes(recursive: true)
+        self.installGestures([.rotation,.translation],for: anchorEntity)
+        self.scene.addAnchor(anchorEntity)
     }
     
     
@@ -155,18 +139,4 @@ class TentARView: ARView {
     }
 }
 
-enum Actions {
-    case place3DModel
-    case remove3DModel
-    case rotate3DModelPitch
-    case rotate3DModelYaw
-    case rotate3DModelRoll
-}
 
-class ActionManager {
-    static let shared = ActionManager()
-    
-    private init() { }
-    
-    var actionStream = PassthroughSubject<Actions, Never>()
-}
