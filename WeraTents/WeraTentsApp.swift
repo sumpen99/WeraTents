@@ -14,8 +14,8 @@ struct WeraTentsApp: App {
     var body: some Scene {
         StyledWindowGroup {
             ContentView()
-            .preferredWindowColor(Color.white)
-            .onChange(of: phase,initial: true) { newPhase,initial in
+                .preferredWindowColor(.lightGreen)
+            /*.onChange(of: phase,initial: true) { newPhase,initial in
                 switch newPhase {
                 case .active:
                     debugLog(object:phase)
@@ -26,7 +26,7 @@ struct WeraTentsApp: App {
                 @unknown default:
                     debugLog(object:"Unknown Future Options")
               }
-            }
+            }*/
         }
     }
 }
