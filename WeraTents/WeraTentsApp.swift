@@ -13,8 +13,8 @@ struct WeraTentsApp: App {
     @Environment(\.scenePhase) private var phase
     var body: some Scene {
         StyledWindowGroup {
-            ContentView()
-                .preferredWindowColor(.lightGreen)
+            HomeView()
+            .preferredWindowColor(.lightGreen)
             /*.onChange(of: phase,initial: true) { newPhase,initial in
                 switch newPhase {
                 case .active:

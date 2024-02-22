@@ -17,10 +17,15 @@ enum ModelRoute: Identifiable{
 }
 
 struct HomeView:View {
-    @EnvironmentObject var navigationViewModel: NavigationViewModel
-    
+    @StateObject var navigationViewModel = NavigationViewModel()
     var content:some View{
-        Text("Home")
+        ZStack{
+            Text("Home").hCenter().vCenter()
+        }
+        .ignoresSafeArea(.all)
+        .safeAreaInset(edge: .bottom){
+            navModelARButton
+        }
     }
     
     var body: some View{
@@ -32,13 +37,7 @@ struct HomeView:View {
                 case .ROUTE_AR: ModelARView()
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .principal){
-                    navModelARButton
-                }
-             }
-            
-        }
+       }
     }
 }
 
@@ -46,11 +45,7 @@ struct HomeView:View {
 extension HomeView{
     var navModelARButton:some View{
         Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
-            ZStack{
-                Image(systemName: "arrow.triangle.2.circlepath").font(.title).foregroundStyle(Color(uiColor: .lightGreen))
-                Image(systemName: "camera.metering.multispot").imageScale(.small).foregroundStyle(Color(uiColor: .lightGreen))
-            }
+            roundedImage("camera",font:.largeTitle,scale:.large,radius: 80.0,foreground: Color.white,background: Color.darkGreen)
         })
-        .toolbarFontAndPadding()
     }
 }
