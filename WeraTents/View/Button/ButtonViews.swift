@@ -10,18 +10,23 @@ import SwiftUI
 struct BackButton:View{
     @Environment(\.dismiss) private var dismiss
     var imgLabel:String = "chevron.left"
-    var color:Color = Color.white
+    var color:Color = Color.black
     var action: (() -> Void)? = nil
     
     var body: some View{
-        HStack{
-            Button(action:{
-                action?()
-                dismiss()
-            }){
-                Image(systemName: imgLabel).font(.headline)
-                .foregroundStyle(color)
-            }
-        }
+        Button(action:backAction){ label }
+    }
+    
+    var label:some View{
+        Image(systemName: imgLabel)
+        .font(.largeTitle)
+        .imageScale(.medium)
+        .bold()
+        .foregroundStyle(color)
+    }
+    
+    func backAction(){
+        action?()
+        dismiss()
     }
 }

@@ -8,22 +8,35 @@
 import SwiftUI
 
 struct ModelARView: View {
+    @StateObject private var arViewCoordinator: ARViewCoordinator
+    
+    init() {
+        self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
+     }
+    
     var arContent:some View{
-      ZStack(alignment: .bottom) {
-            ARViewRepresentable()
-            bottomButtons
-      }
-      .customBackButton(action: releaseMemory)
+      ARViewContainer(arViewCoordinator: arViewCoordinator)
+    }
+    
+    var simulatorContent:some View{
+        Text("Simulator View").hCenter().vCenter()
     }
         
     var body: some View{
         ZStack{
+        Color.lightGreen
 #if targetEnvironment(simulator)
-        EmptyView()
+        simulatorContent
 #else
         arContent
 #endif
        }
+        .toolbar(.hidden)
+        .ignoresSafeArea(.all)
+        .customBackButton(imgLabel: "xmark",color: .white,action: releaseMemory)
+        .safeAreaInset(edge: .bottom){
+            bottomButtons
+        }
 
     }
 }
@@ -31,50 +44,53 @@ struct ModelARView: View {
 //MARK: -- FUNCTIONS
 extension ModelARView{
     func releaseMemory(){
-        ActionManager.shared.actionStream.send(.killSession)
+        arViewCoordinator.kill()
+        //ActionManager.shared.actionStream.send(.killSession)
      }
     
     func removeModel(){
-        ActionManager.shared.actionStream.send(.remove3DModel)
+        arViewCoordinator.action(.remove3DModel)
+        //ActionManager.shared?.actionStream.send(.remove3DModel)
     }
     
     func placeModel(){
-        ActionManager.shared.actionStream.send(.place3DModel)
+        arViewCoordinator.action(.place3DModel)
+        //ActionManager.shared?.actionStream.send(.place3DModel)
     }
 }
 
 //MARK: -- BUTTONS
 extension ModelARView{
     
+    var navigateBackButton:some View{
+        BackButton(color:.black,action:releaseMemory)
+        .hLeading()
+    }
+    
     var placeModelButton:some View{
         Button(action: placeModel, label: {
-            labelText("Put Tent")
+            roundedImage("plus",font:.largeTitle,scale:.large,radius: 70.0)
         })
     }
     
     var removeModelButton:some View{
         Button(action: removeModel, label: {
-            labelText("Delete Tent")
+            roundedImage("minus",font:.title,scale:.medium,radius: 40.0)
+        })
+    }
+    
+    var infoModelButton:some View{
+        Button(action: removeModel, label: {
+            roundedImage("info",font:.title,scale:.medium,radius: 40.0)
         })
     }
     
     var bottomButtons:some View{
         HStack{
-            placeModelButton
             removeModelButton
+            placeModelButton.hCenter()
+            infoModelButton
         }
-        .padding(.bottom, 50)
-    }
-}
-
-//MARK: -- TEXT
-extension ModelARView{
-    func labelText(_ text:String) -> some View{
-        return Text(text)
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding()
-            .background(Color.blue)
-            .cornerRadius(10)
+        .padding([.leading,.trailing])
     }
 }
