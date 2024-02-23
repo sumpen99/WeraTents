@@ -33,12 +33,10 @@ struct ARViewContainer: UIViewRepresentable {
     }
     
     func makeUIView(context: Context) -> UIViewType {
-        debugLog(object: "MAKE UIVIEW 1")
-        let arView = ARView(frame: .zero)
-        debugLog(object: "MAKE UIVIEW 2")
+         let arView = ARView(frame: .zero)
         arViewCoordinator.setARView(arView)
-        debugLog(object: "MAKE UIVIEW 3")
         return arView
+        
     }
     
     func updateUIView(_ uiView: UIViewType, context: Context) {}
@@ -53,6 +51,7 @@ struct ARViewContainer: UIViewRepresentable {
 class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     weak var arView: ARView?
     var focusEntity: FocusEntity?
+    @Published var load:Bool = true
     func session(_ session: ARSession, didUpdate frame: ARFrame){
         //debugLog(object: "Session did UPDATE FRAME ")
     }

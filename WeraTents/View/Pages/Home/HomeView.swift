@@ -18,9 +18,18 @@ enum ModelRoute: Identifiable{
 
 struct HomeView:View {
     @StateObject var navigationViewModel = NavigationViewModel()
+    @StateObject private var firestoreViewModel: FirestoreViewModel
+    
+    
+    init(){
+        self._firestoreViewModel = StateObject(wrappedValue: FirestoreViewModel())
+    }
+ 
     var content:some View{
         ZStack{
-            Text("Home").hCenter().vCenter()
+            Carousel(data: $firestoreViewModel.tents, size: 100)
+            .vCenter()
+            .hCenter()
         }
         .ignoresSafeArea(.all)
         .safeAreaInset(edge: .bottom){
@@ -38,6 +47,9 @@ struct HomeView:View {
                 }
             }
        }
+        .task {
+            firestoreViewModel.loadImageAssets()
+        }
     }
 }
 
