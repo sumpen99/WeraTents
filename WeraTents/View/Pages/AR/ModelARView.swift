@@ -9,14 +9,19 @@ import SwiftUI
 
 struct ModelARView: View {
     @StateObject private var arViewCoordinator: ARViewCoordinator
-    
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
      }
     
-    var arContent:some View{
-      ARViewContainer(arViewCoordinator: arViewCoordinator)
-    }
+    @ViewBuilder
+     var arContent:some View{
+         if !arViewCoordinator.load{
+             ARViewContainer(arViewCoordinator: arViewCoordinator)
+         }
+         else{
+             Text("Loading")
+         }
+     }
     
     var simulatorContent:some View{
         Text("Simulator View").hCenter().vCenter()
@@ -31,6 +36,12 @@ struct ModelARView: View {
         arContent
 #endif
        }
+        .onAppear{
+            DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+                arViewCoordinator.load = false
+            })
+            
+        }
         .toolbar(.hidden)
         .ignoresSafeArea(.all)
         .customBackButton(imgLabel: "xmark",color: .white,action: releaseMemory)
@@ -45,17 +56,14 @@ struct ModelARView: View {
 extension ModelARView{
     func releaseMemory(){
         arViewCoordinator.kill()
-        //ActionManager.shared.actionStream.send(.killSession)
      }
     
     func removeModel(){
         arViewCoordinator.action(.remove3DModel)
-        //ActionManager.shared?.actionStream.send(.remove3DModel)
     }
     
     func placeModel(){
         arViewCoordinator.action(.place3DModel)
-        //ActionManager.shared?.actionStream.send(.place3DModel)
     }
 }
 
