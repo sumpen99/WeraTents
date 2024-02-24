@@ -7,10 +7,6 @@
 
 import SwiftUI
 
-
-
-
-
 protocol CarouselItem:Identifiable{
     var id:Int { get }
     var img:Image { get }
@@ -28,7 +24,7 @@ struct Carousel<T:CarouselItem>:View {
     @State var closest: CGFloat = 0.0
     @State var selectedItem:T? = nil
    
-    // MARK: - GESTRURES
+    // MARK: - GESTURES
     var carouselDragGesture: some Gesture {
         DragGesture()
         .onChanged { value in
@@ -39,8 +35,13 @@ struct Carousel<T:CarouselItem>:View {
         .onEnded { value in
             let predMax = size*2
             let pred = value.predictedEndTranslation.width
-            if pred > predMax||pred < -predMax{
-                draggingItem = closest
+            if pred > predMax{
+                let inc = value.predictedEndTranslation.width/value.predictedEndTranslation.width
+                spinCarouselUpwards(max: value.predictedEndTranslation.width, current: value.translation.width,inc:inc)
+            }
+            else if pred < -predMax{
+                let inc = value.predictedEndTranslation.width/value.predictedEndTranslation.width
+                spinCarouselDownwards(max: value.predictedEndTranslation.width, current: value.translation.width,inc:inc)
             }
             else{
                 draggingItem = snappedItem + pred / (size/2.0)
@@ -50,6 +51,8 @@ struct Carousel<T:CarouselItem>:View {
             setActiveIndex(draggingItem)
         }
     }
+    
+    
     
     var carouselTapGesture: some Gesture {
         TapGesture()
@@ -83,7 +86,6 @@ struct Carousel<T:CarouselItem>:View {
     // MARK: - MAIN BODY
     var body: some View {
         content
-        //.gesture(userHasSelected ? simpleTapGesture : nil)
         .transition(.move(edge: edge))
     }
 }
@@ -119,7 +121,6 @@ extension Carousel{
     var currentlabel:some View{
         Text(validLabel)
         .font(.callout)
-        .bold()
         .vCenter()
         .hCenter()
         .offset(x:0,y:-(size/1.5))
@@ -156,8 +157,9 @@ extension Carousel{
     
     var bottomButtons:some View{
         HStack{
-            
-        }
+            UrlButton(label:"Video",toVisit: "https://www.weratents.se/fortalt-husbil-husvagn/wera-vivaldi-570")
+            UrlButton(label:"Hemsida",toVisit: "https://www.weratents.se/fortalt-husbil-husvagn/wera-vivaldi-570")
+         }
     }
     
     var selectedCardContent:some View{
@@ -168,7 +170,7 @@ extension Carousel{
                 SectionFoldable(header: "Beskrivning",
                                 content: Text(DUMMY_DESCRIPTION).font(.body).hLeading())
                 .listRowBackground(Color.lightBrown)
-                
+                bottomButtons
             }
            .scrollContentBackground(.hidden)
         }
@@ -219,6 +221,36 @@ extension Carousel{
     
     var validLabel:String{
         return validIndex == -1 ? "" : data[validIndex].title
+    }
+    
+    func spinCarouselUpwards(max value1:CGFloat,current:CGFloat,inc:CGFloat){
+        if current >= value1{
+            draggingItem = closest
+            return
+        }
+        let toMove = (current + inc) / (size/2.0)
+        draggingItem = snappedItem + toMove
+        closest = round(draggingItem).remainder(dividingBy: Double(data.count))
+        setActiveIndex(closest)
+        DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+            spinCarouselUpwards(max: value1, current: current+inc,inc: inc)
+        })
+        
+    }
+    
+    func spinCarouselDownwards(max value1:CGFloat,current:CGFloat,inc:CGFloat){
+        if current <= value1{
+            draggingItem = closest
+            return
+        }
+        let toMove = (current - inc) / (size/2.0)
+        draggingItem = snappedItem + toMove
+        closest = round(draggingItem).remainder(dividingBy: Double(data.count))
+        setActiveIndex(closest)
+        DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+            spinCarouselDownwards(max: value1, current: current-inc,inc:inc)
+        })
+        
     }
     
     func distance(_ item: Int) -> Double {
