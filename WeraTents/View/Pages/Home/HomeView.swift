@@ -51,7 +51,6 @@ struct HomeView:View {
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             content
-            .ignoresSafeArea(.all)
             .safeAreaInset(edge: .bottom){
                 bottomButtons
             }
@@ -81,6 +80,7 @@ extension HomeView{
     
     var showCarouselButton:some View{
         Button(action: {
+            if !firestoreViewModel.hasTents{ return }
             withAnimation(.easeInOut(duration: 0.45)){
                 showCarousel.toggle()
             }

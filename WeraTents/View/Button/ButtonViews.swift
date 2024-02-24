@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+//MARK: - CUSTOM BACKBUTTON
 struct BackButton:View{
     @Environment(\.dismiss) private var dismiss
     var imgLabel:String = "chevron.left"
@@ -29,4 +30,33 @@ struct BackButton:View{
         action?()
         dismiss()
     }
+}
+
+//MARK: - CUSTOM COLLAPSABLE LIST BUTTON
+struct ToggleSectionButton: View {
+  let title: String
+  @Binding var isOn: Bool
+  let onLabel: String
+  let offLabel: String
+  
+  var body: some View {
+    Button(action: {
+      withAnimation {
+        isOn.toggle()
+      }
+    }, label: {
+      if isOn {
+        Text(onLabel)
+      } else {
+        Text(offLabel)
+      }
+    })
+    .font(.caption)
+    .foregroundColor(Color.darkGreen)
+    .hTrailing()
+    .overlay(
+        Text(title)
+        .hLeading()
+    )
+  }
 }
