@@ -29,3 +29,10 @@ class FirestoreViewModel:ObservableObject{
         }
     }
 }
+
+//MARK: - HELPER
+extension FirestoreViewModel{
+    var hasTents:Bool{
+        tents.count > 0
+    }
+}
