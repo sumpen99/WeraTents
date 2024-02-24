@@ -32,14 +32,13 @@ class ServiceManager{
             if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
                let bundle = Bundle(path: bundlePath){
                 for name in imageNames{
-                    //if tentItems.count >= 2{ continue }
                     let splitName = name.components(separatedBy: ".")
                     if splitName.count != 2 { continue }
                     if let resourcePath = bundle.path(forResource: splitName[0], ofType: splitName[1]),
                        let uiImage = UIImage(contentsOfFile: resourcePath){
                         tentItems.append(TentItem(id:tentItems.count,
                                                   identifier: shortId(),
-                                                  title: String(splitName[0]),
+                                                  title: String(splitName[0]).capitalized,
                                                   img: Image(uiImage: uiImage)))
                     }
                 }

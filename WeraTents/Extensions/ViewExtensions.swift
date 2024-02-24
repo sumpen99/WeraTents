@@ -45,6 +45,7 @@ extension View{
             .padding()
         }
     }
+     
 }
 
 func roundedImage(_ name:String,
@@ -53,7 +54,7 @@ func roundedImage(_ name:String,
                   radius:CGFloat,
                   foreground:Color=Color.black,
                   background:Color=Color.white) -> some View{
-    return Image(systemName: name)
+        Image(systemName: name)
         .font(font)
         .bold()
         .foregroundStyle(foreground)
