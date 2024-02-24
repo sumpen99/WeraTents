@@ -24,13 +24,15 @@ class ServiceManager{
     }
     
     static func loadImagesFromBundle(_ asset:String,
-                                     imageNames:[String],completion: @escaping ((OperationResult?,[TentItem]?) -> Void)){
+                                     imageNames:[String],
+                                     completion: @escaping ((OperationResult?,[TentItem]?) -> Void)){
         
         DispatchQueue.global(qos: .background).async {
             var tentItems:[TentItem] = []
             if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
                let bundle = Bundle(path: bundlePath){
                 for name in imageNames{
+                    //if tentItems.count >= 2{ continue }
                     let splitName = name.components(separatedBy: ".")
                     if splitName.count != 2 { continue }
                     if let resourcePath = bundle.path(forResource: splitName[0], ofType: splitName[1]),
