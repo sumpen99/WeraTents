@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct Indicator:View {
-    @State var activeDrag:Bool = true
     let cornerRadius:CGFloat
     var backgroundColor:Color = .white
     var indicatorColor:Color = .darkGreen
@@ -35,6 +34,6 @@ struct Indicator:View {
     
     var body: some View {
         content
-        .gesture(activeDrag ? indicatorDragGesture : nil)
+        .gesture(indicatorDragGesture)
     }
 }
