@@ -60,3 +60,22 @@ struct ToggleSectionButton: View {
     )
   }
 }
+
+//MARK: - NAVIGATE TO WEB BUTTON
+struct UrlButton:View {
+    @Environment(\.openURL) var openURL
+    let label:String
+    let toVisit:String
+    var body: some View {
+        Button(action: {
+            if let url = URL(string: toVisit){
+                openURL(url)
+            }
+       }, label: {
+            Text(label)
+            .font(.body)
+            .frame(maxWidth: .infinity)
+        })
+        .buttonStyle(.borderedProminent)
+    }
+}
