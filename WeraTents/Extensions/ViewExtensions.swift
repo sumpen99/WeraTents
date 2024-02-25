@@ -64,3 +64,20 @@ func roundedImage(_ name:String,
         .frame(width: radius,height:radius)
         .clipShape(Circle())
 }
+
+func roundedImage(_ img:Image,
+                  font:Font,
+                  scale:Image.Scale,
+                  radius:CGFloat,
+                  foreground:Color=Color.black,
+                  background:Color=Color.white) -> some View{
+        img
+        .font(font)
+        .bold()
+        .foregroundStyle(foreground)
+        .imageScale(scale)
+        .padding()
+        .background(background)
+        .frame(width: radius,height:radius)
+        .clipShape(Circle())
+}

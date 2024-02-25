@@ -13,74 +13,89 @@ protocol CarouselItem:Identifiable{
     var title:String { get }
 }
 
+struct CarouselIndicators<T:CarouselItem>{
+    var snappedItem = 0.0
+    var draggingItem = 0.0
+    var activeIndex: Int = 0
+    var closest: CGFloat = 0.0
+    var selectedItem:T? = nil
+    var selectedIndex:Int = -1
+}
+
 struct Carousel<T:CarouselItem>:View {
+    @Binding var isOpen:Bool
     @Binding var data:[T]
     let size:CGFloat
     let edge:Edge
-    let onTap:((T) -> Void)? = nil
-    @State private var snappedItem = 0.0
-    @State private var draggingItem = 0.0
-    @State var activeIndex: Int = 0
-    @State var closest: CGFloat = 0.0
-    @State var selectedItem:T? = nil
-   
+    var onSelected:((T) -> Void)? = nil
+    @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
+    
     // MARK: - GESTURES
     var carouselDragGesture: some Gesture {
         DragGesture()
         .onChanged { value in
-            draggingItem = snappedItem + value.translation.width / (size/2.0)
-            closest = round(draggingItem).remainder(dividingBy: Double(data.count))
-            setActiveIndex(closest)
+            ind.draggingItem = ind.snappedItem + value.translation.width / (size/2.0)
+            ind.closest = round(ind.draggingItem).remainder(dividingBy: Double(data.count))
+            setActiveIndex(ind.closest)
         }
         .onEnded { value in
-            let predMax = size*2
-            let pred = value.predictedEndTranslation.width
-            if pred > predMax{
-                let inc = value.predictedEndTranslation.width/value.predictedEndTranslation.width
-                spinCarouselUpwards(max: value.predictedEndTranslation.width, current: value.translation.width,inc:inc)
-            }
-            else if pred < -predMax{
-                let inc = value.predictedEndTranslation.width/value.predictedEndTranslation.width
-                spinCarouselDownwards(max: value.predictedEndTranslation.width, current: value.translation.width,inc:inc)
+            let inc = value.predictedEndTranslation.width/value.translation.width
+            if value.predictedEndTranslation.width >= 0{
+                spinCarousel(current: value.translation.width,inc:inc,iterations: 0){ (current,iterations) in
+                    (current >= value.predictedEndTranslation.width)||iterations>200
+                }
             }
             else{
-                draggingItem = snappedItem + pred / (size/2.0)
-                draggingItem = round(draggingItem).remainder(dividingBy: Double(data.count))
+                 spinCarousel(current: value.translation.width, inc: -inc,iterations: 0){ (current,iterations) in
+                    (current <= value.predictedEndTranslation.width)||iterations>200
+                }
             }
-            snappedItem = draggingItem
-            setActiveIndex(draggingItem)
+    
         }
     }
     
-    
-    
+    var carouselLongTapGeasture:some Gesture{
+        LongPressGesture()
+            .onEnded(){ value in
+                withAnimation{
+                    onSelected?(data[ind.activeIndex])
+                    isOpen.toggle()
+                }
+            }
+    }
+     
     var carouselTapGesture: some Gesture {
         TapGesture()
         .onEnded{
             withAnimation(.linear(duration: 0.25)){
-                if userHasSelected{ self.selectedItem = nil }
+                if userHasSelected{ self.ind.selectedItem = nil }
                 else{
-                    self.selectedItem = data[activeIndex]
+                    self.ind.selectedItem = data[ind.activeIndex]
                 }
                 
             }
         }
     }
     
+    var dismissTapGesture: some Gesture {
+        TapGesture()
+        .onEnded{
+            withAnimation(.linear(duration: 0.25)){
+                if userHasSelected{ self.ind.selectedItem = nil }
+                else{
+                    isOpen.toggle()
+                }
+                
+            }
+        }
+    }
+     
     // MARK: - MAIN CONTENT
     var content:some View{
         ZStack{
-            Color.lightGreen.opacity(0.7)
-            carousel
-            selectedCard
+            background
+            carouselContent
         }
-        .background{
-            Capsule()
-            .fill(.white)
-            .frame(width:size*2.75,height: size*1.5)
-        }
-        .vCenter()
-        .hCenter()
      }
     
     // MARK: - MAIN BODY
@@ -90,8 +105,35 @@ struct Carousel<T:CarouselItem>:View {
     }
 }
 
-    // MARK: - MAIN CAROUSEL CONTENT
+// MARK: BACKGROUND
 extension Carousel{
+    var background:some View{
+        ZStack{
+            Color.lightGreen.opacity(0.7)
+        }
+        .ignoresSafeArea()
+        .hCenter()
+        .vTop()
+        .gesture(dismissTapGesture)
+    }
+}
+
+// MARK: - MAIN CAROUSEL CONTENT
+extension Carousel{
+    
+    var carouselContent:some View{
+        ZStack{
+            carousel
+            selectedCard
+        }
+        .background{
+            Capsule()
+                .fill(.white.opacity(0.7))
+            .frame(width:size*2.75,height: size*1.5)
+        }
+        .zIndex(1)
+    }
+    
     var carousel:some View{
         ZStack {
             ForEach(data) { item in
@@ -105,12 +147,12 @@ extension Carousel{
     func card(_ item:T)-> some View{
         ZStack {
             RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-            .fill(Color.white)
+            .fill(ind.selectedIndex == item.id ? Color.lightBrown : Color.white)
             item.img
             .resizable()
             .padding()
        }
-        .gesture(tapIsActive(item.id) ? carouselTapGesture : nil)
+        .simultaneousGesture(tapIsActive(item.id) ? carouselLongTapGeasture.simultaneously(with: carouselTapGesture) : nil)
         .frame(width: size, height: size)
         .scaleEffect(1.0 - abs(distance(item.id)) * 0.2 )
         .opacity(1.0 - abs(distance(item.id)) * 0.3 )
@@ -121,6 +163,8 @@ extension Carousel{
     var currentlabel:some View{
         Text(validLabel)
         .font(.callout)
+        .foregroundStyle(Color.black .opacity(0.4))
+        .italic()
         .vCenter()
         .hCenter()
         .offset(x:0,y:-(size/1.5))
@@ -143,14 +187,14 @@ extension Carousel{
 extension Carousel{
     
     var selectedCardLabel:some View{
-        Text(selectedItem?.title ?? "")
+        Text(ind.selectedItem?.title ?? "")
         .padding(.top)
         .font(.title)
         .bold()
     }
     
     var selectedCardImage:some View{
-        selectedItem?.img
+        ind.selectedItem?.img
         .resizable()
         .scaledToFit()
     }
@@ -205,7 +249,7 @@ extension Carousel{
 // MARK: - HELPER FUNCTIONS
 extension Carousel{
     var userHasSelected:Bool{
-        selectedItem != nil
+        ind.selectedItem != nil
     }
     
     var dragIsActive:Bool{
@@ -213,8 +257,8 @@ extension Carousel{
     }
     
     var validIndex:Int{
-        if data.count > 0 && activeIndex >= 0 && activeIndex < data.count{
-            return activeIndex
+        if data.count > 0 && ind.activeIndex >= 0 && ind.activeIndex < data.count{
+            return ind.activeIndex
         }
         return -1
     }
@@ -223,38 +267,25 @@ extension Carousel{
         return validIndex == -1 ? "" : data[validIndex].title
     }
     
-    func spinCarouselUpwards(max value1:CGFloat,current:CGFloat,inc:CGFloat){
-        if current >= value1{
-            draggingItem = closest
+    func spinCarousel(current:CGFloat,inc:CGFloat,iterations:Int,abort: @escaping (CGFloat,Int) -> Bool){
+        if abort(current,iterations){
+            ind.draggingItem = ind.closest
+            ind.snappedItem = ind.draggingItem
             return
         }
-        let toMove = (current + inc) / (size/2.0)
-        draggingItem = snappedItem + toMove
-        closest = round(draggingItem).remainder(dividingBy: Double(data.count))
-        setActiveIndex(closest)
+        let newValue = current + inc
+        let toMove = newValue / (size/2.0)
+        ind.draggingItem = ind.snappedItem + toMove
+        ind.closest = round(ind.draggingItem).remainder(dividingBy: Double(data.count))
+        setActiveIndex(ind.closest)
         DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
-            spinCarouselUpwards(max: value1, current: current+inc,inc: inc)
-        })
-        
-    }
-    
-    func spinCarouselDownwards(max value1:CGFloat,current:CGFloat,inc:CGFloat){
-        if current <= value1{
-            draggingItem = closest
-            return
-        }
-        let toMove = (current - inc) / (size/2.0)
-        draggingItem = snappedItem + toMove
-        closest = round(draggingItem).remainder(dividingBy: Double(data.count))
-        setActiveIndex(closest)
-        DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
-            spinCarouselDownwards(max: value1, current: current-inc,inc:inc)
+            spinCarousel(current: newValue,inc:inc,iterations: iterations+1,abort: abort)
         })
         
     }
     
     func distance(_ item: Int) -> Double {
-        return (draggingItem - Double(item)).remainder(dividingBy: Double(data.count))
+        return (ind.draggingItem - Double(item)).remainder(dividingBy: Double(data.count))
     }
     
     func xOffset(_ item: Int) -> Double {
@@ -263,19 +294,25 @@ extension Carousel{
     }
     
     func tapIsActive(_ id:Int) ->Bool{
-        id == activeIndex
+        id == ind.activeIndex
     }
     
     func setActiveIndex(_ value:CGFloat){
-        self.activeIndex = data.count + Int(value)
-        if self.activeIndex > data.count || Int(value) >= 0 {
-            self.activeIndex = Int(value)
+        self.ind.activeIndex = data.count + Int(value)
+        if self.ind.activeIndex > data.count || Int(value) >= 0 {
+            self.ind.activeIndex = Int(value)
+        }
+    }
+ 
+    func clearSelectedItem(){
+        withAnimation{
+            ind.selectedItem = nil
         }
     }
     
-    func clearSelectedItem(){
+    func closeView(){
         withAnimation{
-            selectedItem = nil
+            isOpen.toggle()
         }
     }
 }
