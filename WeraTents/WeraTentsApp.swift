@@ -9,11 +9,18 @@ import SwiftUI
 
 @main
 struct WeraTentsApp: App {
+    @StateObject var launchScreenViewModel = LaunchScreenViewModel()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Environment(\.scenePhase) private var phase
     var body: some Scene {
         StyledWindowGroup {
-            HomeView()
+            ZStack{
+                ContentView()
+                if launchScreenViewModel.state != .FINISHED {
+                    LaunchScreen()
+                }
+            }
+            .environmentObject(launchScreenViewModel)
             .preferredWindowColor(.lightGreen)
             /*.onChange(of: phase,initial: true) { newPhase,initial in
                 switch newPhase {
