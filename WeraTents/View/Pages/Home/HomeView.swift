@@ -17,32 +17,13 @@ enum ModelRoute: Identifiable{
 }
 
 struct HomeView:View {
+    @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject var navigationViewModel = NavigationViewModel()
-    @StateObject private var firestoreViewModel: FirestoreViewModel
     @State var showCarousel:Bool = false
-    
-    init(){
-        self._firestoreViewModel = StateObject(wrappedValue: FirestoreViewModel())
-    }
- 
-    var carouselContent:some View{
-        GeometryReader{ reader in
-            ZStack{
-                if showCarousel{
-                    Carousel(data: $firestoreViewModel.tents,
-                             size: min(reader.size.width,reader.size.height)/3,
-                             edge: .trailing)
-                }
-            }
-            .hCenter()
-            .vCenter()
-        }
-        
-    }
-    
+       
     var content:some View{
         ZStack{
-            Color.clear
+            bottomButtons
         }
         .hCenter()
         .vCenter()
@@ -51,9 +32,6 @@ struct HomeView:View {
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             content
-            .safeAreaInset(edge: .bottom){
-                bottomButtons
-            }
             .modifier(NavigationViewModifier(color:.lightGreen))
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
@@ -64,9 +42,25 @@ struct HomeView:View {
                 carouselContent
             }
        }
-        .task {
-            firestoreViewModel.loadImageAssets()
+    }
+}
+
+//MARK: - CAROUSEL
+extension HomeView{
+    var carouselContent:some View{
+        GeometryReader{ reader in
+            ZStack{
+                if showCarousel{
+                    Carousel(isOpen:$showCarousel,
+                             data: $firestoreViewModel.tents,
+                             size: min(reader.size.width,reader.size.height)/3,
+                             edge: .trailing)
+                }
+            }
+            .hCenter()
+            .vCenter()
         }
+        
     }
 }
 
@@ -86,10 +80,10 @@ extension HomeView{
             }
             
         }, label: {
-            roundedImage("tent",
+            roundedImage("info",
                          font:.title,
                          scale:.medium,
-                         radius: 60.0,
+                         radius: 45.0,
                          foreground: Color.white,
                          background: Color.darkGreen)
         })
@@ -98,9 +92,12 @@ extension HomeView{
     @ViewBuilder
     var bottomButtons:some View{
         HStack{
+            showCarouselButton
             navModelARButton.hCenter()
             showCarouselButton
         }
+        .hCenter()
+        .vBottom()
         .padding([.leading,.trailing])
         
     }

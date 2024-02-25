@@ -16,10 +16,16 @@ class MyEntity: Entity, HasAnchoring, HasModel, HasCollision {}
 
 //MARK: -- ACTIONS
 enum Actions {
-    case place3DModel
-    case remove3DModel
-    case killSession
+    case PLACE_3D_MODEL
+    case REMOVE_3D_MODEL
+    case KILL_SESSION
    
+}
+
+enum LoadState{
+    case INITIAL
+    case LOADING
+    case DONE
 }
 
 //MARK: -- ARVIEWCONTAINER
@@ -51,7 +57,7 @@ struct ARViewContainer: UIViewRepresentable {
 class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     weak var arView: ARView?
     var focusEntity: FocusEntity?
-    @Published var load:Bool = true
+    @Published var state:LoadState = .INITIAL
     func session(_ session: ARSession, didUpdate frame: ARFrame){
         //debugLog(object: "Session did UPDATE FRAME ")
     }
@@ -86,11 +92,11 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     func action(_ action:Actions){
         guard let focusEntity = self.focusEntity else { return }
         switch action {
-        case .place3DModel:
+        case .PLACE_3D_MODEL:
             self.arView?.loadEntityAsync(focusEntity.position)
-        case .remove3DModel:
+        case .REMOVE_3D_MODEL:
             self.arView?.removeModel()
-        case .killSession:
+        case .KILL_SESSION:
             self.arView?.kill()
        }
     }
