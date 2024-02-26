@@ -21,7 +21,7 @@ struct WeraTentsApp: App {
                 }
             }
             .environmentObject(launchScreenViewModel)
-            .preferredWindowColor(.lightGreen)
+            .preferredWindowColor(Color.clear)
             /*.onChange(of: phase,initial: true) { newPhase,initial in
                 switch newPhase {
                 case .active:

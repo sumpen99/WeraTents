@@ -58,6 +58,7 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     weak var arView: ARView?
     var focusEntity: FocusEntity?
     @Published var state:LoadState = .INITIAL
+    @Published var selectedTent:TentItem?
     func session(_ session: ARSession, didUpdate frame: ARFrame){
         //debugLog(object: "Session did UPDATE FRAME ")
     }
@@ -73,7 +74,7 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     
     func setARView(_ arView: ARView) {
         self.arView = arView
-        self.focusEntity = FocusEntity(on: arView, style: .classic())
+        //self.focusEntity = FocusEntity(on: arView, style: .classic())
         self.arView?.runConfiguration()
         self.arView?.session.delegate = self
     }
@@ -99,6 +100,18 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         case .KILL_SESSION:
             self.arView?.kill()
        }
+    }
+    
+    func newSelectedTent(_ item:TentItem){
+        if let arView = arView{
+            selectedTent = item
+            self.focusEntity = FocusEntity(on: arView, style: .classic())
+        }
+   }
+    
+    func removeSelectedTent(){
+        selectedTent = nil
+        self.focusEntity?.destroy()
     }
     
 }
@@ -132,6 +145,15 @@ extension ARView{
     }
     
     func placeModel(modelEntity:ModelEntity,position: SIMD3<Float>){
+        var smpl = SimpleMaterial()
+        smpl.color.tint = .blue
+        smpl.metallic = 0.7
+        smpl.roughness = 0.2
+                
+        var pbr = PhysicallyBasedMaterial()
+        pbr.baseColor.tint = .green
+        
+        modelEntity.model?.materials = [smpl,pbr]
         let anchorEntity = MyEntity()
         anchorEntity.position = position
         anchorEntity.name = "tentAnchor"

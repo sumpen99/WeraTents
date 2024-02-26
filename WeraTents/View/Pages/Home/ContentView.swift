@@ -22,7 +22,7 @@ struct ContentView:View{
         }
         .task{
             firestoreViewModel.loadImageAssets()
-            try? await Task.sleep(for: Duration.seconds(1))
+            //try? await Task.sleep(for: Duration.seconds(1.5))
             self.launchScreenViewModel.dismiss()
         }
     }
