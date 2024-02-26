@@ -42,12 +42,12 @@ struct Carousel<T:CarouselItem>:View {
             let inc = value.predictedEndTranslation.width/value.translation.width
             if value.predictedEndTranslation.width >= 0{
                 spinCarousel(current: value.translation.width,inc:inc,iterations: 0){ (current,iterations) in
-                    (current >= value.predictedEndTranslation.width)||iterations>200
+                    (current >= value.predictedEndTranslation.width)||iterations>50
                 }
             }
             else{
                  spinCarousel(current: value.translation.width, inc: -inc,iterations: 0){ (current,iterations) in
-                    (current <= value.predictedEndTranslation.width)||iterations>200
+                    (current <= value.predictedEndTranslation.width)||iterations>50
                 }
             }
     
@@ -109,7 +109,7 @@ struct Carousel<T:CarouselItem>:View {
 extension Carousel{
     var background:some View{
         ZStack{
-            Color.lightGreen.opacity(0.7)
+            Color.white.opacity(0.7)
         }
         .ignoresSafeArea()
         .hCenter()

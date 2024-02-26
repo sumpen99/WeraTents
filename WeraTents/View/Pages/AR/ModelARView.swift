@@ -11,16 +11,15 @@ struct ModelARView: View {
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
     @State var showCarousel:Bool = false
-    @State var selectedTent:TentItem?
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
     }
             
     var body: some View{
         ZStack{
-        Color.lightGreen
+        Color.black
 #if targetEnvironment(simulator)
-        simulatorContent
+        loadingARKitText
 #else
         arContent
 #endif
@@ -49,20 +48,18 @@ struct ModelARView: View {
 extension ModelARView{
     @ViewBuilder
      var arContent:some View{
-         if arViewCoordinator.state != .DONE{
-             Text("Loading")
-            .font(.system(size: 75.0,weight: .bold))
-         }
-         if arViewCoordinator.state != .INITIAL{
+         ZStack{
              ARViewContainer(arViewCoordinator: arViewCoordinator)
-            .onAppear{
-                arViewCoordinator.state = .DONE
-            }
+             if arViewCoordinator.selectedTent == nil {
+                 loadingARKitText
+             }
          }
     }
-    
-    var simulatorContent:some View{
-        Text("Simulator View").hCenter().vCenter()
+   
+    var loadingARKitText:some View{
+        Text("Pick a tent to place in world")
+            .font(.headline)
+            .foregroundStyle(Color.white)
     }
 }
 
@@ -82,16 +79,8 @@ extension ModelARView{
             .hCenter()
             .vCenter()
         }
-        
-    }
-    
-    func onSelectedItem(tent:TentItem) ->Void{
-        self.selectedTent = tent
     }
 }
-
-
-
 
 //MARK: - FUNCTIONS
 extension ModelARView{
@@ -106,29 +95,35 @@ extension ModelARView{
     func placeModel(){
         arViewCoordinator.action(.PLACE_3D_MODEL)
     }
+    
+    func onSelectedItem(tent:TentItem) ->Void{
+        arViewCoordinator.newSelectedTent(tent)
+    }
+    
+    func onRemoveSelectedItem(){
+        withAnimation{
+            arViewCoordinator.removeSelectedTent()
+        }
+    }
 }
 
 //MARK: - SELECTED TENT
 extension ModelARView{
     
     var tentLabel:some View{
-        Text(self.selectedTent?.title ?? "")
+        Text(arViewCoordinator.selectedTent?.title ?? "")
             .font(.subheadline)
             .hCenter()
     }
     
     var tentImage:some View{
-        self.selectedTent?.img
+        arViewCoordinator.selectedTent?.img
         .resizable()
         .frame(width: 50.0,height: 50.0)
     }
     
     var clearTent:some View{
-        Button(action: {
-            withAnimation{
-                selectedTent = nil
-            }
-        }, label: {
+        Button(action: onRemoveSelectedItem, label: {
             roundedImage("chevron.left",
                          font:.body,
                          scale:.large,
@@ -143,7 +138,7 @@ extension ModelARView{
             tentImage
             tentLabel
             clearTent
-        }
+        }.hLeading()
         .background{
             Color.white.opacity(0.8)
         }
@@ -192,19 +187,28 @@ extension ModelARView{
                          radius: 60.0,
                          foreground: Color.darkGreen)
         })
+        .frame(alignment: .trailing)
+    }
+    
+    var toggleModelButtons:some View{
+        HStack{
+            removeModelButton
+            placeModelButton.hCenter()
+        }
+        .opacity(arViewCoordinator.selectedTent == nil ? 0.5 : 1.0)
+        .disabled(arViewCoordinator.selectedTent == nil)
     }
     
     var interactButtons:some View{
         HStack{
-            removeModelButton
-            placeModelButton.hCenter()
+            toggleModelButtons
             showCarouselButton
         }
     }
     
     var bottomButtons:some View{
         VStack{
-            if selectedTent != nil{
+            if arViewCoordinator.selectedTent != nil{
                 selectedTentContainer
             }
             interactButtons
