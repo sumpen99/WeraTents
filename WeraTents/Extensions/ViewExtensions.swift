@@ -41,7 +41,6 @@ extension View{
                           action: (() -> Void)? = nil) -> some View{
         self.safeAreaInset(edge: .top){
             BackButton(imgLabel: imgLabel,color:color,action:action)
-            .hLeading()
             .padding()
         }
     }

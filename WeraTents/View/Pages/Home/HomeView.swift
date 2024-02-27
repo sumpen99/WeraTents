@@ -20,14 +20,28 @@ struct HomeView:View {
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject var navigationViewModel = NavigationViewModel()
     @State var showCarousel:Bool = false
-       
+ 
     var content:some View{
-        VStack(spacing:0){
-            listContent
-            listContent
+        VStack(spacing:V_HOME_SPACING){
+            topLabel.padding([.horizontal])
+            ScrollView{
+                VStack{
+                    carouselSection
+                    /*VStack{
+                        instructionLabel
+                        carouselContent
+                     }
+                    VStack{
+                        manualsLabel
+                        carouselContent
+                     }*/
+                }
+                
+            }
+            .vTop()
         }
+        .padding([.top,.bottom])
         .hCenter()
-        .vCenter()
     }
     
     var background:some View{
@@ -42,7 +56,7 @@ struct HomeView:View {
                 background
                 content
                 shapedMenu
-            }
+             }
             .modifier(NavigationViewModifier(color:.lightGreen))
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
@@ -50,12 +64,57 @@ struct HomeView:View {
                 }
             }
         }
-        
     }
 }
 
 //MARK: - MAIN CONTENT
 extension HomeView{
+    
+    var topLabel:some View{
+        HStack{
+            VStack{
+                Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
+                Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
+            }.hLeading()
+            
+           Image("weratent-logo")
+            .resizable()
+            .frame(width:60,height: 60)
+            
+        }
+   }
+    
+    
+    
+    var instructionLabel:some View{
+        HStack{
+           Text("Videos").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            
+           Image(systemName: "arrow.right")
+            .font(.title)
+            .bold()
+            .foregroundStyle(Color.white)
+            
+        }
+        .background{
+            Color.red
+        }
+    }
+    
+    var manualsLabel:some View{
+        HStack{
+           Text("Monteringsanvisningar").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            
+           Image(systemName: "arrow.right")
+            .font(.title)
+            .bold()
+            .foregroundStyle(Color.white)
+            
+        }
+        .background{
+            Color.yellow
+        }
+    }
     
     var listContent:some View{
         List{
@@ -93,19 +152,37 @@ extension HomeView{
 
 //MARK: - CAROUSEL
 extension HomeView{
-    var carouselContent:some View{
-        GeometryReader{ reader in
-            ZStack{
-                if showCarousel{
-                    Carousel(isOpen:$showCarousel,
-                             data: $firestoreViewModel.tents,
-                             size: min(reader.size.width,reader.size.height)/3,
-                             edge: .trailing)
-                }
+    
+    var carouselSection:some View{
+        VStack{
+            inspirationLabel.padding([.horizontal])
+            carouselContent
+         }
+    }
+    
+    var inspirationLabel:some View{
+        HStack{
+           Text("Inspiration").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            
+            Button(action: { }){
+                Image(systemName: "arrow.right")
+                 .font(.title)
+                 .bold()
+                 .foregroundStyle(Color.white)
             }
-            .hCenter()
-            .vCenter()
         }
+    }
+    
+    var carouselContent:some View{
+        ZStack{
+            GeometryReader{ reader in
+                HomeCarousel(
+                         data: $firestoreViewModel.tents,
+                         width: reader.size.width*0.75,
+                         edge: .trailing).hCenter()
+            }
+        }
+        .frame(height: HOME_CAROUSEL_HEIGHT)
         
     }
 }
@@ -118,7 +195,7 @@ extension HomeView{
                          font:.title,
                          scale:.large,
                          radius: 60.0,
-                         foreground: Color.materialDark,
+                         foreground: Color.darkGreen,
                          background: Color.clear)
                 .background{
                     Capsule()
@@ -140,7 +217,7 @@ extension HomeView{
                          font:.title,
                          scale:.medium,
                          radius: 45.0,
-                         foreground: Color.materialDark,
+                         foreground: Color.darkGreen,
                          background: Color.clear)
             .background{
                 Capsule()
@@ -162,7 +239,7 @@ extension HomeView{
                          font:.title,
                          scale:.medium,
                          radius: 45.0,
-                         foreground: Color.materialDark,
+                         foreground: Color.darkGreen,
                          background: Color.clear)
             .background{
                 Capsule()
@@ -184,12 +261,13 @@ extension HomeView{
      
     var shapedMenu:some View{
         ZStack{
+            //RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.white)
             ShapeMenu()
-                .fill(Color.materialDark.opacity(0.5))
+                .fill(Color.black.opacity(0.9))
             bottomButtons
        }
         .frame(height:MENU_HEIGHT)
-        .padding([.leading,.trailing,.bottom])
+        .padding([.bottom])
         .vBottom()
     }
 }
