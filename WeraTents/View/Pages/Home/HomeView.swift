@@ -7,27 +7,36 @@
 
 import SwiftUI
 
-enum ModelRoute: Identifiable{
-    case ROUTE_AR
-    
-    var id: Int {
-        hashValue
-    }
-    
-}
+
 
 struct HomeView:View {
-    @EnvironmentObject var firestoreViewModel:FirestoreViewModel
-    @StateObject var navigationViewModel = NavigationViewModel()
+    @EnvironmentObject var firestoreViewModel: FirestoreViewModel
+    @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var showCarousel:Bool = false
-       
-    var content:some View{
-        VStack(spacing:0){
-            listContent
-            listContent
+ 
+    var body: some View{
+        NavigationStack(path:$navigationViewModel.pathTo){
+            mainContent
+            .modifier(NavigationViewModifier(color:.clear))
+            .navigationDestination(for: ModelRoute.self){  route in
+                switch route{
+                case .ROUTE_AR:                 ModelARView()
+                case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
+                }
+            }
         }
-        .hCenter()
-        .vCenter()
+    }
+}
+
+//MARK: - MAIN CONTENT
+extension HomeView{
+    
+    var mainContent:some View{
+        ZStack{
+            background
+            content
+            shapedMenu
+         }
     }
     
     var background:some View{
@@ -36,26 +45,69 @@ struct HomeView:View {
         .ignoresSafeArea()
     }
     
-    var body: some View{
-        NavigationStack(path:$navigationViewModel.pathTo){
-            ZStack{
-                background
-                content
-                shapedMenu
+    var content:some View{
+        VStack(spacing:V_HOME_SPACING){
+            topLabel.padding([.horizontal])
+            ScrollView{
+                VStack{
+                    carouselSection
+                 }
+                
             }
-            .modifier(NavigationViewModifier(color:.lightGreen))
-            .navigationDestination(for: ModelRoute.self){  route in
-                switch route{
-                case .ROUTE_AR: ModelARView()
-                }
-            }
+            .vTop()
         }
-        
+        .padding([.top,.bottom])
+        .hCenter()
     }
+    
+    var topLabel:some View{
+        HStack{
+            VStack{
+                Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
+                Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
+            }.hLeading()
+            
+           Image("weratent-logo")
+            .resizable()
+            .frame(width:60,height: 60)
+            
+        }
+   }
+    
 }
 
-//MARK: - MAIN CONTENT
+//MARK: - LIST CONTENT CONTENT
 extension HomeView{
+   
+    var instructionLabel:some View{
+        HStack{
+           Text("Videos").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            
+           Image(systemName: "arrow.right")
+            .font(.title)
+            .bold()
+            .foregroundStyle(Color.white)
+            
+        }
+        .background{
+            Color.red
+        }
+    }
+    
+    var manualsLabel:some View{
+        HStack{
+           Text("Monteringsanvisningar").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            
+           Image(systemName: "arrow.right")
+            .font(.title)
+            .bold()
+            .foregroundStyle(Color.white)
+            
+        }
+        .background{
+            Color.yellow
+        }
+    }
     
     var listContent:some View{
         List{
@@ -93,39 +145,53 @@ extension HomeView{
 
 //MARK: - CAROUSEL
 extension HomeView{
-    var carouselContent:some View{
-        GeometryReader{ reader in
-            ZStack{
-                if showCarousel{
-                    Carousel(isOpen:$showCarousel,
-                             data: $firestoreViewModel.tents,
-                             size: min(reader.size.width,reader.size.height)/3,
-                             edge: .trailing)
-                }
+    
+    var carouselSection:some View{
+        VStack{
+            inspirationLabel.padding([.horizontal])
+            carouselContent
+         }
+    }
+    
+    var inspirationLabel:some View{
+        HStack{
+           Text("Inspiration").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            
+            Button(action: { }){
+                Image(systemName: "arrow.right")
+                 .font(.title)
+                 .bold()
+                 .foregroundStyle(Color.white)
             }
-            .hCenter()
-            .vCenter()
         }
+    }
+    
+    var carouselContent:some View{
+        ZStack{
+            GeometryReader{ reader in
+                HomeCarousel(
+                         data: $firestoreViewModel.tents,
+                         width: reader.size.width*0.75,
+                         edge: .trailing).hCenter()
+            }
+        }
+        .frame(height: HOME_CAROUSEL_HEIGHT)
         
     }
 }
 
-//MARK: -- BUTTONS
+//MARK: -- BOTTOMBAR
 extension HomeView{
     var navModelARButton:some View{
         Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
-            roundedImage("camera",
-                         font:.title,
-                         scale:.large,
-                         radius: 60.0,
-                         foreground: Color.materialDark,
-                         background: Color.clear)
-                .background{
-                    Capsule()
-                    .fill(Color.white)
-                    .frame(width:60,height: 80)
-                }
+            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightBlue)
+                .imageScale(.large)
+            .padding(15.0)
+            .background{
+                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.materialDarkest)
+            }
         })
+        .offset(y:-4)
     }
     
     var videoButton:some View{
@@ -136,16 +202,10 @@ extension HomeView{
             }
             
         }, label: {
-            roundedImage("video.circle.fill",
-                         font:.title,
-                         scale:.medium,
-                         radius: 45.0,
-                         foreground: Color.materialDark,
-                         background: Color.clear)
+            buttonImage("video.circle.fill", font: .title, foreground: Color.lightBlue)
+            .padding(10.0)
             .background{
-                Capsule()
-                .fill(Color.white)
-                .frame(width:45,height: 55)
+                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
             }
         })
     }
@@ -158,16 +218,10 @@ extension HomeView{
             }
             
         }, label: {
-            roundedImage("person.crop.circle.fill",
-                         font:.title,
-                         scale:.medium,
-                         radius: 45.0,
-                         foreground: Color.materialDark,
-                         background: Color.clear)
+            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightBlue)
+            .padding(10.0)
             .background{
-                Capsule()
-                .fill(Color.white)
-                .frame(width:45,height: 55)
+                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
             }
         })
     }
@@ -175,56 +229,22 @@ extension HomeView{
     @ViewBuilder
     var bottomButtons:some View{
         HStack{
-            videoButton.padding(.leading)
+            videoButton
             navModelARButton.hCenter()
-            accountButton.padding(.trailing)
+            accountButton
         }
         .padding([.leading,.trailing])
     }
      
     var shapedMenu:some View{
         ZStack{
-            ShapeMenu()
-                .fill(Color.materialDark.opacity(0.5))
+            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.materialDark)
+            OvalShapeMenu()
+            .fill(Color.materialDark)
             bottomButtons
        }
         .frame(height:MENU_HEIGHT)
-        .padding([.leading,.trailing,.bottom])
+        .padding([.bottom,.leading,.trailing])
         .vBottom()
-    }
-}
-
-struct ShapeMenu: Shape {
-   func path(in rect: CGRect) -> Path {
-       let y_middle = MENU_HEIGHT/2.0
-       let part = CORNER_RADIUS_MENU*1.5
-       let middle = rect.maxX/2.0
-       let start = middle-part
-       let end = middle+part
-       let offY = MENU_HEIGHT*0.8667
-       let minY = MENU_HEIGHT*0.1333
-       let midOffY = MENU_HEIGHT*0.2333
-     return Path { path in
-         path.move(to: CGPoint(x: end, y: 0))
-         path.addQuadCurve(to: CGPoint(x: rect.maxX-CORNER_RADIUS_MENU,y:0), control: CGPoint(x:rect.maxX-part, y: minY))
-         path.addQuadCurve(to: CGPoint(x: rect.maxX-CORNER_RADIUS_MENU, y: MENU_HEIGHT), control: CGPoint(x:rect.maxX, y: y_middle))
-         path.addQuadCurve(to: CGPoint(x: end,y:MENU_HEIGHT), control: CGPoint(x:rect.maxX-part, y: offY)) 
-         
-         path.addQuadCurve(to: CGPoint(x: start,y:MENU_HEIGHT), control: CGPoint(x:middle, y: MENU_HEIGHT+midOffY))
-        
-         path.addQuadCurve(to: CGPoint(x: CORNER_RADIUS_MENU,y:MENU_HEIGHT), control: CGPoint(x:part, y: offY))
-         path.addQuadCurve(to: CGPoint(x: CORNER_RADIUS_MENU,y:0), control: CGPoint(x:0, y: y_middle))
-         path.addQuadCurve(to: CGPoint(x: start,y:0), control: CGPoint(x:part, y: MENU_HEIGHT-offY))
-         
-         path.addQuadCurve(to: CGPoint(x: end,y:0), control: CGPoint(x:middle, y: -midOffY))
-         
-         /*path.move(to: CGPoint(x: start, y: 0))
-         path.addQuadCurve(to: CGPoint(x: CORNER_RADIUS_MENU,y:0), control: CGPoint(x:0+part, y: minY))
-         path.addQuadCurve(to: CGPoint(x: CORNER_RADIUS_MENU, y: MENU_HEIGHT), control: CGPoint(x:0, y: y_middle))
-         path.addQuadCurve(to: CGPoint(x: start,y:MENU_HEIGHT), control: CGPoint(x:0+part, y: offY))
-         path.addQuadCurve(to: CGPoint(x: end,y:MENU_HEIGHT), control: CGPoint(x:middle, y: MENU_HEIGHT+minY*2))
-         path.addLine(to: CGPoint(x: end,y:0))
-         path.addQuadCurve(to: CGPoint(x: start,y:0), control: CGPoint(x:middle, y: -minY*2))*/
-         }
     }
 }
