@@ -97,19 +97,39 @@ extension ModelARView{
     }
 }
 
-//MARK: - FUNCTIONS
+//MARK SAVE TO COREDATA
 extension ModelARView{
-    func releaseMemory(){
-        arViewCoordinator.kill()
-     }
-    
     func captureImage(){
         withAnimation{
             capturedImageCount += 1
             flashScreen = true
         }
+        let managedObjectContext = PersistenceController.shared.container.viewContext
+        let model = ScreenshotModel(context:managedObjectContext)
+        model.build()
+        /*if docContent.data != nil{
+            let image = TubeImage(context:managedObjectContext)
+            image.id = model.id
+            image.data = docContent.data
+            model.image = image
+        }*/
+        do{
+            try PersistenceController.saveContext()
+            debugLog(object: "Screenshot saved")
+        }
+        catch{
+            debugLog(object: "Screenshot not saved")
+        }
+        
     }
-    
+}
+
+//MARK: - FUNCTIONS
+extension ModelARView{
+    func releaseMemory(){
+        arViewCoordinator.kill()
+     }
+     
     func removeModel(){
 #if targetEnvironment(simulator)
         arViewCoordinator.modelState = .HAS_SELECTION

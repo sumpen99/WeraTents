@@ -71,12 +71,12 @@ struct AnimatedTypingText:View {
  
     var body: some View {
         Text(text)
-        .animation(.interpolatingSpring(stiffness: 350, damping: 90, initialVelocity: 10))
+        //.animation(.interpolatingSpring(stiffness: 350, damping: 90, initialVelocity: 10))
         .font(font)
         .foregroundStyle(foreground)
-        .onChange(of: animation){
+        /*.onChange(of: animation){
             animateText()
-        }
+        }*/
     }
 
         func animateText() {
