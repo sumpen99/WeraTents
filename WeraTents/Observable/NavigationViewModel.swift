@@ -6,20 +6,30 @@
 //
 
 import SwiftUI
-
+/*
 enum MainTabItem{
     case HOME
     case AR
     case PROFILE
 }
+*/
+enum ModelRoute: Identifiable{
+    case ROUTE_AR
+    case ROUTE_CAPTURED_IMAGES
+    
+    var id: Int {
+        hashValue
+    }
+    
+}
 
 class NavigationViewModel: ObservableObject{
-    @Published var selectedTab:MainTabItem = .HOME
+    //@Published var selectedTab:MainTabItem = .HOME
     @Published var pathTo:NavigationPath = NavigationPath()
     
     var notEmptyPath:Bool{ pathTo.count > 0 }
     
-    func navTo(_ tab:MainTabItem){
+    /*func navTo(_ tab:MainTabItem){
         if(isActive(tab)){NavigationUtil.popToRootView()}
         else{nav(tab)}
     }
@@ -33,7 +43,7 @@ class NavigationViewModel: ObservableObject{
     
     func isActive(_ tab:MainTabItem) -> Bool{
         return selectedTab == tab
-    }
+    }*/
     
     func switchPathToRoute<T:Hashable>(_ route:T){
         clearPath()

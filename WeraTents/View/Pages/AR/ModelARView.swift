@@ -10,6 +10,7 @@ import SwiftUI
 struct ModelARView: View {
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
+    @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var showCarousel:Bool = false
     @State var capturedImageCount:Int = 0
     @State var flashScreen:Bool = false
@@ -18,14 +19,7 @@ struct ModelARView: View {
     }
             
     var body: some View{
-        ZStack{
-        Color.black
-#if targetEnvironment(simulator)
-        loadingARKitText
-#else
-        arContent
-#endif
-       }
+        mainContent
         .ignoresSafeArea()
         .safeAreaInset(edge: .bottom){
             bottomButtons
@@ -49,7 +43,17 @@ struct ModelARView: View {
 
 //MARK: - MAIN CONTENT
 extension ModelARView{
-    @ViewBuilder
+    var mainContent:some View{
+        ZStack{
+        Color.black
+#if targetEnvironment(simulator)
+        loadingARKitText
+#else
+        arContent
+#endif
+       }
+    }
+    
      var arContent:some View{
          ZStack{
              ARViewContainer(arViewCoordinator: arViewCoordinator)
@@ -70,7 +74,7 @@ extension ModelARView{
             Color.white
         }
         .task{
-            DispatchQueue.main.asyncAfter(deadline: .now()+0.1){
+            DispatchQueue.main.asyncAfter(deadline: .now()+0.05){
                 flashScreen = false
             }
         }
@@ -97,111 +101,14 @@ extension ModelARView{
     }
 }
 
-//MARK SAVE TO COREDATA
+//MARK: - BOTTOMBAR
 extension ModelARView{
-    func captureImage(){
-        withAnimation{
-            capturedImageCount += 1
-            flashScreen = true
-        }
-        let managedObjectContext = PersistenceController.shared.container.viewContext
-        let model = ScreenshotModel(context:managedObjectContext)
-        model.build()
-        /*if docContent.data != nil{
-            let image = TubeImage(context:managedObjectContext)
-            image.id = model.id
-            image.data = docContent.data
-            model.image = image
-        }*/
-        do{
-            try PersistenceController.saveContext()
-            debugLog(object: "Screenshot saved")
-        }
-        catch{
-            debugLog(object: "Screenshot not saved")
-        }
-        
-    }
-}
-
-//MARK: - FUNCTIONS
-extension ModelARView{
-    func releaseMemory(){
-        arViewCoordinator.kill()
-     }
-     
-    func removeModel(){
-#if targetEnvironment(simulator)
-        arViewCoordinator.modelState = .HAS_SELECTION
-#else
-        arViewCoordinator.action(.REMOVE_3D_MODEL)
-#endif
-    }
-    
-    func placeModel(){
-#if targetEnvironment(simulator)
-        arViewCoordinator.modelState = .HAS_MODEL
-#else
-        arViewCoordinator.action(.PLACE_3D_MODEL)
-#endif
-    }
-    
-    func onSelectedItem(tent:TentItem) ->Void{
-#if targetEnvironment(simulator)
-        arViewCoordinator.modelState = arViewCoordinator.selectedTent == nil ? .HAS_SELECTION : arViewCoordinator.modelState
-        arViewCoordinator.selectedTent = tent
-#else
-        arViewCoordinator.newSelectedTent(tent)
-#endif
-    }
-}
-
-//MARK: - BUTTONS
-extension ModelARView{
-    
-    var navigateBackButton:some View{
-        BackButton(color:.black,action:releaseMemory)
-        .hLeading()
-    }
-    
-    var badge:some View{
-        ZStack{
-            Circle().fill(Color.white)
-            Text("\(capturedImageCount)")
-            .foregroundStyle(Color.black)
-            .bold()
-         }
-        .frame(width: 25.0,height: 25.0)
-        .hTrailing()
-        .vTop()
-        .offset(x:5,y:-11)
-    }
-    
-    var navigateToCapturedImagesButton:some View{
-        Button(action: { } , label: {
-            ZStack{
-                Image(systemName: "photo.on.rectangle.angled")
-                .font(.largeTitle)
-                .imageScale(.medium)
-                .bold()
-                .foregroundStyle(Color.white)
-            }
-            .background{
-                if capturedImageCount != 0{
-                    badge
-                }
-            }
-        })
-        .hTrailing()
-        .symbolEffect(.bounce.down, value: capturedImageCount)
-     }
-    
     var captureImageButton:some View{
         Button(action: captureImage, label: {
             roundedImage("camera.metering.center.weighted.average",font:.largeTitle,
                          scale:.large,
                          radius: 70.0,
-                         foreground: Color.darkGreen,
+                         foreground: Color.lightBlue,
                          background: Color.white)
         })
     }
@@ -215,7 +122,7 @@ extension ModelARView{
             roundedImage("plus",font:.largeTitle,
                          scale:.large,
                          radius: 70.0,
-                         foreground: Color.darkGreen)
+                         foreground: Color.lightBlue)
         })
     }
     
@@ -245,12 +152,11 @@ extension ModelARView{
                          font:.title,
                          scale:.medium,
                          radius: 60.0,
-                         foreground: Color.darkGreen)
+                         foreground: Color.lightBlue)
         })
         .frame(alignment: .trailing)
     }
     
-    @ViewBuilder
     func centerButton() -> some View{
         ZStack{
             if arViewCoordinator.activeAddButton{
@@ -284,12 +190,95 @@ extension ModelARView{
         interactButtons
         .padding([.leading,.trailing])
     }
+}
+
+//MARK: - TOPBAR
+extension ModelARView{
+     
+    var navigateToCapturedImagesButton:some View{
+        Button(action: navigateToCapturedImages , label: {
+            buttonImage("photo.on.rectangle.angled",font: .largeTitle,foreground: Color.white)
+            .background{
+                Badge(count: $capturedImageCount)
+            }
+        })
+        .hTrailing()
+        .symbolEffect(.bounce.down, value: capturedImageCount)
+     }
     
     var topButtons:some View{
         HStack{
-            BackButton(imgLabel: "xmark",color: .white,action: releaseMemory).hLeading()
+            BackButtonAction(action: navigateBack)
             navigateToCapturedImagesButton
         }
         .padding()
+    }
+}
+
+//MARK: - FUNCTIONS
+extension ModelARView{
+    
+    func navigateToCapturedImages(){
+        arViewCoordinator.kill()
+        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_CAPTURED_IMAGES)
+    }
+    
+    func navigateBack(){
+        releaseMemory()
+        navigationViewModel.popPath()
+    }
+    
+    func releaseMemory(){
+        arViewCoordinator.kill()
+     }
+     
+    func removeModel(){
+#if targetEnvironment(simulator)
+        arViewCoordinator.modelState = .HAS_SELECTION
+#else
+        arViewCoordinator.action(.REMOVE_3D_MODEL)
+#endif
+    }
+    
+    func placeModel(){
+#if targetEnvironment(simulator)
+        arViewCoordinator.modelState = .HAS_MODEL
+#else
+        arViewCoordinator.action(.PLACE_3D_MODEL)
+#endif
+    }
+    
+    func onSelectedItem(tent:TentItem) ->Void{
+#if targetEnvironment(simulator)
+        arViewCoordinator.modelState = arViewCoordinator.selectedTent == nil ? .HAS_SELECTION : arViewCoordinator.modelState
+        arViewCoordinator.selectedTent = tent
+#else
+        arViewCoordinator.newSelectedTent(tent)
+#endif
+    }
+    
+    func captureImage(){
+        flashScreen = true
+        let managedObjectContext = PersistenceController.shared.container.viewContext
+        arViewCoordinator.captureSnapshot(){ data in
+            if let data = data{
+                let model = ScreenshotModel(context:managedObjectContext)
+                model.build()
+                let image = ScreenshotImage(context:managedObjectContext)
+                image.id = model.id
+                image.data = data
+                model.image = image
+                do{
+                    try PersistenceController.saveContext()
+                    debugLog(object: "Screenshot saved")
+                }
+                catch{
+                    debugLog(object: "Screenshot not saved")
+                }
+            }
+            else{
+                debugLog(object: "No sir, No Image For You")
+            }
+        }
     }
 }

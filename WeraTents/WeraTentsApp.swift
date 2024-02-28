@@ -22,7 +22,7 @@ struct WeraTentsApp: App {
                 }
             }
             .environmentObject(launchScreenViewModel)
-            .preferredWindowColor(Color.clear)
+            .preferredWindowColor(Color.black)
             .onChange(of: phase,initial: true) { newPhase,initial in
                 try? persistenceController.saveContext()
                 /*switch newPhase {

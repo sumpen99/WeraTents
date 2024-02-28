@@ -19,7 +19,6 @@ enum Actions {
     case PLACE_3D_MODEL
     case REMOVE_3D_MODEL
     case KILL_SESSION
-    case TAKE_SNAP_SHOT
 }
 
 enum ModelState{
@@ -117,18 +116,33 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
                 }
                 self.setFocusState()
             }
-        case .TAKE_SNAP_SHOT:
-            self.arView?.snapshot(saveToHDR: false) { (image) in
-                if let image = image,
-                   let pngImage = image.pngData(),
-                   let compressedImage = UIImage(data: pngImage){
-                    UIImageWriteToSavedPhotosAlbum(compressedImage, nil, nil, nil)
-                }
-            }
-            break
-        case .KILL_SESSION:
+       case .KILL_SESSION:
             self.arView?.kill()
        }
+    }
+    
+    /*
+    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
+        self.arView?.snapshot(saveToHDR: false) { (image) in
+            if let image = image,
+               let pngImage = image.pngData(),
+               let compressedImage = UIImage(data: pngImage){
+                callback?(compressedImage)
+                return
+            }
+        }
+        callback?(nil)
+    }*/
+    
+    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
+        self.arView?.snapshot(saveToHDR: false) { (image) in
+            if let image = image,
+               let data = image.jpegData(compressionQuality: 1) ?? image.pngData(){
+                callback?(data)
+                return
+            }
+        }
+        callback?(nil)
     }
     
     func newSelectedTent(_ item:TentItem){
