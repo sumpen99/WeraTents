@@ -39,17 +39,19 @@ struct Carousel<T:CarouselItem>:View {
             setActiveIndex(ind.closest)
         }
         .onEnded { value in
-            let inc = value.predictedEndTranslation.width/value.translation.width
+            ind.draggingItem = ind.closest
+            ind.snappedItem = ind.draggingItem
+            /*let inc = value.predictedEndTranslation.width/value.translation.width
             if value.predictedEndTranslation.width >= 0{
                 spinCarousel(current: value.translation.width,inc:inc,iterations: 0){ (current,iterations) in
-                    (current >= value.predictedEndTranslation.width)||iterations>200
+                    (current >= value.predictedEndTranslation.width)||iterations>50
                 }
             }
             else{
                  spinCarousel(current: value.translation.width, inc: -inc,iterations: 0){ (current,iterations) in
-                    (current <= value.predictedEndTranslation.width)||iterations>200
+                    (current <= value.predictedEndTranslation.width)||iterations>50
                 }
-            }
+            }*/
     
         }
     }
@@ -67,12 +69,9 @@ struct Carousel<T:CarouselItem>:View {
     var carouselTapGesture: some Gesture {
         TapGesture()
         .onEnded{
-            withAnimation(.linear(duration: 0.25)){
-                if userHasSelected{ self.ind.selectedItem = nil }
-                else{
-                    self.ind.selectedItem = data[ind.activeIndex]
-                }
-                
+            withAnimation{
+                onSelected?(data[ind.activeIndex])
+                isOpen.toggle()
             }
         }
     }
@@ -109,7 +108,7 @@ struct Carousel<T:CarouselItem>:View {
 extension Carousel{
     var background:some View{
         ZStack{
-            Color.lightGreen.opacity(0.7)
+            Color.white.opacity(0.1)
         }
         .ignoresSafeArea()
         .hCenter()
@@ -152,7 +151,7 @@ extension Carousel{
             .resizable()
             .padding()
        }
-        .simultaneousGesture(tapIsActive(item.id) ? carouselLongTapGeasture.simultaneously(with: carouselTapGesture) : nil)
+        .simultaneousGesture(tapIsActive(item.id) ? carouselTapGesture : nil)
         .frame(width: size, height: size)
         .scaleEffect(1.0 - abs(distance(item.id)) * 0.2 )
         .opacity(1.0 - abs(distance(item.id)) * 0.3 )

@@ -19,6 +19,10 @@ struct TentItem:CarouselItem{
 class FirestoreViewModel:ObservableObject{
     @Published var tents:[TentItem] = []
     
+}
+
+//MARK: - CONNECTION
+extension FirestoreViewModel{
     func loadImageAssets(){
         let imageNames = ServiceManager.readAssetsFromBundle("Tent.bundle")
         ServiceManager.loadImagesFromBundle("Tent", imageNames: imageNames){ [weak self ] (opResult,tentItems) in

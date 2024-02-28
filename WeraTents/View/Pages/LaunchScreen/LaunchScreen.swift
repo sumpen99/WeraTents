@@ -15,21 +15,7 @@ struct LaunchScreen:View {
     @State var labeltext = "©Weratents"
     
     @ViewBuilder
-    var image:some View{
-        Image("weratent-logo")
-        .rotationEffect(firstAnimation ? Angle(degrees: 900) : Angle(degrees: 1800))
-        .scaleEffect(secondAnimation ? 0 : 1)
-        .offset(y: secondAnimation ? 400 : 0)
-        .hCenter()
-        .vCenter()
-        
-    }
-    
-    @ViewBuilder
     var label:some View{
-        /*AnimatedColorText(text:"©Weratents",
-                          font: .largeTitle,
-                          foreground: Color.white)*/
         AnimatedTypingText(text: $labeltext,
                            animation: $firstAnimation,
                            font: .largeTitle,
@@ -38,8 +24,10 @@ struct LaunchScreen:View {
     }
     
     @ViewBuilder
-    var backgroundColor:some View{
-        Color.darkGreen.ignoresSafeArea()
+    var background:some View{
+        Image("background")
+        .resizable()
+        .ignoresSafeArea()
     }
     
     let animationTimer = Timer
@@ -49,9 +37,8 @@ struct LaunchScreen:View {
     
     var body: some View {
         ZStack {
-            backgroundColor
-            image
-            label
+            background
+           label
         }.onReceive(animationTimer) { timerValue in
             updateAnimation()
         }.opacity(startFadeoutAnimation ? 0 : 1)

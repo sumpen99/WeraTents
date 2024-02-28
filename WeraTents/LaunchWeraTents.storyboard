@@ -3,7 +3,6 @@
     <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22504"/>
-        <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -16,13 +15,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="weratent-logo" adjustsImageSizeForAccessibilityContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="emG-rA-Ak7">
-                                <rect key="frame" x="0.0" y="348" width="393" height="181"/>
-                                <accessibility key="accessibilityConfiguration">
-                                    <accessibilityTraits key="traits" image="YES" notEnabled="YES"/>
-                                </accessibility>
-                                <rect key="contentStretch" x="0.0" y="0.0" width="0.0" height="0.0"/>
-                                <preferredSymbolConfiguration key="preferredSymbolConfiguration" scale="default"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="background" translatesAutoresizingMaskIntoConstraints="NO" id="mjY-xv-wed">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="©Weratents" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NtQ-5P-Yvp">
                                 <rect key="frame" x="0.0" y="777.33333333333337" width="393" height="40.666666666666629"/>
@@ -32,14 +26,14 @@
                             </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="vDu-zF-Fre"/>
-                        <color key="backgroundColor" name="launch-color"/>
                         <constraints>
-                            <constraint firstItem="emG-rA-Ak7" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" id="6Fz-Dp-l0d"/>
                             <constraint firstItem="NtQ-5P-Yvp" firstAttribute="trailing" secondItem="vDu-zF-Fre" secondAttribute="trailing" id="75h-eD-xvy"/>
                             <constraint firstItem="NtQ-5P-Yvp" firstAttribute="leading" secondItem="vDu-zF-Fre" secondAttribute="leading" id="HB8-GR-7w7"/>
-                            <constraint firstItem="emG-rA-Ak7" firstAttribute="centerY" secondItem="vDu-zF-Fre" secondAttribute="centerY" id="IyA-QK-Es5"/>
+                            <constraint firstItem="mjY-xv-wed" firstAttribute="bottom" secondItem="5EZ-qb-Rvc" secondAttribute="bottom" id="WaT-tW-9tr"/>
                             <constraint firstItem="NtQ-5P-Yvp" firstAttribute="bottom" secondItem="vDu-zF-Fre" secondAttribute="bottom" id="fsT-GG-e6R"/>
-                            <constraint firstItem="emG-rA-Ak7" firstAttribute="trailing" secondItem="vDu-zF-Fre" secondAttribute="trailing" id="rVW-Ox-rzg"/>
+                            <constraint firstItem="mjY-xv-wed" firstAttribute="top" secondItem="5EZ-qb-Rvc" secondAttribute="top" id="mhn-5Q-E28"/>
+                            <constraint firstItem="mjY-xv-wed" firstAttribute="leading" secondItem="5EZ-qb-Rvc" secondAttribute="leading" id="qYi-V7-2UZ"/>
+                            <constraint firstItem="mjY-xv-wed" firstAttribute="trailing" secondItem="vDu-zF-Fre" secondAttribute="trailing" id="yzv-Er-R9j"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -49,9 +43,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="weratent-logo" width="200" height="181"/>
-        <namedColor name="launch-color">
-            <color red="0.35686274509803922" green="0.49019607843137253" blue="0.36862745098039218" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </namedColor>
+        <image name="background" width="800" height="533"/>
     </resources>
 </document>

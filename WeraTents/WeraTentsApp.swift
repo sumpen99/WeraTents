@@ -12,6 +12,7 @@ struct WeraTentsApp: App {
     @StateObject var launchScreenViewModel = LaunchScreenViewModel()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Environment(\.scenePhase) private var phase
+    let persistenceController = PersistenceController.shared
     var body: some Scene {
         StyledWindowGroup {
             ZStack{
@@ -21,9 +22,10 @@ struct WeraTentsApp: App {
                 }
             }
             .environmentObject(launchScreenViewModel)
-            .preferredWindowColor(.lightGreen)
-            /*.onChange(of: phase,initial: true) { newPhase,initial in
-                switch newPhase {
+            .preferredWindowColor(Color.black)
+            .onChange(of: phase,initial: true) { newPhase,initial in
+                try? persistenceController.saveContext()
+                /*switch newPhase {
                 case .active:
                     debugLog(object:phase)
                 case .inactive:
@@ -32,8 +34,8 @@ struct WeraTentsApp: App {
                     debugLog(object:phase)
                 @unknown default:
                     debugLog(object:"Unknown Future Options")
-              }
-            }*/
+              }*/
+            }
         }
     }
 }

@@ -19,13 +19,12 @@ enum Actions {
     case PLACE_3D_MODEL
     case REMOVE_3D_MODEL
     case KILL_SESSION
-   
 }
 
-enum LoadState{
-    case INITIAL
-    case LOADING
-    case DONE
+enum ModelState{
+    case HAS_EMPTY
+    case HAS_SELECTION
+    case HAS_MODEL
 }
 
 //MARK: -- ARVIEWCONTAINER
@@ -57,7 +56,8 @@ struct ARViewContainer: UIViewRepresentable {
 class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     weak var arView: ARView?
     var focusEntity: FocusEntity?
-    @Published var state:LoadState = .INITIAL
+    @Published var modelState:ModelState = .HAS_EMPTY
+    @Published var selectedTent:TentItem?
     func session(_ session: ARSession, didUpdate frame: ARFrame){
         //debugLog(object: "Session did UPDATE FRAME ")
     }
@@ -76,6 +76,7 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         self.focusEntity = FocusEntity(on: arView, style: .classic())
         self.arView?.runConfiguration()
         self.arView?.session.delegate = self
+        setFocusState()
     }
     
     func kill() {
@@ -89,16 +90,83 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         self.arView?.pause()
     }
     
+    func setFocusState(){
+        switch self.modelState {
+        case .HAS_EMPTY:
+            self.focusEntity?.isEnabled = false
+        case .HAS_SELECTION:
+            self.focusEntity?.isEnabled = true
+        case .HAS_MODEL:
+            self.focusEntity?.isEnabled = false
+        }
+    }
+    
     func action(_ action:Actions){
         guard let focusEntity = self.focusEntity else { return }
         switch action {
         case .PLACE_3D_MODEL:
-            self.arView?.loadEntityAsync(focusEntity.position)
+            self.arView?.loadEntityAsync(focusEntity.position){ success in
+                self.modelState = success ? .HAS_MODEL : .HAS_SELECTION
+                self.setFocusState()
+            }
         case .REMOVE_3D_MODEL:
-            self.arView?.removeModel()
-        case .KILL_SESSION:
+            self.arView?.removeModel(){ result in
+                if result{
+                    self.modelState = .HAS_SELECTION
+                }
+                self.setFocusState()
+            }
+       case .KILL_SESSION:
             self.arView?.kill()
        }
+    }
+    
+    /*
+    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
+        self.arView?.snapshot(saveToHDR: false) { (image) in
+            if let image = image,
+               let pngImage = image.pngData(),
+               let compressedImage = UIImage(data: pngImage){
+                callback?(compressedImage)
+                return
+            }
+        }
+        callback?(nil)
+    }*/
+    
+    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
+        self.arView?.snapshot(saveToHDR: false) { (image) in
+            if let image = image,
+               let data = image.jpegData(compressionQuality: 1) ?? image.pngData(){
+                callback?(data)
+                return
+            }
+        }
+        callback?(nil)
+    }
+    
+    func newSelectedTent(_ item:TentItem){
+        self.modelState = selectedTent == nil ? .HAS_SELECTION : self.modelState
+        selectedTent = item
+        self.setFocusState()
+   }
+    
+    func removeSelectedTent(){
+        selectedTent = nil
+        self.modelState = .HAS_SELECTION
+        setFocusState()
+    }
+    
+    var activeRemoveButton:Bool{
+        selectedTent != nil && modelState == .HAS_MODEL
+    }
+    
+    var activeAddButton:Bool{
+        selectedTent != nil && modelState == .HAS_SELECTION
+    }
+    
+    var activeCaptureButton:Bool{
+        modelState == .HAS_MODEL
     }
     
 }
@@ -118,20 +186,31 @@ extension ARView{
 
 //MARK: -- LOAD MODEL FROM APP
 extension ARView{
-    func loadEntityAsync(_ position:SIMD3<Float>) {
+    func loadEntityAsync(_ position:SIMD3<Float>,onResult:((Bool) ->Void)? = nil) {
         let usdzPath = "Assets/tent-2-man-tent.usdz"
         var cancellable: AnyCancellable? = nil
         cancellable = ModelEntity.loadModelAsync(named: usdzPath)
         .sink(receiveCompletion: { error in
             debugLog(object:"Error while reading usdz file: \(error)")
           cancellable?.cancel()
+            onResult?(false)
         }, receiveValue: { modelEntity in
             self.placeModel(modelEntity: modelEntity, position: position)
           cancellable?.cancel()
+            onResult?(true)
         })
     }
     
     func placeModel(modelEntity:ModelEntity,position: SIMD3<Float>){
+        var smpl = SimpleMaterial()
+        smpl.color.tint = .blue
+        smpl.metallic = 0.7
+        smpl.roughness = 0.2
+                
+        var pbr = PhysicallyBasedMaterial()
+        pbr.baseColor.tint = .green
+        
+        modelEntity.model?.materials = [smpl,pbr]
         let anchorEntity = MyEntity()
         anchorEntity.position = position
         anchorEntity.name = "tentAnchor"
@@ -139,18 +218,22 @@ extension ARView{
         anchorEntity.generateCollisionShapes(recursive: true)
         self.installGestures([.rotation,.translation],for: anchorEntity)
         self.scene.addAnchor(anchorEntity)
+    
     }
 }
 
 //MARK: -- RELEASE RESOURCES
 extension ARView{
     
-    func removeModel(){
+    func removeModel(onResult:((Bool) ->Void)? = nil){
         if let anchorEntity = self.scene.findEntity(named: "tentAnchor"),
            let modelEntity = anchorEntity.children.first{
             modelEntity.removeFromParent()
             anchorEntity.removeFromParent()
+            onResult?(true)
+            return
         }
+        onResult?(false)
     }
     
     func kill() {
