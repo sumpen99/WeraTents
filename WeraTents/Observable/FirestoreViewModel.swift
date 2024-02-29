@@ -7,14 +7,7 @@
 
 import SwiftUI
 
-struct TentItem:CarouselItem{
-    var id:Int
-    var identifier: String
-    var title:String
-    var img:Image
-    
-    
-}
+
 
 class FirestoreViewModel:ObservableObject{
     @Published var tents:[TentItem] = []

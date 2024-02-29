@@ -36,4 +36,13 @@ class AppDelegate: UIResponder,UIApplicationDelegate{
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
     
+    func applicationWillTerminate(_ application: UIApplication){
+        PersistenceController.deleteAllDataFromEntity("ScreenshotModel")
+        debugLog(object: "free up core data")
+    }
+    
+    func applicationDidReceiveMemoryWarning(_ application: UIApplication){
+        debugLog(object: "Oops I Daisy. Memory is an issue")
+    }
+    
 }

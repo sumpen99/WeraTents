@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LaunchScreen:View {
-    @EnvironmentObject var launchScreenViewModel:LaunchScreenViewModel
+    @EnvironmentObject var appStateViewModel:AppStateViewModel
     @State var firstAnimation:Bool = false
     @State var secondAnimation:Bool = false
     @State var startFadeoutAnimation:Bool = false
@@ -45,7 +45,7 @@ struct LaunchScreen:View {
     }
     
     func updateAnimation() {
-            switch launchScreenViewModel.state {
+        switch appStateViewModel.launchState {
             case .START:
                 withAnimation(.easeInOut(duration: 0.9)) {
                     firstAnimation.toggle()

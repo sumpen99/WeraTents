@@ -7,12 +7,6 @@
 
 import SwiftUI
 
-protocol CarouselItem:Identifiable{
-    var id:Int { get }
-    var img:Image { get }
-    var title:String { get }
-}
-
 struct CarouselIndicators<T:CarouselItem>{
     var snappedItem = 0.0
     var draggingItem = 0.0
@@ -27,7 +21,7 @@ struct Carousel<T:CarouselItem>:View {
     @Binding var data:[T]
     let size:CGFloat
     let edge:Edge
-    var onSelected:((T) -> Void)? = nil
+    var onSelected:((TentMeta) -> Void)? = nil
     @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
     
     // MARK: - GESTURES
@@ -55,7 +49,7 @@ struct Carousel<T:CarouselItem>:View {
     
         }
     }
-    
+    /*
     var carouselLongTapGeasture:some Gesture{
         LongPressGesture()
             .onEnded(){ value in
@@ -64,13 +58,15 @@ struct Carousel<T:CarouselItem>:View {
                     isOpen.toggle()
                 }
             }
-    }
+    }*/
      
     var carouselTapGesture: some Gesture {
         TapGesture()
         .onEnded{
             withAnimation{
-                onSelected?(data[ind.activeIndex])
+                let tent = data[ind.activeIndex]
+                let meta = TentMeta(title: tent.title)
+                onSelected?(meta)
                 isOpen.toggle()
             }
         }

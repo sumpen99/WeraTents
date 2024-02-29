@@ -45,15 +45,14 @@ final class PersistenceController {
         
     }
     
-    static func deleteAllData(){
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName:"ScreenshotModel")
+    static func deleteAllDataFromEntity(_ name:String){
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName:name)
         let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         do {
             try shared.container.viewContext.execute(batchDeleteRequest)
         } catch {
             debugLog(object: error.localizedDescription)
         }
-        saveChanges()
     }
     
     static func deleteScreenshotModel(_ meta: ScreenshotModel?){
