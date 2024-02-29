@@ -7,11 +7,22 @@
 
 import SwiftUI
 
-struct Badge:View {
+struct Badge: ViewModifier {
     @Binding var count:Int
     
     @ViewBuilder
-    var body: some View {
+    func body(content: Content) -> some View {
+        ZStack {
+            content
+            .background{
+                if count > 0{
+                    badgeView
+                }
+            }
+        }
+     }
+     
+    var badgeView: some View {
         ZStack{
             Circle().fill(Color.white)
             Text("\(count)")
@@ -22,7 +33,6 @@ struct Badge:View {
         .hTrailing()
         .vTop()
         .offset(x:5,y:-11)
-        .opacity(count == 0 ? 0 : 1)
-        .transition(.move(edge: .top))
+        .animation(.bouncy, value: count)
     }
 }

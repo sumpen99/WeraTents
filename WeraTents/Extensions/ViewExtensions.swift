@@ -35,7 +35,28 @@ extension View{
     func vCenter() -> some View{
         self.frame(maxHeight: .infinity,alignment: .center)
     }
-       
+    
+    func toast(isShowing: Binding<Bool>) -> some View {
+        self.modifier(Toast(isShowing: isShowing))
+    }
+    
+    func badge(count: Binding<Int>) -> some View {
+        self.modifier(Badge(count: count))
+    }
+    
+    func checkmarkCircle() -> some View{
+        Image(systemName: "checkmark.circle.fill")
+        .resizable()
+        .background{
+            Circle().fill(Color.black).frame(width: 26, height: 26)
+        }
+        .foregroundStyle(Color.white)
+        .frame(width: 24, height: 24)
+        .font(.system(size: 20, weight: .bold, design: .default))
+        .hLeading()
+        .vBottom()
+        .padding([.leading,.bottom])
+    }
 }
 
 

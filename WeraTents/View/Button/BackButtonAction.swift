@@ -14,7 +14,7 @@ struct BackButtonAction:View{
     
     var body: some View{
         Button(action:{ action?() }){
-            buttonImage(imgLabel, font: .largeTitle, foreground: color)
+            buttonImage(imgLabel, font: TOP_BAR_FONT, foreground: color)
         }
         .hLeading()
     }
