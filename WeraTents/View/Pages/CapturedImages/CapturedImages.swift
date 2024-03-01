@@ -12,23 +12,20 @@ enum LibraryState{
     case EDIT
 }
 
-enum TentLabel:String,CaseIterable{
-    case ALL = "ALLA"
-    
-}
 
 struct LibraryHelper{
     var state:LibraryState = .BASE
     var deleteModelsId:[String] = []
+    var labelHeaderList:[String] = []
     var selectedScreenShotModel:ScreenshotModel? = nil
-    var labelHeader:String? = TentLabel.ALL.rawValue
-    
-    var labelHeaderList:[String] = [
-        TentLabel.ALL.rawValue
-    ]
-    
-    var emptyList:Bool{
+    var labelHeader:String?
+        
+    var emptyDeleteList:Bool{
         deleteModelsId.count == 0
+    }
+    
+    var emptyLabelsList:Bool{
+        labelHeaderList.count == 0
     }
     
     var listCount:Int{
@@ -43,12 +40,14 @@ struct LibraryHelper{
         return false
     }
     
-    mutating func addLabelToList(_ label:String?){
-        if let label = label{
-            if labelHeaderList.contains(where: { $0 == label }){ return }
-            labelHeaderList.append(label)
+    mutating func updateState(){
+        withAnimation{
+            state = emptyLabelsList ? .BASE : state
         }
-        
+    }
+    
+    mutating func updateLabelsList(_ labels:[String]){
+        labelHeaderList = labels
     }
     
     mutating func toggleListId(_ id:String?){
@@ -71,11 +70,20 @@ struct LibraryHelper{
         deleteModelsId.removeAll()
     }
     
+    mutating func clearListOfLabels(){
+        labelHeaderList.removeAll()
+    }
+    
     mutating func clearSelectedItem(){
         withAnimation{
             selectedScreenShotModel = nil
             
         }
+    }
+    
+    mutating func clearAllData(){
+        labelHeaderList.removeAll()
+        deleteModelsId.removeAll()
     }
 }
 
@@ -128,21 +136,20 @@ extension CapturedImages{
     var itemsLoadedPage:some View{
         savedScreenshotList
         .padding([.leading,.trailing])
-        .onAppear{
+        .task{
             coreDataViewModel.setChildViewDimension(CHILD_VIEW_HEIGHT)
             coreDataViewModel.requestInitialSetOfItems()
+            setCurrentLabels()
         }
         .onDisappear{
             coreDataViewModel.clearAllData()
+            library.clearAllData()
         }
     }
     
     var savedScreenshotList:some View{
         ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
             screenShotCard(screenShot as? ScreenshotModel)
-            .onAppear{
-                library.addLabelToList((screenShot as? ScreenshotModel)?.name)
-            }
             .onTapGesture {
                 withAnimation{
                     if let screenShotModel = screenShot as? ScreenshotModel,
@@ -305,6 +312,15 @@ extension CapturedImages{
 //MARK: - BUTTONS
 extension CapturedImages{
      
+    
+    var libraryLabel:some View{
+        Text("Bibliotek")
+        .foregroundStyle(Color.white)
+        .font(.headline)
+        .bold()
+        .hCenter()
+     }
+    
     var editButton:some View{
         Button(action: {
             withAnimation{
@@ -317,6 +333,8 @@ extension CapturedImages{
             .bold()
             .hTrailing()
         }
+        .opacity(library.emptyLabelsList ? 0 : 1)
+        .disabled(library.emptyLabelsList)
     }
     
     var cancelButton:some View{
@@ -351,7 +369,7 @@ extension CapturedImages{
             .bold()
             .hLeading()
         }
-        .disabled(library.emptyList)
+        .disabled(library.emptyDeleteList)
     }
     
     
@@ -359,6 +377,7 @@ extension CapturedImages{
         VStack{
             HStack{
                 BackButtonAction(action: navigateBack)
+                libraryLabel
                 editButton
             }
             settingsItemMenuList
@@ -389,7 +408,7 @@ extension CapturedImages{
                 removeButton
             }
             .padding([.leading,.top])
-            .opacity(library.emptyList ? 0.5 : 1.0)
+            .opacity(library.emptyDeleteList ? 0.5 : 1.0)
             
         }
         .padding(.top)
@@ -414,6 +433,9 @@ extension CapturedImages{
     
     var topButtons:some View{
         currentTopBarButtons()
+        .animation(.linear(duration: 0.5),value: library.state)
+        .transition(.opacity.combined(with: .scale))
+        .matchedGeometryEffect(id: "CURRENTTOPMENY", in: animation)
         .padding()
     }
 }
@@ -430,7 +452,7 @@ extension CapturedImages{
             library.deleteModelsId.append(contentsOf: items)
         }
     }
-    
+     
     func deleteSelectedItems(){
         DispatchQueue.global().async {
             for modelId in library.deleteModelsId{
@@ -446,7 +468,16 @@ extension CapturedImages{
     func resetListOfSavedTubes(){
         DispatchQueue.main.async{
             library.clearListOfIds()
+            library.clearListOfLabels()
             coreDataViewModel.requestInitialSetOfItems()
+            setCurrentLabels()
+        }
+    }
+    
+    func setCurrentLabels(){
+        coreDataViewModel.requestAllUniqueLabels(){ labels in
+            library.updateLabelsList(labels)
+            library.updateState()
         }
     }
      
