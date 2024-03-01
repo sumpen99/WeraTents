@@ -40,9 +40,13 @@ extension HomeView{
     }
     
     var background:some View{
-        Image("background")
-        .resizable()
-        .ignoresSafeArea()
+        ZStack{
+            Color.black
+            Image("weratent-logo-horn")
+                .resizable()
+                .frame(width:100,height:100)
+         }
+         .ignoresSafeArea()
     }
     
     var content:some View{
@@ -67,9 +71,9 @@ extension HomeView{
                 Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
             }.hLeading()
             
-           Image("weratent-logo")
+           Image("weratent-logo-horn")
             .resizable()
-            .frame(width:60,height: 60)
+            .frame(width:80,height: 80)
             
         }
    }

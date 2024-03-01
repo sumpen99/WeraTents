@@ -69,9 +69,11 @@ extension ModelARView{
     }
    
     var loadingARKitText:some View{
-        Text("Pick a tent to place in world")
-            .font(.headline)
-            .foregroundStyle(Color.white)
+        ZStack{
+            ModelSceneView()
+            .ignoresSafeArea()
+        }
+      
     }
     
     var flashView:some View{
