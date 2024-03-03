@@ -9,6 +9,7 @@ import SwiftUI
 
 enum ModelRoute: Identifiable{
     case ROUTE_AR
+    case ROUTE_SELECTED_CARD
     case ROUTE_CAPTURED_IMAGES
     
     var id: Int {

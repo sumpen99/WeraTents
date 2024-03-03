@@ -6,8 +6,13 @@
 //
 
 import SwiftUI
+let PIXEL_TO_ANGLE:Float            = .pi / 180
+let MAX_ZOOM_LEVEL:CGFloat          = 10
+let MIN_ZOOM_LEVEL:CGFloat          = 1
+let ZOOM_SCALE:CGFloat                = 0.05
+let ROTATE_SCALE:Float              = 0.4
 let TOP_BAR_FONT:Font               = .title
-let BULLET = "•\t"
+let BULLET                          = "•\t"
 let MAX_STORAGE_PNG_SIZE:Int64      = 5 * 1024 * 1024
 let MAX_STORAGE_JPEG_SIZE           = 5 * 1024 * 1024
 let MIN_STORAGE_JPEG_SIZE           = 524288

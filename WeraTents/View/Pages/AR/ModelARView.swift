@@ -10,6 +10,7 @@ import SwiftUI
 struct ModelARView: View {
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
+    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var appStateViewModel: AppStateViewModel
     @State var showCarousel:Bool = false
@@ -18,6 +19,7 @@ struct ModelARView: View {
     @State var savingScreenShot:Bool = false
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
+        self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
     }
             
     var body: some View{
@@ -48,30 +50,17 @@ extension ModelARView{
     var mainContent:some View{
         ZStack{
         Color.black
-#if targetEnvironment(simulator)
-        loadingARKitText
-#else
         arContent
-#endif
        }
     }
     
      var arContent:some View{
          ZStack{
              ARViewContainer(arViewCoordinator: arViewCoordinator)
-             if arViewCoordinator.selectedTentMeta == nil {
-                 loadingARKitText
-             }
          }
          .task {
              arViewCoordinator.run()
          }
-    }
-   
-    var loadingARKitText:some View{
-        Text("Pick a tent to place in world")
-            .font(.headline)
-            .foregroundStyle(Color.white)
     }
     
     var flashView:some View{
@@ -216,6 +205,7 @@ extension ModelARView{
             BackButtonAction(action: navigateBack)
             navigateToCapturedImagesButton
         }
+        .hLeading()
         .padding()
     }
 }

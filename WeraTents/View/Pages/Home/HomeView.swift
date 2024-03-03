@@ -13,6 +13,7 @@ struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var showCarousel:Bool = false
+    @State var selectedTent:TentItem?
  
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
@@ -22,6 +23,7 @@ struct HomeView:View {
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
+                case .ROUTE_SELECTED_CARD:      ModelSceneView(selectedTent:selectedTent)
                 }
             }
         }
@@ -40,9 +42,10 @@ extension HomeView{
     }
     
     var background:some View{
-        Image("background")
-        .resizable()
-        .ignoresSafeArea()
+        ZStack{
+            Color.black
+         }
+         .ignoresSafeArea()
     }
     
     var content:some View{
@@ -67,9 +70,9 @@ extension HomeView{
                 Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
             }.hLeading()
             
-           Image("weratent-logo")
+           Image("weratent-logo-horn")
             .resizable()
-            .frame(width:60,height: 60)
+            .frame(width:80,height: 80)
             
         }
    }
@@ -172,19 +175,27 @@ extension HomeView{
                 HomeCarousel(
                          data: $firestoreViewModel.tents,
                          width: reader.size.width*0.75,
-                         edge: .trailing).hCenter()
+                         edge: .trailing,
+                         onSelected:onSelectedTent)
+                .hCenter()
             }
         }
         .frame(height: HOME_CAROUSEL_HEIGHT)
         
     }
+    
+    func onSelectedTent(_ item:TentItem){
+        self.selectedTent = item
+        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_SELECTED_CARD)
+    }
+   
 }
 
 //MARK: -- BOTTOMBAR
 extension HomeView{
     var navModelARButton:some View{
         Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
-            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightBlue)
+            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightGold)
                 .imageScale(.large)
             .padding(15.0)
             .background{
@@ -202,7 +213,7 @@ extension HomeView{
             }
             
         }, label: {
-            buttonImage("video.circle.fill", font: .title, foreground: Color.lightBlue)
+            buttonImage("video.circle.fill", font: .title, foreground: Color.lightGold)
             .padding(10.0)
             .background{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
@@ -218,7 +229,7 @@ extension HomeView{
             }
             
         }, label: {
-            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightBlue)
+            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightGold)
             .padding(10.0)
             .background{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)

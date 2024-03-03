@@ -73,6 +73,11 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     
     func setARView(_ arView: ARView) {
         self.arView = arView
+#if targetEnvironment(simulator)
+        arView.environment.background = .color(.black)
+#else
+        arView.environment.background = .cameraFeed()
+#endif
         self.focusEntity = FocusEntity(on: arView, style: .classic())
         self.arView?.setConfiguration()
         self.arView?.session.delegate = self

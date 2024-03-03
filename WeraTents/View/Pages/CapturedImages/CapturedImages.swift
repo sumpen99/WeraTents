@@ -376,7 +376,7 @@ extension CapturedImages{
     var baseTopBar:some View{
         VStack{
             HStack{
-                BackButtonAction(action: navigateBack)
+                BackButtonAction(action: navigateBack).hLeading()
                 libraryLabel
                 editButton
             }
