@@ -7,6 +7,7 @@
 import SwiftUI
 
 struct HomeCarousel<T:CarouselItem>:View {
+    @EnvironmentObject var navigationViewModel: NavigationViewModel
     @Binding var data:[T]
     let width:CGFloat
     let edge:Edge
@@ -56,7 +57,11 @@ extension HomeCarousel{
                     Text(item.title).font(.headline)
                     .bold()
                     .foregroundStyle(Color.materialDark)
-                    Button(action: { self.ind.selectedItem = data[ind.activeIndex] }, label: {
+                    Button(action: {
+                        //navigationViewModel.appendToPathWith(ModelRoute.ROUTE_SELECTED_CARD)
+                        onSelected?(data[ind.activeIndex])
+                        //self.ind.selectedItem = data[ind.activeIndex]
+                    }, label: {
                         Text("Se mer").bold()
                     })
                     .buttonStyle(.borderedProminent)

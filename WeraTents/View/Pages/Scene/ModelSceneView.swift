@@ -6,36 +6,63 @@
 //
 
 import SwiftUI
-import SceneKit
 
-struct ModelSceneView: UIViewRepresentable {
-    
-    func makeUIView(context: Context) -> SCNView {
-        let scnView = SCNView(frame:.zero)
-        
-        if let url = Bundle.main.url(forResource: "Assets/tent-2-man-tent", withExtension: "usdz") {
-            let scene = try! SCNScene(url: url, options: nil)
-            let lightNode = SCNNode()
-            lightNode.light = SCNLight()
-            lightNode.light?.type = .omni
-            lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-            scene.rootNode.addChildNode(lightNode)
-            scene.rootNode.scale = SCNVector3(0.5, 0.5, 0.5)
-            SCNNode.createBorderOnNode(scene.rootNode)
-            scnView.scene = scene
-            scnView.autoenablesDefaultLighting = true
-            scnView.allowsCameraControl = true
-            //scnView.backgroundColor = UIColor.black
-        }
-        else{
-            debugLog(object: "nepp")
-        }
-        
-        return scnView
+struct ModelSceneView: View {
+    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
+    @EnvironmentObject var navigationViewModel: NavigationViewModel
+    let selectedTent:TentItem?
+    init(selectedTent:TentItem?) {
+        self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
+        self.selectedTent = selectedTent
     }
+            
+    var body: some View{
+        mainContent
+        .ignoresSafeArea()
+        .toolbar(.hidden)
+        .safeAreaInset(edge: .top){
+            topButtons
+        }
+     
+    }
+}
 
-    func updateUIView(_ uiView: SCNView, context: Context){
+
+//MARK: - MAIN CONTENT
+extension ModelSceneView{
+    var mainContent:some View{
+        ZStack{
+        Color.black
+            SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
+       }
     }
     
+}
+
+//MARK: - TOPBAR
+extension ModelSceneView{
+   
+    var selectedTentLabel:some View{
+        Text(selectedTent?.title ?? "No Tent")
+        .foregroundStyle(Color.white)
+        .font(.headline)
+        .bold()
+     }
+    
+    var topButtons:some View{
+        HStack{
+            BackButtonAction(action: navigateBack)
+            selectedTentLabel.hCenter()
+        }
+        .padding()
+    }
+}
+
+//MARK: - FUNCTIONS
+extension ModelSceneView{
+  
+    func navigateBack(){
+        navigationViewModel.popPath()
+    }
     
 }

@@ -22,12 +22,13 @@ class ARTextNode:SCNNode{
           
     convenience init(pos1: SCNVector3,
                      pos2:SCNVector3,
-                     shift:Bool){
+                     shift:Bool,
+                     color:UIColor){
         let distance = SCNVector3.distanceOfLine(v1: pos1, v2: pos2, convert: .DEFAULT)
         let text = String(format: "%.2f cm", distance)
         let textGeometry = SCNText(string: "\(text)\n", extrusionDepth: 1)
         textGeometry.font = UIFont.boldSystemFont(ofSize: 6)
-        textGeometry.firstMaterial?.diffuse.contents = UIColor.black.withAlphaComponent(1.0)
+        textGeometry.firstMaterial?.diffuse.contents = color
         self.init()
         textGeometry.firstMaterial?.lightingModel = .constant
         textGeometry.firstMaterial?.isDoubleSided = true
@@ -98,14 +99,24 @@ class ARTextNode:SCNNode{
 
 //MARK: - SCNNODE
 extension SCNNode {
-    static func createCylinderLine(from: simd_float3, to: simd_float3, radius : CGFloat = 0.25) -> SCNNode{
+    static func createCylinderLine(from: simd_float3, 
+                                   to: simd_float3,
+                                   radius : CGFloat = 0.25,
+                                   color:UIColor) -> SCNNode{
         let vector = to - from
         let height = simd_length(vector)
 
         let cylinder = SCNCylinder(radius: radius, height: CGFloat(height))
-        cylinder.firstMaterial?.diffuse.contents = UIColor.white
-      
-         let lineNode = SCNNode(geometry: cylinder)
+        //cylinder.firstMaterial?.diffuse.contents = color
+        //cylinder.firstMaterial?.isDoubleSided = true
+        let material = SCNMaterial()
+        material.diffuse.contents = color
+        //material.isDoubleSided = true
+        //material.ambient.contents = UIColor.yellow
+        material.lightingModel = .constant
+        cylinder.materials = [material]
+         
+        let lineNode = SCNNode(geometry: cylinder)
 
         let line_axis = simd_float3(0, height/2, 0)
         lineNode.simdPosition = from + line_axis
@@ -135,7 +146,10 @@ extension SCNNode {
         return SCNGeometry(sources: [source], elements: [element])
     }
     
-    static func createBorderOnNode(_ node:SCNNode){
+    static func createBorderOnNode(_ node:SCNNode,
+                                   borderColor:UIColor,
+                                   textColor:UIColor,
+                                   addText:Bool = true){
         let bbox = node.boundingBox
         let min = bbox.min
         let max = bbox.max
@@ -154,20 +168,27 @@ extension SCNNode {
             let shift = i == 3||i == 7
             let p1 = indices[i]
             let p2 = shift ? indices[i-3] : indices[i+1]
-            let lineBase = SCNNode.createCylinderLine(from: p1,to: p2)
-            let textNode = ARTextNode(pos1: SCNVector3(x: p1.x, y: p1.y, z: p1.z),
-                                      pos2: SCNVector3(x: p2.x, y: p2.y, z: p2.z),
-                                      shift: shift)
+            let lineBase = SCNNode.createCylinderLine(from: p1,to: p2,color:borderColor)
             node.addChildNode(lineBase)
-            node.addChildNode(textNode)
+            if addText{
+                let textNode = ARTextNode(pos1: SCNVector3(x: p1.x, y: p1.y, z: p1.z),
+                                          pos2: SCNVector3(x: p2.x, y: p2.y, z: p2.z),
+                                          shift: shift,
+                                          color:textColor)
+                node.addChildNode(textNode)
+            }
             if i < 4 {
                 let p3 = indices[i+4]
-                let lineDiagonal = SCNNode.createCylinderLine(from: p1,to: p3)
-                let textDiagonal = ARTextNode(pos1: SCNVector3(x: p1.x, y: p1.y, z: p1.z),
-                                          pos2: SCNVector3(x: p3.x, y: p3.y, z: p3.z),
-                                          shift: i == 0||i == 3)
+                let lineDiagonal = SCNNode.createCylinderLine(from: p1,to: p3,color: borderColor)
                 node.addChildNode(lineDiagonal)
-                node.addChildNode(textDiagonal)
+                if addText{
+                    let textDiagonal = ARTextNode(pos1: SCNVector3(x: p1.x, y: p1.y, z: p1.z),
+                                              pos2: SCNVector3(x: p3.x, y: p3.y, z: p3.z),
+                                                  shift: i == 0||i == 3,
+                                                  color:textColor)
+                    node.addChildNode(textDiagonal)
+                }
+                
             }
         }
            
