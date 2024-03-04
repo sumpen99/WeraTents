@@ -244,13 +244,13 @@ extension CapturedImages{
                 }
            
 #else
-        if let item = selectedScreenShotModel,
-           let image = item.image,
-           let data = image.data,
-           let uiImage = UIImage(data: data){
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
+                if let item = library.selectedScreenShotModel,
+                   let image = item.image,
+                   let data = image.data,
+                   let uiImage = UIImage(data: data){
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
         }
 #endif
             }

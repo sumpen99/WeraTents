@@ -6,12 +6,21 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
+import FirebaseStorage
 
-
+class FirestoreRepository{
+    private let firestoreDB = Firestore.firestore()
+    private let firestoreStorage = Storage.storage()
+    
+    func shutDown(){
+        firestoreDB.terminate()
+    }
+}
 
 class FirestoreViewModel:ObservableObject{
     @Published var tents:[TentItem] = []
-    
+    //let repo = FirestoreRepository()
 }
 
 //MARK: - CONNECTION

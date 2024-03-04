@@ -274,7 +274,7 @@ extension ModelARView{
         arViewCoordinator.captureSnapshot(){ data in
             if let data = data{
                  let model = ScreenshotModel(context:managedObjectContext)
-                model.buildWithName(arViewCoordinator.selectedTentMeta?.title ?? "")
+                model.buildWithName(arViewCoordinator.selectedTentMeta)
                 let image = ScreenshotImage(context:managedObjectContext)
                 image.id = model.id
                 image.data = data
