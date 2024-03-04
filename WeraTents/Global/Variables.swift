@@ -14,6 +14,7 @@ let ROTATE_SCALE:Float              = 0.4
 let TOP_BAR_FONT:Font               = .title
 let BULLET                          = "•\t"
 let MAX_STORAGE_PNG_SIZE:Int64      = 5 * 1024 * 1024
+let MAX_STORAGE_USDZ_SIZE:Int64     = 5 * 1024 * 1024
 let MAX_STORAGE_JPEG_SIZE           = 5 * 1024 * 1024
 let MIN_STORAGE_JPEG_SIZE           = 524288
 let CORNER_RADIUS_MENU_BUTTON       = 18.0

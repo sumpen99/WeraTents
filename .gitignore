@@ -84,7 +84,10 @@ playground.xcworkspace
 *.xcodeproj/
 *.xcodeproj
 **/GoogleService-Info.plist
+**/WeraTents.entitlements
 **/sources.txt
+**/Bundle/
+**/Assets/
 
 # CocoaPods
 # We recommend against adding the Pods directory to your .gitignore. However

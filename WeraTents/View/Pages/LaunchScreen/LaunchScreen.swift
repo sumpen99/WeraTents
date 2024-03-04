@@ -16,10 +16,9 @@ struct LaunchScreen:View {
     
     @ViewBuilder
     var label:some View{
-        AnimatedTypingText(text: $labeltext,
-                           animation: $firstAnimation,
-                           font: .largeTitle,
-                           foreground: Color.white)
+       Text(labeltext)
+        .font(.largeTitle)
+        .foregroundStyle(Color.white)
         .vBottom()
     }
     
@@ -36,12 +35,23 @@ struct LaunchScreen:View {
     
     
     var body: some View {
-        ZStack {
-            background
-           label
-        }.onReceive(animationTimer) { timerValue in
-            updateAnimation()
-        }.opacity(startFadeoutAnimation ? 0 : 1)
+        GeometryReader{ reader in
+            ZStack {
+               background
+               label
+            }
+            .onReceive(animationTimer) { timerValue in
+                updateAnimation()
+            }
+            //.rotation3DEffect(.degrees(startFadeoutAnimation ? 180 : 0), axis:(x:1,y:1,z:1))
+            .rotationEffect(.degrees(startFadeoutAnimation ? 360 : 0))
+            .frame(width: startFadeoutAnimation ? 0 : reader.size.width,
+                   height: startFadeoutAnimation ? 0 : reader.size.height)
+            .opacity(startFadeoutAnimation ? 0 : 1)
+            .vCenter()
+            .hCenter()
+        }
+        
     }
     
     func updateAnimation() {
@@ -52,7 +62,7 @@ struct LaunchScreen:View {
                 }
             case .CONTINUE:
                 if secondAnimation == false {
-                    withAnimation(.linear) {
+                    withAnimation(.easeInOut(duration: 0.9)) {
                         self.secondAnimation = true
                         startFadeoutAnimation = true
                     }

@@ -43,7 +43,7 @@ extension ModelSceneView{
 extension ModelSceneView{
    
     var selectedTentLabel:some View{
-        Text(selectedTent?.title ?? "No Tent")
+        Text(selectedTent?.name ?? "No Tent")
         .foregroundStyle(Color.white)
         .font(.headline)
         .bold()

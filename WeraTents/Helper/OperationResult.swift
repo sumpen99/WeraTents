@@ -12,7 +12,8 @@ enum PresentedResult:String{
 }
 
 enum PresentedError: Error {
-    case FAILED_TO_DOWNLOAD_IMAGE(message:String)
+    case FAILED_TO_DOWNLOAD_IMAGE(message:String = "Failed to download image")
+    case FAILED_TO_DOWNLOAD_MODEL(message:String = "Failed to download usdz model")
     case OPTIONAL(message:String)
 }
 
