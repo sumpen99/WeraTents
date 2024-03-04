@@ -20,7 +20,7 @@ class AppStateViewModel:ObservableObject{
     @MainActor func dismiss(){
         Task{
             launchState = .CONTINUE
-            try? await Task.sleep(for: Duration.seconds(1))
+            try? await Task.sleep(for: Duration.seconds(1.4))
             self.launchState = .FINISHED
         }
     }

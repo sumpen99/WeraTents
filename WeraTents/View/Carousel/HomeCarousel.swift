@@ -54,7 +54,7 @@ extension HomeCarousel{
             Color.lightBrown
             HStack{
                 VStack{
-                    Text(item.title).font(.headline)
+                    Text(item.name).font(.headline)
                     .bold()
                     .foregroundStyle(Color.materialDark)
                     Button(action: {
@@ -77,10 +77,10 @@ extension HomeCarousel{
        }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL*2))
         .frame(width: width, height: HOME_CAROUSEL_HEIGHT)
-        .scaleEffect(1.0 - abs(distance(item.id)) * 0.2 )
-        .offset(x: xOffset(item.id) * 1.63, y: 0)
-        .opacity(1.0 - abs(distance(item.id)) * 0.3 )
-        .zIndex(1.0 - abs(distance(item.id)) * 0.1)
+        .scaleEffect(1.0 - abs(distance(item.index)) * 0.2 )
+        .offset(x: xOffset(item.index) * 1.63, y: 0)
+        .opacity(1.0 - abs(distance(item.index)) * 0.3 )
+        .zIndex(1.0 - abs(distance(item.index)) * 0.1)
     }
      
 }

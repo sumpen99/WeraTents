@@ -173,7 +173,7 @@ extension HomeView{
         ZStack{
             GeometryReader{ reader in
                 HomeCarousel(
-                         data: $firestoreViewModel.tents,
+                         data: $firestoreViewModel.tentAssets,
                          width: reader.size.width*0.75,
                          edge: .trailing,
                          onSelected:onSelectedTent)

@@ -83,7 +83,7 @@ extension ModelARView{
             ZStack{
                 if showCarousel{
                     Carousel(isOpen:$showCarousel,
-                             data: $firestoreViewModel.tents,
+                             data: $firestoreViewModel.tentAssets,
                              size: min(reader.size.width,reader.size.height)/3,
                              edge: .trailing,
                              onSelected:onSelectedItem)

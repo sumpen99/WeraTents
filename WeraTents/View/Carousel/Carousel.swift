@@ -65,7 +65,7 @@ struct Carousel<T:CarouselItem>:View {
         .onEnded{
             withAnimation{
                 let tent = data[ind.activeIndex]
-                let meta = TentMeta(title: tent.title)
+                let meta = TentMeta(title: tent.name)
                 onSelected?(meta)
                 isOpen.toggle()
             }
@@ -142,17 +142,17 @@ extension Carousel{
     func card(_ item:T)-> some View{
         ZStack {
             RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-            .fill(ind.selectedIndex == item.id ? Color.lightBrown : Color.white)
+            .fill(ind.selectedIndex == item.index ? Color.lightBrown : Color.white)
             item.img
             .resizable()
             .padding()
        }
-        .simultaneousGesture(tapIsActive(item.id) ? carouselTapGesture : nil)
+        .simultaneousGesture(tapIsActive(item.index) ? carouselTapGesture : nil)
         .frame(width: size, height: size)
-        .scaleEffect(1.0 - abs(distance(item.id)) * 0.2 )
-        .opacity(1.0 - abs(distance(item.id)) * 0.3 )
-        .offset(x: xOffset(item.id), y: 0)
-        .zIndex(1.0 - abs(distance(item.id)) * 0.1)
+        .scaleEffect(1.0 - abs(distance(item.index)) * 0.2 )
+        .opacity(1.0 - abs(distance(item.index)) * 0.3 )
+        .offset(x: xOffset(item.index), y: 0)
+        .zIndex(1.0 - abs(distance(item.index)) * 0.1)
     }
     
     var currentlabel:some View{
@@ -182,7 +182,7 @@ extension Carousel{
 extension Carousel{
     
     var selectedCardLabel:some View{
-        Text(ind.selectedItem?.title ?? "")
+        Text(ind.selectedItem?.name ?? "")
         .padding(.top)
         .font(.title)
         .bold()
@@ -259,7 +259,7 @@ extension Carousel{
     }
     
     var validLabel:String{
-        return validIndex == -1 ? "" : data[validIndex].title
+        return validIndex == -1 ? "" : data[validIndex].name
     }
     
     func spinCarousel(current:CGFloat,inc:CGFloat,iterations:Int,abort: @escaping (CGFloat,Int) -> Bool){
