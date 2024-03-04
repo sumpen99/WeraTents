@@ -178,6 +178,32 @@ extension SceneViewCoordinator{
             resetValues()
         }
     }
+     
+    func setFinalAnimation(_ currentP:CGPoint){
+        if let lastTranslate = lastTranslate,
+           let prevTime = prevTime{
+            let seconds = Date().timeIntervalSinceReferenceDate - prevTime;
+            let magnitude = sqrt(pow(currentP.x - lastTranslate.x,2) + pow(currentP.y - lastTranslate.y,2))
+            if seconds > 0 && magnitude > 0{
+                let iSec = 0.01
+                let swipeVelocity = CGPointMake((currentP.x - lastTranslate.x) / seconds,
+                                                (currentP.y - lastTranslate.y) / seconds)
+                let endPoint = CGPointMake(currentP.x + swipeVelocity.x * iSec, currentP.y + swipeVelocity.y * iSec)
+                applyAnimation(endPoint)
+                
+            }
+        }
+        
+    }
+    
+    func applyAnimation(_ endPoint:CGPoint){
+        guard let cameraNode = cameraNode else { return }
+        let originalTransform = cameraNode.transform
+        transform(endPoint)
+        let animation = CABasicAnimation(keyPath: "transform")
+        animation.fromValue = originalTransform
+        cameraNode.addAnimation(animation, forKey: nil)
+    }
     
     func transform(_ newPoint: CGPoint) {
         if let previousPoint = previousPanPoint {
@@ -201,31 +227,6 @@ extension SceneViewCoordinator{
         guard let cameraNode = cameraNode else { return }
         let transform = SCNMatrix4Mult(cameraNode.transform, matrix)
         cameraNode.transform = transform
-    }
-    
-    func setFinalAnimation(_ currentP:CGPoint){
-        if let lastTranslate = lastTranslate,
-           let prevTime = prevTime{
-            let seconds = Date().timeIntervalSinceReferenceDate - prevTime;
-            let magnitude = sqrt(pow(currentP.x - lastTranslate.x,2) + pow(currentP.y - lastTranslate.y,2))
-            if seconds > 0 && magnitude > 0{
-                let swipeVelocity = CGPointMake((currentP.x - lastTranslate.x) / seconds,
-                                                (currentP.y - lastTranslate.y) / seconds)
-                let endPoint = CGPointMake(currentP.x + swipeVelocity.x / magnitude, currentP.y + swipeVelocity.y / magnitude)
-                applyAnimation(endPoint)
-                
-            }
-        }
-        
-    }
-    
-    func applyAnimation(_ endPoint:CGPoint){
-        guard let cameraNode = cameraNode else { return }
-        let originalTransform = cameraNode.transform
-        transform(endPoint)
-        let animation = CABasicAnimation(keyPath: "transform")
-        animation.fromValue = originalTransform
-        cameraNode.addAnimation(animation, forKey: nil)
     }
     
     func initializeValues(_ point:CGPoint){
