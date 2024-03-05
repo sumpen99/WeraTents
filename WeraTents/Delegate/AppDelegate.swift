@@ -5,18 +5,25 @@
 //  Created by fredrik sundström on 2024-02-20.
 //
 
-import SwiftUI
+import Firebase
 import FirebaseCore
-
+import FirebaseAppCheck
 class AppDelegate: UIResponder,UIApplicationDelegate{
     
     static private(set) var instance: AppDelegate! = nil
     
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-            //FirebaseApp.configure()
-            AppDelegate.instance = self
-            return true
+        var providerFactory:AppCheckProviderFactory
+#if targetEnvironment(simulator)
+        providerFactory = AppCheckDebugProviderFactory()
+#else
+        providerFactory = WeraAppCheckProvider()
+#endif
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+        FirebaseApp.configure()
+        AppDelegate.instance = self
+        return true
     }
     
     func applicationWillResignActive(_ application: UIApplication) {
@@ -36,4 +43,23 @@ class AppDelegate: UIResponder,UIApplicationDelegate{
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
     
+    func applicationWillTerminate(_ application: UIApplication){
+        PersistenceController.deleteAllDataFromEntity("ScreenshotModel")
+        debugLog(object: "free up core data")
+    }
+    
+    func applicationDidReceiveMemoryWarning(_ application: UIApplication){
+        debugLog(object: "Oops I Daisy. Memory is an issue")
+    }
+    
+}
+
+class WeraAppCheckProvider:NSObject,AppCheckProviderFactory{
+    func createProvider(with app:FirebaseApp) ->AppCheckProvider?{
+        if #available(iOS 14.0, *){
+            return AppAttestProvider(app:app)
+        } else{
+            return DeviceCheckProvider(app: app)
+        }
+    }
 }

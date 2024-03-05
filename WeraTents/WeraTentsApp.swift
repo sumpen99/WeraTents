@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct WeraTentsApp: App {
-    @StateObject var launchScreenViewModel = LaunchScreenViewModel()
+    @StateObject var appStateViewModel = AppStateViewModel()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Environment(\.scenePhase) private var phase
     let persistenceController = PersistenceController.shared
@@ -17,12 +17,12 @@ struct WeraTentsApp: App {
         StyledWindowGroup {
             ZStack{
                 ContentView()
-                if launchScreenViewModel.state != .FINISHED {
+                if appStateViewModel.launchState != .FINISHED {
                     LaunchScreen()
                 }
             }
-            .environmentObject(launchScreenViewModel)
-            .preferredWindowColor(Color.black)
+            .environmentObject(appStateViewModel)
+            .preferredWindowColor(Color.background)
             .onChange(of: phase,initial: true) { newPhase,initial in
                 try? persistenceController.saveContext()
                 /*switch newPhase {

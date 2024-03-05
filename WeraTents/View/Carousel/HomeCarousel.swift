@@ -7,10 +7,10 @@
 import SwiftUI
 
 struct HomeCarousel<T:CarouselItem>:View {
+    @EnvironmentObject var navigationViewModel: NavigationViewModel
     @Binding var data:[T]
     let width:CGFloat
     let edge:Edge
-    var onSelected:((T) -> Void)? = nil
     @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
     
     // MARK: - GESTURES
@@ -22,8 +22,11 @@ struct HomeCarousel<T:CarouselItem>:View {
             setActiveIndex(ind.closest)
         }
         .onEnded { value in
-            ind.draggingItem = ind.closest
-            ind.snappedItem = ind.draggingItem
+            withAnimation(.easeIn){
+                ind.draggingItem = ind.closest
+                ind.snappedItem = ind.draggingItem
+            }
+            
     
         }
     }
@@ -53,29 +56,30 @@ extension HomeCarousel{
             Color.lightBrown
             HStack{
                 VStack{
-                    Text(item.title).font(.headline)
-                    .bold()
-                    .foregroundStyle(Color.materialDark)
-                    Button(action: { self.ind.selectedItem = data[ind.activeIndex] }, label: {
+                    Text(item.name).font(.caption)
+                        .foregroundStyle(Color.materialDark).bold()
+                    Text(item.shortDescription).font(.caption2).lineLimit(3).vCenter()
+                        .italic().foregroundStyle(Color.materialDark)
+                    Button(action: navigate, label: {
                         Text("Se mer").bold()
                     })
                     .buttonStyle(.borderedProminent)
                 }
+                .padding()
                .hCenter()
                 ZStack{
                     item.img
                     .resizable()
                 }
-                .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL*2))
                 
             }
        }
-        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL*2))
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
         .frame(width: width, height: HOME_CAROUSEL_HEIGHT)
-        .scaleEffect(1.0 - abs(distance(item.id)) * 0.2 )
-        .offset(x: xOffset(item.id) * 1.63, y: 0)
-        .opacity(1.0 - abs(distance(item.id)) * 0.3 )
-        .zIndex(1.0 - abs(distance(item.id)) * 0.1)
+        .scaleEffect(1.0 - abs(distance(item.index)) * 0.2 )
+        .offset(x: xOffset(item.index) * 1.63, y: 0)
+        .opacity(1.0 - abs(distance(item.index)) * 0.3 )
+        .zIndex(1.0 - abs(distance(item.index)) * 0.1)
     }
      
 }
@@ -88,6 +92,13 @@ extension HomeCarousel{
             return ind.activeIndex
         }
         return -1
+    }
+    
+    func navigate(){
+        let index = validIndex
+        if index != -1{
+            navigationViewModel.appendToPathWith(data[index])
+        }
     }
    
     func spinCarousel(current:CGFloat,inc:CGFloat,iterations:Int,abort: @escaping (CGFloat,Int) -> Bool){

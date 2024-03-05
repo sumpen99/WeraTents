@@ -7,12 +7,6 @@
 
 import SwiftUI
 
-protocol CarouselItem:Identifiable{
-    var id:Int { get }
-    var img:Image { get }
-    var title:String { get }
-}
-
 struct CarouselIndicators<T:CarouselItem>{
     var snappedItem = 0.0
     var draggingItem = 0.0
@@ -27,7 +21,7 @@ struct Carousel<T:CarouselItem>:View {
     @Binding var data:[T]
     let size:CGFloat
     let edge:Edge
-    var onSelected:((T) -> Void)? = nil
+    var onSelected:((TentMeta) -> Void)? = nil
     @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
     
     // MARK: - GESTURES
@@ -55,7 +49,7 @@ struct Carousel<T:CarouselItem>:View {
     
         }
     }
-    
+    /*
     var carouselLongTapGeasture:some Gesture{
         LongPressGesture()
             .onEnded(){ value in
@@ -64,13 +58,15 @@ struct Carousel<T:CarouselItem>:View {
                     isOpen.toggle()
                 }
             }
-    }
+    }*/
      
     var carouselTapGesture: some Gesture {
         TapGesture()
         .onEnded{
             withAnimation{
-                onSelected?(data[ind.activeIndex])
+                let tent = data[ind.activeIndex]
+                let meta = TentMeta(title: tent.name)
+                onSelected?(meta)
                 isOpen.toggle()
             }
         }
@@ -146,23 +142,23 @@ extension Carousel{
     func card(_ item:T)-> some View{
         ZStack {
             RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-            .fill(ind.selectedIndex == item.id ? Color.lightBrown : Color.white)
+            .fill(ind.selectedIndex == item.index ? Color.lightBrown : Color.white)
             item.img
             .resizable()
             .padding()
        }
-        .simultaneousGesture(tapIsActive(item.id) ? carouselTapGesture : nil)
+        .simultaneousGesture(tapIsActive(item.index) ? carouselTapGesture : nil)
         .frame(width: size, height: size)
-        .scaleEffect(1.0 - abs(distance(item.id)) * 0.2 )
-        .opacity(1.0 - abs(distance(item.id)) * 0.3 )
-        .offset(x: xOffset(item.id), y: 0)
-        .zIndex(1.0 - abs(distance(item.id)) * 0.1)
+        .scaleEffect(1.0 - abs(distance(item.index)) * 0.2 )
+        .opacity(1.0 - abs(distance(item.index)) * 0.3 )
+        .offset(x: xOffset(item.index), y: 0)
+        .zIndex(1.0 - abs(distance(item.index)) * 0.1)
     }
     
     var currentlabel:some View{
         Text(validLabel)
         .font(.callout)
-        .foregroundStyle(Color.black .opacity(0.4))
+        .foregroundStyle(Color.background.opacity(0.4))
         .italic()
         .vCenter()
         .hCenter()
@@ -186,7 +182,7 @@ extension Carousel{
 extension Carousel{
     
     var selectedCardLabel:some View{
-        Text(ind.selectedItem?.title ?? "")
+        Text(ind.selectedItem?.name ?? "")
         .padding(.top)
         .font(.title)
         .bold()
@@ -263,7 +259,7 @@ extension Carousel{
     }
     
     var validLabel:String{
-        return validIndex == -1 ? "" : data[validIndex].title
+        return validIndex == -1 ? "" : data[validIndex].name
     }
     
     func spinCarousel(current:CGFloat,inc:CGFloat,iterations:Int,abort: @escaping (CGFloat,Int) -> Bool){

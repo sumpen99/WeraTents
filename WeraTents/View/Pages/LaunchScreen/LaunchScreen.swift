@@ -7,20 +7,30 @@
 
 import SwiftUI
 
+enum Animate:Int{
+    case FIRST
+    case SECOND
+    case THIRD
+    case FADE_OUT
+    case ALL
+}
+
 struct LaunchScreen:View {
-    @EnvironmentObject var launchScreenViewModel:LaunchScreenViewModel
-    @State var firstAnimation:Bool = false
-    @State var secondAnimation:Bool = false
-    @State var startFadeoutAnimation:Bool = false
-    @State var labeltext = "©Weratents"
-    
+    @EnvironmentObject var appStateViewModel:AppStateViewModel
+    @State var animate:[Bool] = Array.init(repeating: false,count: Animate.ALL.rawValue)
     @ViewBuilder
+    
     var label:some View{
-        AnimatedTypingText(text: $labeltext,
-                           animation: $firstAnimation,
-                           font: .largeTitle,
-                           foreground: Color.white)
+       Text("©Weratents")
+            .font(animate[Animate.SECOND.rawValue] ? .title2 :
+                  animate[Animate.THIRD.rawValue] ? .headline :
+                  .largeTitle)
+        .foregroundStyle(Color.white)
+        .opacity(animate[Animate.THIRD.rawValue] ? 0.7 : 1)
+        .rotation3DEffect(.degrees(animate[Animate.SECOND.rawValue] ? 45.0 : 0),
+                          axis: (x:1.0,y:0.0,z:0.0))
         .vBottom()
+        .hCenter()
     }
     
     @ViewBuilder
@@ -36,28 +46,34 @@ struct LaunchScreen:View {
     
     
     var body: some View {
-        ZStack {
-            background
-           label
-        }.onReceive(animationTimer) { timerValue in
-            updateAnimation()
-        }.opacity(startFadeoutAnimation ? 0 : 1)
+        GeometryReader{ reader in
+            ZStack {
+               background
+               label
+            }
+            .onReceive(animationTimer) { timerValue in
+                updateAnimation()
+            }
+            .frame(width: !animate[Animate.THIRD.rawValue] ? reader.size.width :
+                    !animate[Animate.FADE_OUT.rawValue] ? reader.min()/1.5 : 0 ,
+                   height: !animate[Animate.SECOND.rawValue] ? reader.size.height : 
+                    !animate[Animate.FADE_OUT.rawValue] ? reader.min()/1.5 : 0 )
+           .opacity(animate[Animate.FADE_OUT.rawValue] ? 0 : 1)
+            .vCenter()
+            .hCenter()
+        }
+        
     }
     
     func updateAnimation() {
-            switch launchScreenViewModel.state {
-            case .START:
-                withAnimation(.easeInOut(duration: 0.9)) {
-                    firstAnimation.toggle()
-                }
+        switch appStateViewModel.launchState {
             case .CONTINUE:
-                if secondAnimation == false {
-                    withAnimation(.linear) {
-                        self.secondAnimation = true
-                        startFadeoutAnimation = true
+                if let index = animate.firstIndex(where: {!$0}){
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        animate[index] = true
                     }
                 }
-            case .FINISHED:
+           default:
                break
             }
         }

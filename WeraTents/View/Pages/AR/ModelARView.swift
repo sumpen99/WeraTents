@@ -10,12 +10,16 @@ import SwiftUI
 struct ModelARView: View {
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
+    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @EnvironmentObject var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var appStateViewModel: AppStateViewModel
     @State var showCarousel:Bool = false
-    @State var capturedImageCount:Int = 0
     @State var flashScreen:Bool = false
+    @State var capturedImageCount:Int = 0
+    @State var savingScreenShot:Bool = false
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
+        self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
     }
             
     var body: some View{
@@ -45,28 +49,18 @@ struct ModelARView: View {
 extension ModelARView{
     var mainContent:some View{
         ZStack{
-        Color.black
-#if targetEnvironment(simulator)
-        loadingARKitText
-#else
+        Color.background
         arContent
-#endif
        }
     }
     
      var arContent:some View{
          ZStack{
              ARViewContainer(arViewCoordinator: arViewCoordinator)
-             if arViewCoordinator.selectedTent == nil {
-                 loadingARKitText
-             }
          }
-    }
-   
-    var loadingARKitText:some View{
-        Text("Pick a tent to place in world")
-            .font(.headline)
-            .foregroundStyle(Color.white)
+         .task {
+             arViewCoordinator.run()
+         }
     }
     
     var flashView:some View{
@@ -89,7 +83,7 @@ extension ModelARView{
             ZStack{
                 if showCarousel{
                     Carousel(isOpen:$showCarousel,
-                             data: $firestoreViewModel.tents,
+                             data: $firestoreViewModel.tentAssets,
                              size: min(reader.size.width,reader.size.height)/3,
                              edge: .trailing,
                              onSelected:onSelectedItem)
@@ -111,6 +105,7 @@ extension ModelARView{
                          foreground: Color.lightBlue,
                          background: Color.white)
         })
+        .disabled(savingScreenShot)
     }
     
     var placeModelButton:some View{
@@ -197,20 +192,19 @@ extension ModelARView{
      
     var navigateToCapturedImagesButton:some View{
         Button(action: navigateToCapturedImages , label: {
-            buttonImage("photo.on.rectangle.angled",font: .largeTitle,foreground: Color.white)
-            .background{
-                Badge(count: $capturedImageCount)
-            }
+            buttonImage("photo.on.rectangle.angled",font: TOP_BAR_FONT,foreground: Color.white)
+            .badge(count: $capturedImageCount)
         })
         .hTrailing()
         .symbolEffect(.bounce.down, value: capturedImageCount)
-     }
+    }
     
     var topButtons:some View{
         HStack{
             BackButtonAction(action: navigateBack)
             navigateToCapturedImagesButton
         }
+        .hLeading()
         .padding()
     }
 }
@@ -219,7 +213,8 @@ extension ModelARView{
 extension ModelARView{
     
     func navigateToCapturedImages(){
-        arViewCoordinator.kill()
+        arViewCoordinator.pause()
+        arViewCoordinator.action(.REMOVE_3D_MODEL)
         navigationViewModel.appendToPathWith(ModelRoute.ROUTE_CAPTURED_IMAGES)
     }
     
@@ -248,37 +243,58 @@ extension ModelARView{
 #endif
     }
     
-    func onSelectedItem(tent:TentItem) ->Void{
+    func onSelectedItem(tent:TentMeta) ->Void{
 #if targetEnvironment(simulator)
-        arViewCoordinator.modelState = arViewCoordinator.selectedTent == nil ? .HAS_SELECTION : arViewCoordinator.modelState
-        arViewCoordinator.selectedTent = tent
+        arViewCoordinator.modelState = arViewCoordinator.selectedTentMeta == nil ? .HAS_SELECTION : arViewCoordinator.modelState
+        arViewCoordinator.selectedTentMeta = tent
 #else
         arViewCoordinator.newSelectedTent(tent)
 #endif
     }
     
     func captureImage(){
+        savingScreenShot = true
         flashScreen = true
+        capturedImageCount += 1
         let managedObjectContext = PersistenceController.shared.container.viewContext
+#if targetEnvironment(simulator)
+        let model = ScreenshotModel(context:managedObjectContext)
+        model.buildWithName(arViewCoordinator.selectedTentMeta)
+        do{
+            try PersistenceController.saveContext()
+            savingScreenShot = false
+        }
+        catch{
+            appStateViewModel.activateToast(.FAIL,"Error"){
+                savingScreenShot = false
+            }
+        }
+#else
         arViewCoordinator.captureSnapshot(){ data in
             if let data = data{
-                let model = ScreenshotModel(context:managedObjectContext)
-                model.build()
+                 let model = ScreenshotModel(context:managedObjectContext)
+                model.buildWithName(arViewCoordinator.selectedTentMeta)
                 let image = ScreenshotImage(context:managedObjectContext)
                 image.id = model.id
                 image.data = data
                 model.image = image
                 do{
                     try PersistenceController.saveContext()
-                    debugLog(object: "Screenshot saved")
+                    savingScreenShot = false
                 }
                 catch{
-                    debugLog(object: "Screenshot not saved")
+                    appStateViewModel.activateToast(.FAIL,"Error"){
+                        savingScreenShot = false
+                    }
                 }
             }
             else{
-                debugLog(object: "No sir, No Image For You")
+                appStateViewModel.activateToast(.FAIL,"Error"){
+                    savingScreenShot = false
+                }
             }
         }
+#endif
+        
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView:View{
-    @EnvironmentObject var launchScreenViewModel:LaunchScreenViewModel
+    @EnvironmentObject var appStateViewModel:AppStateViewModel
     @StateObject private var firestoreViewModel: FirestoreViewModel
     @StateObject var navigationViewModel: NavigationViewModel
     init(){
@@ -17,16 +17,18 @@ struct ContentView:View{
     }
     var body:some View{
         ZStack{
-            if launchScreenViewModel.state == .FINISHED {
+            if appStateViewModel.launchState == .FINISHED {
                 HomeView()
+                .toast(isShowing: $appStateViewModel.showToast)
                 .environmentObject(firestoreViewModel)
                 .environmentObject(navigationViewModel)
             }
         }
-        .task{
-            firestoreViewModel.loadImageAssets()
-            //try? await Task.sleep(for: Duration.seconds(1.5))
-            self.launchScreenViewModel.dismiss()
+         .task{
+            firestoreViewModel.loadTentAssetsFromLocal()
+            //firestoreViewModel.loadTentAssetsFromServer()
+             //try? await Task.sleep(for: Duration.seconds(0.9 * Animate.ALL.rawValue))
+            self.appStateViewModel.dismiss()
         }
     }
 }

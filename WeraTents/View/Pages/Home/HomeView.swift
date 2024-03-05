@@ -7,17 +7,20 @@
 
 import SwiftUI
 
-
-
 struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
-    @State var showCarousel:Bool = false
- 
+  
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
-            .modifier(NavigationViewModifier(color:.clear))
+            .safeAreaInset(edge: .top){
+                topLabel
+            }
+            .modifier(NavigationViewModifier(color:.black))
+            .navigationDestination(for: TentItem.self){  tent in
+                ModelSceneView(selectedTent:tent)
+            }
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
@@ -33,158 +36,127 @@ extension HomeView{
     
     var mainContent:some View{
         ZStack{
-            background
             content
             shapedMenu
          }
     }
     
-    var background:some View{
-        Image("background")
-        .resizable()
-        .ignoresSafeArea()
-    }
-    
     var content:some View{
         VStack(spacing:V_HOME_SPACING){
-            topLabel.padding([.horizontal])
-            ScrollView{
-                VStack{
-                    carouselSection
-                 }
-                
-            }
-            .vTop()
+            scrollContainer
         }
-        .padding([.top,.bottom])
         .hCenter()
     }
     
-    var topLabel:some View{
-        HStack{
-            VStack{
-                Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
-                Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
-            }.hLeading()
-            
-           Image("weratent-logo")
-            .resizable()
-            .frame(width:60,height: 60)
-            
-        }
-   }
-    
 }
 
-//MARK: - LIST CONTENT CONTENT
+//MARK: - SCROLLCONTAINER
 extension HomeView{
-   
-    var instructionLabel:some View{
-        HStack{
-           Text("Videos").font(.title).bold().foregroundStyle(Color.white).hLeading()
-            
-           Image(systemName: "arrow.right")
-            .font(.title)
-            .bold()
-            .foregroundStyle(Color.white)
+    var scrollContainer:some View{
+        ScrollView{
+            VStack{
+                carouselSection
+             }
             
         }
-        .background{
-            Color.red
-        }
-    }
-    
-    var manualsLabel:some View{
-        HStack{
-           Text("Monteringsanvisningar").font(.title).bold().foregroundStyle(Color.white).hLeading()
-            
-           Image(systemName: "arrow.right")
-            .font(.title)
-            .bold()
-            .foregroundStyle(Color.white)
-            
-        }
-        .background{
-            Color.yellow
-        }
-    }
-    
-    var listContent:some View{
-        List{
-            VStack(spacing:0){
-                HStack{
-                    Text(BULLET).frame(width:10).hLeading()
-                    Text(BULLET).frame(width:10).hTrailing()
-                }
-                HStack{
-                    Text(BULLET).frame(width:10).hLeading()
-                    Text(BULLET).frame(width:10).hTrailing()
-                }
-                HStack{
-                    Text(BULLET).frame(width:10).hLeading()
-                    Text(BULLET).frame(width:10).hTrailing()
-                }
-                HStack{
-                    Text(BULLET).frame(width:10).hLeading()
-                    Text(BULLET).frame(width:10).hTrailing()
-                }
-                HStack{
-                    Text(BULLET).frame(width:10).hLeading()
-                    Text(BULLET).frame(width:10).hTrailing()
-                }
-            }
-            .listRowBackground(Color.darkGreen.opacity(0.5))
-            .padding()
-            .background(){
-                RoundedRectangle(cornerRadius: 10.0).fill(Color.white)
-            }
-        }
-        .padding()
+        .vTop()
     }
 }
 
-//MARK: - CAROUSEL
+//MARK: - CAROUSELSECTION
 extension HomeView{
     
     var carouselSection:some View{
         VStack{
-            inspirationLabel.padding([.horizontal])
+            inspirationLabel
             carouselContent
          }
     }
     
     var inspirationLabel:some View{
         HStack{
-           Text("Inspiration").font(.title).bold().foregroundStyle(Color.white).hLeading()
-            
-            Button(action: { }){
-                Image(systemName: "arrow.right")
-                 .font(.title)
-                 .bold()
-                 .foregroundStyle(Color.white)
-            }
+           inspirationtext
+           inspirationButton
+        }
+        .padding([.horizontal])
+    }
+    
+    var inspirationtext:some View{
+        Text("Våra tält")
+        .font(.title)
+        .bold()
+        .foregroundStyle(Color.white).hLeading()
+    }
+    
+    var inspirationButton:some View{
+        Button(action: { }){
+            Image(systemName: "arrow.right")
+             .font(.title)
+             .bold()
+             .foregroundStyle(Color.white)
         }
     }
     
     var carouselContent:some View{
         ZStack{
             GeometryReader{ reader in
-                HomeCarousel(
-                         data: $firestoreViewModel.tents,
-                         width: reader.size.width*0.75,
-                         edge: .trailing).hCenter()
+                carousel(reader.size.width*0.75)
+                .hCenter()
             }
         }
         .frame(height: HOME_CAROUSEL_HEIGHT)
-        
     }
+    
+    func carousel(_ width:CGFloat) ->some View{
+        HomeCarousel(
+                 data: $firestoreViewModel.tentAssets,
+                 width: width,
+                 edge: .trailing)
+        .overlay{
+            if !firestoreViewModel.hasTents{
+                SpinnerAnimation()
+                .frame(width: width/4.0,height: width/4.0)
+                .foregroundStyle(Color.lightGold)
+                .hCenter()
+                .vCenter()
+            }
+            
+        }
+    }
+     
+}
+
+//MARK: - TOP LABEL
+extension HomeView{
+    
+    var labelText:some View{
+        VStack{
+            Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
+        }.hLeading()
+    }
+    
+    var labelImage:some View{
+        Image("weratent-logo-horn")
+         .resizable()
+         .frame(width:80,height: 80)
+         .hTrailing()
+    }
+    
+    var topLabel:some View{
+        HStack{
+           labelText
+           labelImage
+        }
+        .padding(.horizontal)
+   }
 }
 
 //MARK: -- BOTTOMBAR
 extension HomeView{
     var navModelARButton:some View{
         Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
-            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightBlue)
+            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightGold)
                 .imageScale(.large)
             .padding(15.0)
             .background{
@@ -195,14 +167,8 @@ extension HomeView{
     }
     
     var videoButton:some View{
-        Button(action: {
-            if !firestoreViewModel.hasTents{ return }
-            withAnimation(.easeInOut(duration: 0.45)){
-                showCarousel.toggle()
-            }
-            
-        }, label: {
-            buttonImage("video.circle.fill", font: .title, foreground: Color.lightBlue)
+        Button(action: {}, label: {
+            buttonImage("video.circle.fill", font: .title, foreground: Color.lightGold)
             .padding(10.0)
             .background{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
@@ -211,14 +177,8 @@ extension HomeView{
     }
     
     var accountButton:some View{
-        Button(action: {
-            if !firestoreViewModel.hasTents{ return }
-            withAnimation(.easeInOut(duration: 0.45)){
-                showCarousel.toggle()
-            }
-            
-        }, label: {
-            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightBlue)
+        Button(action: {}, label: {
+            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightGold)
             .padding(10.0)
             .background{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)

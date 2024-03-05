@@ -18,43 +18,49 @@ class ServiceManager{
             return contents.map { $0.lastPathComponent }
         }
         catch let error as NSError {
-          debugLog(object: error)
+            debugLog(object: error)
         }
         return []
     }
     
+    static func readJsonFromBundleFile<T:Decodable>(_ file:String,
+                                                    value:T.Type,
+                                                    completion: @escaping ([T]?) -> Void){
+        DispatchQueue.global(qos: .background).async {
+            let tentItems = Bundle.main.decode([T].self, from: "data.json")
+            completion(tentItems)
+        }
+    }
+    
+    static func loadImageFromBundle(_ asset:String,
+                                    imageName:String,
+                                    completion: @escaping (UIImage?) -> Void){
+        
+        DispatchQueue.global(qos: .background).async {
+            if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
+               let bundle = Bundle(path: bundlePath),
+               let resourcePath = bundle.path(forResource: imageName, ofType: "png"){
+                DispatchQueue.main.async { completion(UIImage(contentsOfFile: resourcePath)) }
+            }
+        }
+    }
+        
+    
     static func loadImagesFromBundle(_ asset:String,
                                      imageNames:[String],
                                      completion: @escaping ((OperationResult?,[TentItem]?) -> Void)){
-        
-        DispatchQueue.global(qos: .background).async {
-            var tentItems:[TentItem] = []
-            if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
-               let bundle = Bundle(path: bundlePath){
-                for name in imageNames{
-                    let splitName = name.components(separatedBy: ".")
-                    if splitName.count != 2 { continue }
-                    if let resourcePath = bundle.path(forResource: splitName[0], ofType: splitName[1]),
-                       let uiImage = UIImage(contentsOfFile: resourcePath){
-                        tentItems.append(TentItem(id:tentItems.count,
-                                                  identifier: shortId(),
-                                                  title: String(splitName[0]).capitalized,
-                                                  img: Image(uiImage: uiImage)))
-                    }
+        /*
+         let imageNames = ServiceManager.readAssetsFromBundle("Tent.bundle")
+         ServiceManager.loadImagesFromBundle("Tent", imageNames: imageNames){}
+         */
+        /*if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
+           let bundle = Bundle(path: bundlePath){
+            for name in imageNames{
+                 if let resourcePath = bundle.path(forResource: splitName[0], ofType: splitName[1]),
+                   let uiImage = UIImage(contentsOfFile: resourcePath){
                 }
             }
-            DispatchQueue.main.async {
-                if tentItems.count > 0{
-                    completion(nil,tentItems)
-                }
-                else{
-                    let opResult = OperationResult(error:PresentedError.FAILED_TO_DOWNLOAD_IMAGE(message: "Unable to download images"))
-                    completion(opResult,nil)
-                }
-                
-            }
-            
-        }
+        }*/
         
     }
 }
