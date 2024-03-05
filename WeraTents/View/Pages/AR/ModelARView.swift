@@ -49,7 +49,7 @@ struct ModelARView: View {
 extension ModelARView{
     var mainContent:some View{
         ZStack{
-        Color.black
+        Color.background
         arContent
        }
     }
@@ -197,8 +197,7 @@ extension ModelARView{
         })
         .hTrailing()
         .symbolEffect(.bounce.down, value: capturedImageCount)
-        .badge(1)
-     }
+    }
     
     var topButtons:some View{
         HStack{

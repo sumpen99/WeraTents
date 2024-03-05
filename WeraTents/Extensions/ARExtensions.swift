@@ -146,11 +146,12 @@ extension SCNNode {
         return SCNGeometry(sources: [source], elements: [element])
     }
     
-    static func createBorderOnNode(_ node:SCNNode,
+    static func createBorderOnBoundingBox(_ bbox:(min:SCNVector3,max:SCNVector3),
                                    borderColor:UIColor,
                                    textColor:UIColor,
-                                   addText:Bool = true){
-        let bbox = node.boundingBox
+                                   addText:Bool = true) -> SCNNode{
+        let node = SCNNode()
+        node.name = "BoundingBox"
         let min = bbox.min
         let max = bbox.max
       
@@ -191,7 +192,13 @@ extension SCNNode {
                 
             }
         }
+        return node
            
+    }
+    
+    
+    func find(where name:String) ->SCNNode?{
+        return self.childNodes.first(where: { $0.name == name })
     }
     
 }

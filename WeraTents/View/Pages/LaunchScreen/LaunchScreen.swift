@@ -7,19 +7,30 @@
 
 import SwiftUI
 
+enum Animate:Int{
+    case FIRST
+    case SECOND
+    case THIRD
+    case FADE_OUT
+    case ALL
+}
+
 struct LaunchScreen:View {
     @EnvironmentObject var appStateViewModel:AppStateViewModel
-    @State var firstAnimation:Bool = false
-    @State var secondAnimation:Bool = false
-    @State var startFadeoutAnimation:Bool = false
-    @State var labeltext = "©Weratents"
-    
+    @State var animate:[Bool] = Array.init(repeating: false,count: Animate.ALL.rawValue)
     @ViewBuilder
+    
     var label:some View{
-       Text(labeltext)
-        .font(.largeTitle)
+       Text("©Weratents")
+            .font(animate[Animate.SECOND.rawValue] ? .title2 :
+                  animate[Animate.THIRD.rawValue] ? .headline :
+                  .largeTitle)
         .foregroundStyle(Color.white)
+        .opacity(animate[Animate.THIRD.rawValue] ? 0.7 : 1)
+        .rotation3DEffect(.degrees(animate[Animate.SECOND.rawValue] ? 45.0 : 0),
+                          axis: (x:1.0,y:0.0,z:0.0))
         .vBottom()
+        .hCenter()
     }
     
     @ViewBuilder
@@ -43,11 +54,11 @@ struct LaunchScreen:View {
             .onReceive(animationTimer) { timerValue in
                 updateAnimation()
             }
-            //.rotation3DEffect(.degrees(startFadeoutAnimation ? 180 : 0), axis:(x:1,y:1,z:1))
-            .rotationEffect(.degrees(startFadeoutAnimation ? 360 : 0))
-            .frame(width: startFadeoutAnimation ? 0 : reader.size.width,
-                   height: startFadeoutAnimation ? 0 : reader.size.height)
-            .opacity(startFadeoutAnimation ? 0 : 1)
+            .frame(width: !animate[Animate.THIRD.rawValue] ? reader.size.width :
+                    !animate[Animate.FADE_OUT.rawValue] ? reader.min()/1.5 : 0 ,
+                   height: !animate[Animate.SECOND.rawValue] ? reader.size.height : 
+                    !animate[Animate.FADE_OUT.rawValue] ? reader.min()/1.5 : 0 )
+           .opacity(animate[Animate.FADE_OUT.rawValue] ? 0 : 1)
             .vCenter()
             .hCenter()
         }
@@ -56,18 +67,13 @@ struct LaunchScreen:View {
     
     func updateAnimation() {
         switch appStateViewModel.launchState {
-            case .START:
-                withAnimation(.easeInOut(duration: 0.9)) {
-                    firstAnimation.toggle()
-                }
             case .CONTINUE:
-                if secondAnimation == false {
-                    withAnimation(.easeInOut(duration: 0.9)) {
-                        self.secondAnimation = true
-                        startFadeoutAnimation = true
+                if let index = animate.firstIndex(where: {!$0}){
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        animate[index] = true
                     }
                 }
-            case .FINISHED:
+           default:
                break
             }
         }

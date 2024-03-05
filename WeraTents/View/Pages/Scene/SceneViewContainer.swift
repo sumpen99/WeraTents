@@ -10,9 +10,9 @@ import SceneKit
 import SceneKit.ModelIO
 
 class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
-    var camera:SCNCamera?
+    var scnView:SCNView?
+    var usdzData:Data?
     var cameraNode: SCNNode?
-    var scnView: SCNView?
     var previousPanPoint: CGPoint?
     var startPanPoint: CGPoint?
     var originalRotation:CGFloat?
@@ -20,6 +20,11 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     var prevTranslate:CGPoint?
     var lastTime:TimeInterval?
     var prevTime:TimeInterval?
+    
+    convenience init(usdzData:Data?){
+        self.init()
+        self.usdzData = usdzData
+    }
     
     func createLightNode() ->SCNNode{
         let lightNode = SCNNode()
@@ -53,15 +58,18 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
         return SCNVector3(x:0, y:center.y, z:adjacentLength)
     }
     
-    func addGestures(){
+    func addGesturesToSCNView(_ scnView:SCNView){
+        //let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        //self.scnView?.addGestureRecognizer(tapGesture)
+        
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-        self.scnView?.addGestureRecognizer(panGesture)
+        scnView.addGestureRecognizer(panGesture)
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
-        self.scnView?.addGestureRecognizer(pinchGesture)
+        scnView.addGestureRecognizer(pinchGesture)
         
         let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotation(_:)))
-        self.scnView?.addGestureRecognizer(rotationGesture)
+        scnView.addGestureRecognizer(rotationGesture)
     }
     
     func loadTentModel() ->SCNNode?{
@@ -69,18 +77,16 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             let ass = MDLAsset(url: url)
             ass.loadTextures()
             let tentNode = SCNNode(mdlObject: ass.object(at: 0))
-            tentNode.name = "tent"
+            tentNode.name = "TentNode"
             return tentNode
         }
         return nil
     }
     
     func setSceneView(_ scnView:SCNView){
-        self.scnView = scnView
-        
         if let tentModel = loadTentModel() {
             let scene = SCNScene()
-            SCNNode.createBorderOnNode(tentModel,
+            let boundinBoxNode = SCNNode.createBorderOnBoundingBox(tentModel.boundingBox,
                                        borderColor: UIColor.gray,
                                        textColor: UIColor.white,
                                        addText: true)
@@ -92,8 +98,8 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
                                                  fieldOfView: camera.fieldOfView)
             cameraNode.orientation = SCNQuaternion(x: 0, y: 0, z: 0, w:0)
             self.cameraNode = cameraNode
-            self.camera = camera
         
+            tentModel.addChildNode(boundinBoxNode)
             tentModel.addChildNode(lightNode)
             tentModel.addChildNode(cameraNode)
            
@@ -105,16 +111,38 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             
             scnView.pointOfView = cameraNode
             scnView.backgroundColor = UIColor.black
-            addGestures()
+            scnView.delegate = self
+            addGesturesToSCNView(scnView)
+            self.scnView = scnView
             
         }
         else{
             debugLog(object: "nepp")
         }
-        self.scnView?.delegate = self
     }
     
 }
+
+//MARK: SCENEVIEWCOORDINATOR TAP INTERACT
+extension SceneViewCoordinator{
+    @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {
+        switch gestureRecognizer.state {
+        case .ended:
+            debugLog(object: "Tap On tent or maybe, most probably, most definitely the whole view")
+        default:
+            break
+        }
+    }
+    
+    func toggleDimensionBox(){
+        if let tentNode = self.scnView?.scene?.rootNode.find(where: "TentNode"),
+           let boxNode = tentNode.find(where: "BoundingBox"){
+            boxNode.isHidden = !boxNode.isHidden
+        }
+    }
+}
+
+
 
 //MARK: SCENEVIEWCOORDINATOR ROTATE
 extension SceneViewCoordinator{
@@ -146,7 +174,7 @@ extension SceneViewCoordinator{
 //MARK: SCENEVIEWCOORDINATOR PINCH
 extension SceneViewCoordinator{
     @objc func handlePinch(_ gestureRecognizer: UIPinchGestureRecognizer) {
-        guard let camera = camera else { return }
+        guard let camera = cameraNode?.camera else { return }
         let scale = gestureRecognizer.velocity
         switch gestureRecognizer.state {
         case .began:
@@ -269,7 +297,7 @@ struct SceneViewContainer: UIViewRepresentable {
     }
     
     static func dismantleUIView(_ sceneView: UIViewType, coordinator: Coordinator) {
-        //debugLog(object: "dismantleARView: \(arSCNView.debugDescription)")
+        //debugLog(object: "dismantleSceneView: \(sceneView.debugDescription)")
     }
     
     func makeCoordinator() -> Coordinator {
