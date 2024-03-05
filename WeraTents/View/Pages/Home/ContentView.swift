@@ -27,7 +27,7 @@ struct ContentView:View{
          .task{
             firestoreViewModel.loadTentAssetsFromLocal()
             //firestoreViewModel.loadTentAssetsFromServer()
-            //try? await Task.sleep(for: Duration.seconds(1.5))
+             //try? await Task.sleep(for: Duration.seconds(0.9 * Animate.ALL.rawValue))
             self.appStateViewModel.dismiss()
         }
     }

@@ -111,7 +111,7 @@ struct CapturedImages:View {
 extension CapturedImages{
     var background:some View{
         ZStack{
-            Color.black
+            Color.background
          }
         .vCenter()
         .hCenter()
@@ -119,7 +119,7 @@ extension CapturedImages{
     }
     
     var content:some View{
-        VStack(spacing:0){
+        VStack{
             topButtons
             itemsLoadedPage
        }
@@ -380,6 +380,7 @@ extension CapturedImages{
                 libraryLabel
                 editButton
             }
+            splitLine()
             settingsItemMenuList
         }
         
@@ -417,6 +418,7 @@ extension CapturedImages{
     var editTopBar:some View{
         VStack{
             editTopBarButtons
+            splitLine()
             editTopBarSection
         }
     }

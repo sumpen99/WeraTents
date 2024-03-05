@@ -158,7 +158,7 @@ extension Carousel{
     var currentlabel:some View{
         Text(validLabel)
         .font(.callout)
-        .foregroundStyle(Color.black .opacity(0.4))
+        .foregroundStyle(Color.background.opacity(0.4))
         .italic()
         .vCenter()
         .hCenter()

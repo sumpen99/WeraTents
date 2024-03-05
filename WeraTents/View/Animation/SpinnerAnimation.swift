@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct SpinnerAnimation: View {
-    
     @State private var isAnimating: Bool = false
+    var text:String? = nil
+    var textColor:Color = Color.white
     
     var animatedCircles:some View{
         GeometryReader { reader in
@@ -31,9 +32,22 @@ struct SpinnerAnimation: View {
     }
    
     var body: some View {
-        animatedCircles
+        ZStack{
+            animatedText
+            animatedCircles
+            
+        }
         .onAppear {
             self.isAnimating = true
+        }
+    }
+    
+    @ViewBuilder
+    var animatedText:some View{
+        if let text = text{
+            AnimatedTypingText(text: text,
+                               font: .caption,
+                               foreground: textColor)
         }
     }
     

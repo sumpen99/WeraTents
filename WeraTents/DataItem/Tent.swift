@@ -8,11 +8,12 @@
 import SwiftUI
 // FOR THE LOVE OF GOD DONT REMOVE IMPORT
 import FirebaseFirestoreSwift
-protocol CarouselItem:Identifiable{
+protocol CarouselItem:Identifiable,Hashable{
     var id:String { get }
     var index:Int { get }
     var img:Image { get }
     var name:String { get }
+    var shortDescription:String { get }
 }
 
 struct TentDimensions{
@@ -37,7 +38,7 @@ struct TentItem:CarouselItem{
     var img:Image
     var price:String?
     var productWeight:String?
-    var shortDescription:String?
+    var shortDescription:String
     var longDescription:String?
     var category:String?
     var label:String?
@@ -48,6 +49,14 @@ struct TentItem:CarouselItem{
     var iconStorageIds:[String]?
     var modelStoragesIds:[String]?
     var instructionVideoUrls:[String]?
+    
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: TentItem, rhs: TentItem) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
 struct TentDb:Codable{

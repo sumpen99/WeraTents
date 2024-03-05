@@ -16,6 +16,6 @@ struct BackButtonAction:View{
         Button(action:{ action?() }){
             buttonImage(imgLabel, font: TOP_BAR_FONT, foreground: color)
         }
-    }
+     }
       
 }

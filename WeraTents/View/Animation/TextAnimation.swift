@@ -64,31 +64,36 @@ struct AnimatedColorText:View {
 }
 
 struct AnimatedTypingText:View {
-    @Binding var text:String
-    @Binding var animation:Bool
+    let text:String
     let font:Font
     let foreground:Color
+    @State var animatedText:String = ""
  
     var body: some View {
-        Text(text)
-        .animation(.interpolatingSpring(stiffness: 350, damping: 90, initialVelocity: 10))
+        Text(animatedText)
+        //.animation(.interpolatingSpring(stiffness: 350, damping: 90, initialVelocity: 10))
+        .animation(.easeInOut(duration: 0.15))
         .font(font)
+        .bold()
         .foregroundStyle(foreground)
-        .onChange(of: animation){
+        .onAppear{
             animateText()
         }
     }
 
         func animateText() {
-            for (index, _) in text.enumerated() {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.15) {
-                    if text.count > 0{
-                        text.removeLast()
-                        //animatedText.append(character)
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            for (index, character) in text.enumerated() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.26) {
+                    animatedText.append(character)
+                     //UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    if index == text.count-1{
+                        withAnimation{
+                            animatedText = ""
+                            animateText()
+                        }
                     }
-                    
                 }
             }
+    
         }
 }
