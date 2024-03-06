@@ -32,20 +32,25 @@ class ServiceManager{
         }
     }
     
-    static func loadImageFromBundle(_ asset:String,
-                                    imageName:String,
-                                    completion: @escaping (UIImage?) -> Void){
+    static func loadImagesFromBundle(_ asset:String,
+                                    imageNames:[String],
+                                    completion: @escaping ([UIImage]) -> Void){
         
         DispatchQueue.global(qos: .background).async {
-            if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
-               let bundle = Bundle(path: bundlePath),
-               let resourcePath = bundle.path(forResource: imageName, ofType: "png"){
-                DispatchQueue.main.async { completion(UIImage(contentsOfFile: resourcePath)) }
+            var images:[UIImage] = []
+            for imageName in imageNames{
+                if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
+                   let bundle = Bundle(path: bundlePath),
+                   let resourcePath = bundle.path(forResource: imageName, ofType: "png"),
+                   let uiImage = UIImage(contentsOfFile: resourcePath){
+                    images.append(uiImage)
+                }
             }
+            DispatchQueue.main.async { completion(images) }
         }
     }
         
-    
+    /*
     static func loadImagesFromBundle(_ asset:String,
                                      imageNames:[String],
                                      completion: @escaping ((OperationResult?,[TentItem]?) -> Void)){
@@ -62,5 +67,5 @@ class ServiceManager{
             }
         }*/
         
-    }
+    }*/
 }

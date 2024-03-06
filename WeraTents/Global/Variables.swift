@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+let FETCH_LOCALLY:Bool              = true
 let PIXEL_TO_ANGLE:Float            = .pi / 180
 let MAX_ZOOM_LEVEL:CGFloat          = 10
 let MIN_ZOOM_LEVEL:CGFloat          = 1
@@ -21,6 +22,7 @@ let CORNER_RADIUS_MENU_BUTTON       = 18.0
 let CORNER_RADIUS_CAROUSEL          = 18.0
 let CORNER_RADIUS_MENU              = 35.0
 let MENU_HEIGHT                     = 75.0
+let SHEET_MENU_HEIGHT               = 55.0
 let HOME_CAROUSEL_HEIGHT            = 150.0
 let V_SPACING_REG                   = 10.0
 let V_GRID_SPACING                  = 20.0

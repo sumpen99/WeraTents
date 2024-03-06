@@ -59,8 +59,8 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     }
     
     func addGesturesToSCNView(_ scnView:SCNView){
-        //let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        //self.scnView?.addGestureRecognizer(tapGesture)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        scnView.addGestureRecognizer(tapGesture)
         
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         scnView.addGestureRecognizer(panGesture)
@@ -128,7 +128,11 @@ extension SceneViewCoordinator{
     @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {
         switch gestureRecognizer.state {
         case .ended:
-            debugLog(object: "Tap On tent or maybe, most probably, most definitely the whole view")
+            guard let scnView = self.scnView else { return }
+            let hits = scnView.hitTest(gestureRecognizer.location(in: scnView), options: nil)
+            if let _ = hits.first?.node {
+                toggleDimensionBox()
+            }
         default:
             break
         }

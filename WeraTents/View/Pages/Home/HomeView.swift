@@ -17,7 +17,7 @@ struct HomeView:View {
             .safeAreaInset(edge: .top){
                 topLabel
             }
-            .modifier(NavigationViewModifier(color:.black))
+            .modifier(NavigationViewModifier())
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
@@ -36,7 +36,7 @@ extension HomeView{
     
     var mainContent:some View{
         ZStack{
-            content
+             content
             shapedMenu
          }
     }
