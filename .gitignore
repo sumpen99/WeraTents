@@ -88,6 +88,7 @@ playground.xcworkspace
 **/sources.txt
 **/Bundle/
 **/Assets/
+**/BundleData/
 
 # CocoaPods
 # We recommend against adding the Pods directory to your .gitignore. However

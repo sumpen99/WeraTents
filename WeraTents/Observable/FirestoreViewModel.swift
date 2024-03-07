@@ -61,9 +61,9 @@ extension FirestoreViewModel{
             if let strongSelf = self,
                let data = data{
                 for tent in data{
-                    ServiceManager.loadImageFromBundle("Tent",
-                                                       imageName: tent.iconStorageIds?[0] ?? "no image please"){ uiImage in
-                        if let uiImage = uiImage{
+                    ServiceManager.loadImagesFromBundle("Tent",
+                                                       imageNames: [tent.iconStorageIds?[0] ?? ""]){ uiImages in
+                        if let uiImage = uiImages.first{
                             let count = strongSelf.tentAssets.count
                             strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
                         }
@@ -74,6 +74,22 @@ extension FirestoreViewModel{
             }
         }
     }
+    
+    func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
+        ServiceManager.loadImagesFromBundle("Tent",
+                                            imageNames: imageNames,
+                                            completion: completion)
+    }
+    
+    func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
+        for imageName in imageNames{
+            downloadTentIconImageFromStorage(tentId: imageName){ error,uiImage in
+                if let uiImage = uiImage{
+                    completion(uiImage)
+                }
+            }
+        }
+     }
     
     func loadTentAssetsFromServer(){
         let coll = repo.tentCollection()

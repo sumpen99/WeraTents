@@ -14,18 +14,23 @@ enum ModelSceneHeader:String{
 
 struct ModelHelper{
     var header:ModelSceneHeader = .MODEL_3D
-    var overlayImage:Bool = false
+    var toggleDimensionBox:Bool = false
+    var presentSheet:Bool = false
+    var iconImages:[UIImage] = []
+    var selectedImageIndex:Int = 0
     
-    mutating func toggleOverlayImage(){
-        withAnimation{
-            overlayImage.toggle()
+    func currentSelectedImage() -> UIImage?{
+        if 0 < iconImages.count && selectedImageIndex < iconImages.count{
+            return iconImages[selectedImageIndex]
         }
+        return nil
     }
 }
 
 struct ModelSceneView: View {
-    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @EnvironmentObject var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var firestoreViewModel: FirestoreViewModel
+    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @Namespace var animation
     @State var helper:ModelHelper = ModelHelper()
     let selectedTent:TentItem
@@ -36,54 +41,34 @@ struct ModelSceneView: View {
             
     var body: some View{
         backgroundContent
+        .sheet(isPresented: $helper.presentSheet) { sheetTentInfo }
         .ignoresSafeArea()
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
             mainContent
         }
-        .overlay{
-            if helper.overlayImage{
-                //imageUpScaled
-            }
-        }
-     
     }
 }
-
 
 //MARK: - MAIN CONTENT
 extension ModelSceneView{
     var backgroundContent:some View{
         ZStack{
             Color.background
+            bottomContainer
         }
         
     }
     
     var mainContent:some View{
-        ZStack{
-            VStack{
-                topContainer
-                currentShownHeader()
-            }
+        VStack(spacing:0){
+            topContainer
+            currentShownHeader()
+        }
+        .task{
+            loadImages()
         }
         .padding(.vertical)
-    }
-    
-    var imageUpScaled:some View{
-        ZStack{
-            Color.white
-            selectedTent.img
-            .resizable()
-        }
-        .vCenter()
-        .hCenter()
-        .transition(.opacity.combined(with: .scale))
-        .onTapGesture {
-            withAnimation{
-                helper.overlayImage.toggle()
-            }
-       }
     }
      
 }
@@ -107,36 +92,30 @@ extension ModelSceneView{
         
     func imageContainer(_ size:CGFloat) -> some View{
         VStack{
+            ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
             optionalImages
-            currentImage(size)
         }
-        .padding(.horizontal)
-    }
-    
-    func currentImage(_ size:CGFloat) -> some View{
-        ZStack{
-            selectedTent.img
-            .resizable()
-        }
-        .frame(width:size,height: size)
-        .onTapGesture {
-            withAnimation{
-                helper.overlayImage.toggle()
-            }
-        }
-    }
-    
+        .padding()
+     }
+  
     var optionalImages:some View{
         HStack{
-            selectedTent.img
-            .resizable()
-            .frame(width:50,height: 50)
-            .padding(2)
-            .background{
-                Rectangle().fill(Color.white)
+            ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
+                Image(uiImage: uiImage)
+                .resizable()
+                .frame(width:50,height: 50)
+                .padding(2)
+                .background{
+                    Rectangle().fill(helper.selectedImageIndex == index ? Color.white : Color.gray)
+                }
+                .onTapGesture {
+                    withAnimation{
+                        helper.selectedImageIndex = index
+                    }
+                }
             }
-            .hLeading()
-        }
+         }
+        .hLeading()
     }
 }
 
@@ -191,34 +170,8 @@ extension ModelSceneView{
 
 //MARK: - MODEL-SELECTION
 extension ModelSceneView{
-    
+   
     var tentBarContainerButtons:some View{
-        HStack{
-            tentBarHeaderSwitch
-            //modelButtons
-        }
-        .hLeading()
-    }
-    
-    @ViewBuilder
-    var modelButtons: some View{
-        if helper.header == .MODEL_3D{
-            HStack{
-                Button(action: toggleBorder){
-                    buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
-                }
-                .hTrailing()
-                Button(action: toggleBorder){
-                    buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
-                }
-                .hTrailing()
-            }
-            .hTrailing()
-        }
-        
-    }
-    
-    var tentBarHeaderSwitch:some View{
         HStack{
             labelHeaderCell(.MODEL_3D)
             labelHeaderCell(.MODEL_PICTURES)
@@ -227,6 +180,7 @@ extension ModelSceneView{
             Color.materialDark
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+        .hLeading()
     }
     
     func labelHeaderCell(_ header:ModelSceneHeader) -> some View{
@@ -257,17 +211,47 @@ extension ModelSceneView{
 //MARK: - BOTTOM SHEET
 extension ModelSceneView{
     var bottomContainer:some View{
-        VStack{
+        ZStack{
+            Color.white
+            Indicator(minDistance: 10.0,cornerRadius: 0,indicatorColor:Color.black){
+                helper.presentSheet.toggle()
+            }
         }
-        .hLeading()
-        .padding(.horizontal)
+        .frame(height: SHEET_MENU_HEIGHT)
+        .hCenter()
+        .vBottom()
+    }
+    
+    var sheetTentInfo:some View{
+        ZStack{
+            Color.white
+            Text("Detail")
+        }
+        .presentationDragIndicator(.visible)
     }
 }
 
 //MARK: - FUNCTIONS
 extension ModelSceneView{
-  
+    
+    func loadImages(){
+        if let iconStorageIds = selectedTent.iconStorageIds{
+            if FETCH_LOCALLY{
+                firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
+                helper.iconImages = uiImages
+                }
+            }
+            else{
+                firestoreViewModel.loadTentImagesFromServer(iconStorageIds){ uiImage in
+                    helper.iconImages.append(uiImage)
+                }
+            }
+            
+        }
+    }
+    
     func navigateBack(){
+        sceneViewCoordinator.destroy()
         navigationViewModel.popPath()
     }
     

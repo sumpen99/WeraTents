@@ -25,10 +25,9 @@ struct ContentView:View{
             }
         }
          .task{
-            firestoreViewModel.loadTentAssetsFromLocal()
-            //firestoreViewModel.loadTentAssetsFromServer()
-             //try? await Task.sleep(for: Duration.seconds(0.9 * Animate.ALL.rawValue))
-            self.appStateViewModel.dismiss()
+             if FETCH_LOCALLY{ firestoreViewModel.loadTentAssetsFromLocal() }
+             else{ firestoreViewModel.loadTentAssetsFromServer() }
+             self.appStateViewModel.dismiss()
         }
     }
 }
