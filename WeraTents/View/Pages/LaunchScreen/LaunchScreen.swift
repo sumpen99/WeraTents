@@ -18,8 +18,8 @@ enum Animate:Int{
 struct LaunchScreen:View {
     @EnvironmentObject var appStateViewModel:AppStateViewModel
     @State var animate:[Bool] = Array.init(repeating: false,count: Animate.ALL.rawValue)
+   
     @ViewBuilder
-    
     var label:some View{
        Text("©Weratents")
             .font(animate[Animate.SECOND.rawValue] ? .title2 :

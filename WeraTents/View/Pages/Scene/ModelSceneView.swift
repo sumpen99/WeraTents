@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-enum ModelSceneHeader:String{
-    case MODEL_3D       = "3D Model"
-    case MODEL_PICTURES = "Bilder"
+enum ModelDimensionHeader:String{
+    case GRID_ON       = "Grid På"
+    case GRID_OFF = "Grid Av"
 }
 
 struct ModelHelper{
-    var header:ModelSceneHeader = .MODEL_3D
-    var toggleDimensionBox:Bool = false
+    var header:ModelDimensionHeader = .GRID_ON
+    var toggleDimensionBox:Bool = true
     var presentSheet:Bool = false
     var iconImages:[UIImage] = []
     var selectedImageIndex:Int = 0
@@ -40,104 +40,77 @@ struct ModelSceneView: View {
     }
             
     var body: some View{
-        backgroundContent
+        mainContent
         .sheet(isPresented: $helper.presentSheet) { sheetTentInfo }
-        .ignoresSafeArea()
+        .ignoresSafeArea(.all)
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
-            mainContent
+            topContainer
         }
     }
 }
 
 //MARK: - MAIN CONTENT
 extension ModelSceneView{
-    var backgroundContent:some View{
+    var mainContent:some View{
         ZStack{
-            Color.background
+            Color.black
+            SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
             bottomContainer
         }
-        
-    }
-    
-    var mainContent:some View{
-        VStack(spacing:0){
-            topContainer
-            currentShownHeader()
-        }
+        .ignoresSafeArea(.all)
         .task{
-            loadImages()
-        }
-        .padding(.vertical)
-    }
-     
-}
-
-//MARK: - CONTENT CONTAINER
-extension ModelSceneView{
-    @ViewBuilder
-    func currentShownHeader() ->some View{
-        GeometryReader{ reader in
-            ZStack{
-                if helper.header == .MODEL_3D{
-                    SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
-                }
-                else{
-                    imageContainer(reader.min())
-                }
-            }
-            .transition(.move(edge: .leading))
-        }
+             loadImages()
+          }
     }
         
-    func imageContainer(_ size:CGFloat) -> some View{
-        VStack{
-            ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
-            optionalImages
-        }
-        .padding()
-     }
-  
-    var optionalImages:some View{
-        HStack{
-            ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
-                Image(uiImage: uiImage)
-                .resizable()
-                .frame(width:50,height: 50)
-                .padding(2)
-                .background{
-                    Rectangle().fill(helper.selectedImageIndex == index ? Color.white : Color.gray)
-                }
-                .onTapGesture {
-                    withAnimation{
-                        helper.selectedImageIndex = index
-                    }
-                }
-            }
-         }
-        .hLeading()
-    }
 }
 
-//MARK: - TOPBAR
+//MARK: - TOPCONTAINER
 extension ModelSceneView{
     var topContainer:some View{
-        VStack{
-            topButtons
-            splitLine()
-            tentBarContainerButtons
-        }
-        .hLeading()
-        .padding(.horizontal)
-    }
-    
-    var topButtons:some View{
         HStack{
             BackButtonAction(action: navigateBack)
-            selectedTentLabel
+            toggleGridButtons.hCenter()
             openInformationButton
         }
-        .hLeading()
+        .padding([.top,.horizontal])
+   }
+    
+    var toggleGridButtons:some View{
+        HStack{
+            labelHeaderCell(.GRID_ON)
+            labelHeaderCell(.GRID_OFF)
+        }
+        .background{
+            Color.materialDark
+        }
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+   }
+    
+    func labelHeaderCell(_ header:ModelDimensionHeader) -> some View{
+        return Text(header.rawValue)
+        .font(.headline)
+        .bold()
+        .frame(height: 33)
+        .foregroundStyle(header == helper.header ? Color.background : Color.materialDarkest )
+        .padding([.vertical],5)
+        .padding([.horizontal],10)
+        .background(
+             ZStack{
+                 if header == helper.header{
+                     RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
+                    .fill(Color.white)
+                    .matchedGeometryEffect(id: "CURRENTSCENEHEADER", in: animation)
+                 }
+             }
+        )
+       .onTapGesture {
+            withAnimation{
+                helper.header = header
+                sceneViewCoordinator.toggleDimensionBox()
+            }
+        }
     }
     
     var openInformationButton:some View{
@@ -159,75 +132,116 @@ extension ModelSceneView{
         })
       }
     
-    var selectedTentLabel:some View{
-        Text(selectedTent.name)
-        .foregroundStyle(Color.white)
-        .font(.body)
-        .bold()
-        .hCenter()
-     }
-}
-
-//MARK: - MODEL-SELECTION
-extension ModelSceneView{
-   
-    var tentBarContainerButtons:some View{
-        HStack{
-            labelHeaderCell(.MODEL_3D)
-            labelHeaderCell(.MODEL_PICTURES)
-        }
-        .background{
-            Color.materialDark
-        }
-        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-        .hLeading()
-    }
     
-    func labelHeaderCell(_ header:ModelSceneHeader) -> some View{
-        return Text(header.rawValue)
-        .font(.headline)
-        .bold()
-        .frame(height: 33)
-        .foregroundStyle(header == helper.header ? Color.background : Color.materialDarkest )
-        .padding([.vertical],5)
-        .padding([.horizontal],10)
-        .background(
-             ZStack{
-                 if header == helper.header{
-                     RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-                    .fill(Color.white)
-                    .matchedGeometryEffect(id: "CURRENTSCENEHEADER", in: animation)
-                 }
-             }
-        )
-        .onTapGesture {
-            withAnimation{
-                helper.header = header
-            }
-        }
-    }
 }
 
-//MARK: - BOTTOM SHEET
+//MARK: - BOTTOM CONTAINER
 extension ModelSceneView{
     var bottomContainer:some View{
         ZStack{
-            Color.white
-            Indicator(minDistance: 10.0,cornerRadius: 0,indicatorColor:Color.black){
+            Indicator(width:40,height:5.0,minDistance: 10.0,cornerRadius: 0,indicatorColor:Color(uiColor: .lightGray).opacity(0.8)){
                 helper.presentSheet.toggle()
             }
+            selectedTentLabel
         }
-        .frame(height: SHEET_MENU_HEIGHT)
+        .background{
+            Color.white
+        }
+        .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
         .hCenter()
         .vBottom()
     }
     
+    var selectedTentLabel:some View{
+        Text(selectedTent.name)
+        .frame(height: TIP_OF_SHEET)
+        .foregroundStyle(Color.materialDark)
+        .font(.headline)
+        .bold()
+        .hCenter()
+        .padding([.top,.bottom])
+     }
+    
+}
+
+//MARK: - SHEET CONTAINER
+extension ModelSceneView{
     var sheetTentInfo:some View{
-        ZStack{
-            Color.white
-            Text("Detail")
+        GeometryReader{ reader in
+            sheetScrollContent(reader.min())
         }
         .presentationDragIndicator(.visible)
+        .presentationDetents([.fraction(0.5), .large])
+    }
+    
+    func sheetScrollContent(_ size:CGFloat) -> some View{
+        ScrollView{
+           VStack{
+               ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
+               optionalImages
+               HStack{
+                   VStack{
+                       Text("Tillbehör").font(.headline).bold().hLeading()
+                       ForEach(selectedTent.equipment ?? [],id:\.self){ equipment in
+                           Text(String(BULLET + equipment)).font(.body).hLeading()
+                       }
+                   }
+                    VStack{
+                       Text("Information").font(.headline).bold().hLeading()
+                       ForEach(selectedTent.bareInMind ?? [],id:\.self){ bareInMind in
+                           Text(String(BULLET + bareInMind)).font(.body).hLeading()
+                       }
+                   }
+               }
+               VStack{
+                   Text("Kategori").font(.headline).bold().hLeading()
+                   Text(selectedTent.category ?? "").font(.body).hLeading()
+               }
+               VStack{
+                   Text("Märke").font(.headline).bold().hLeading()
+                   Text(selectedTent.label ?? "").font(.body).hLeading()
+               }
+               VStack{
+                   Text("Information:").font(.headline).bold().hLeading()
+                   Text(selectedTent.shortDescription).font(.body).hLeading()
+               }
+               VStack{
+                   Text("Pris:").font(.headline).bold().hLeading()
+                   Text(selectedTent.price ?? "").font(.body).hLeading()
+               }
+               VStack{
+                   Text("Produktvikt:").font(.headline).bold().hLeading()
+                   Text(selectedTent.productWeight ?? "").font(.body).hLeading()
+               }
+               VStack{
+                   Text("Beskrivning:").font(.headline).bold().hLeading()
+                   Text(selectedTent.longDescription ?? "").font(.body).hLeading()
+               }
+           }
+        }
+        .scrollIndicators(.hidden)
+    }
+   
+    var optionalImages:some View{
+        ScrollView(.horizontal){
+            HStack{
+                ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
+                    Image(uiImage: uiImage)
+                    .resizable()
+                    .frame(width:80,height: 80)
+                    .padding(2)
+                    .background{
+                        Rectangle().fill(helper.selectedImageIndex == index ? Color.lightGold : Color.white)
+                    }
+                   .onTapGesture {
+                        withAnimation{
+                            helper.selectedImageIndex = index
+                        }
+                    }
+                }
+             }
+        }
     }
 }
 
@@ -253,7 +267,7 @@ extension ModelSceneView{
     func navigateBack(){
         sceneViewCoordinator.destroy()
         navigationViewModel.popPath()
-    }
+     }
     
     func toggleBorder(){
         sceneViewCoordinator.toggleDimensionBox()

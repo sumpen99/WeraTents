@@ -53,7 +53,7 @@ extension UIView{
     
     static func changeUIAlertTintColor(){
         UIView.appearance(whenContainedInInstancesOf: [UIAlertController.self])
-            .tintColor = UIColor.blue
+        .tintColor = UIColor.blue
     }
 }
 

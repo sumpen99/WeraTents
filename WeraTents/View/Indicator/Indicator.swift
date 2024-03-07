@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct Indicator:View {
+    var width:CGFloat = 50.0
+    var height:CGFloat = 6.0
     var minDistance:CGFloat = 5.0
     var cornerRadius:CGFloat = CORNER_RADIUS_CAROUSEL
     var backgroundColor:Color = .white
@@ -26,10 +28,10 @@ struct Indicator:View {
             RoundedRectangle(cornerRadius: cornerRadius).fill(backgroundColor)
             Capsule()
             .fill(indicatorColor)
-            .frame(width:50.0,height: 6).vTop().padding()
-            .gesture(indicatorDragGesture)
+            .frame(width:width,height: height).vTop().padding()
         }
-        .frame(height: 25.0)
+        .frame(height: height*4.0)
+        .gesture(indicatorDragGesture)
         .vTop()
         .hCenter()
      }
