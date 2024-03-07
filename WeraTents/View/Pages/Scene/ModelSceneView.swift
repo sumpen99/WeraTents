@@ -66,15 +66,7 @@ extension ModelSceneView{
             currentShownHeader()
         }
         .task{
-            if let iconStorageIds = selectedTent.iconStorageIds{
-                if FETCH_LOCALLY{
-                    firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
-                    helper.iconImages = uiImages
-                }
-                }
-                else{ }
-                
-            }
+            loadImages()
         }
         .padding(.vertical)
     }
@@ -221,7 +213,7 @@ extension ModelSceneView{
     var bottomContainer:some View{
         ZStack{
             Color.white
-            Indicator(minDistance: 10.0,cornerRadius: 0){
+            Indicator(minDistance: 10.0,cornerRadius: 0,indicatorColor:Color.black){
                 helper.presentSheet.toggle()
             }
         }
@@ -241,8 +233,25 @@ extension ModelSceneView{
 
 //MARK: - FUNCTIONS
 extension ModelSceneView{
-  
+    
+    func loadImages(){
+        if let iconStorageIds = selectedTent.iconStorageIds{
+            if FETCH_LOCALLY{
+                firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
+                helper.iconImages = uiImages
+                }
+            }
+            else{
+                firestoreViewModel.loadTentImagesFromServer(iconStorageIds){ uiImage in
+                    helper.iconImages.append(uiImage)
+                }
+            }
+            
+        }
+    }
+    
     func navigateBack(){
+        sceneViewCoordinator.destroy()
         navigationViewModel.popPath()
     }
     

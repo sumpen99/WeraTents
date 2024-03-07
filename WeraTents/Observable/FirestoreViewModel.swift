@@ -81,6 +81,16 @@ extension FirestoreViewModel{
                                             completion: completion)
     }
     
+    func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
+        for imageName in imageNames{
+            downloadTentIconImageFromStorage(tentId: imageName){ error,uiImage in
+                if let uiImage = uiImage{
+                    completion(uiImage)
+                }
+            }
+        }
+     }
+    
     func loadTentAssetsFromServer(){
         let coll = repo.tentCollection()
         coll.getDocuments(){ [weak self] snapshot,error in

@@ -116,9 +116,6 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             self.scnView = scnView
             
         }
-        else{
-            debugLog(object: "nepp")
-        }
     }
     
 }
@@ -283,6 +280,14 @@ extension SceneViewCoordinator{
         previousPanPoint = nil
     }
     
+    func destroy(){
+        /*self.scnView?.scene?.rootNode.removeAllAnimations()
+        self.scnView?.scene?.rootNode.removeFromParentNode()
+        self.scnView?.scene = nil
+        self.scnView?.removeFromSuperview()
+        self.scnView = nil*/
+    }
+    
 }
 
 struct SceneViewContainer: UIViewRepresentable {
@@ -301,6 +306,7 @@ struct SceneViewContainer: UIViewRepresentable {
     }
     
     static func dismantleUIView(_ sceneView: UIViewType, coordinator: Coordinator) {
+        coordinator.destroy()
         //debugLog(object: "dismantleSceneView: \(sceneView.debugDescription)")
     }
     
