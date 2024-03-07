@@ -35,37 +35,16 @@ class ServiceManager{
     static func loadImagesFromBundle(_ asset:String,
                                     imageNames:[String],
                                     completion: @escaping ([UIImage]) -> Void){
-        
-        DispatchQueue.global(qos: .background).async {
-            var images:[UIImage] = []
-            for imageName in imageNames{
-                if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
-                   let bundle = Bundle(path: bundlePath),
-                   let resourcePath = bundle.path(forResource: imageName, ofType: "png"),
-                   let uiImage = UIImage(contentsOfFile: resourcePath){
-                    images.append(uiImage)
-                }
+        var images:[UIImage] = []
+        for imageName in imageNames{
+            if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
+               let bundle = Bundle(path: bundlePath),
+               let resourcePath = bundle.path(forResource: imageName, ofType: "png"),
+               let uiImage = UIImage(contentsOfFile: resourcePath){
+                images.append(uiImage)
             }
-            DispatchQueue.main.async { completion(images) }
         }
+        DispatchQueue.main.async { completion(images) }
     }
         
-    /*
-    static func loadImagesFromBundle(_ asset:String,
-                                     imageNames:[String],
-                                     completion: @escaping ((OperationResult?,[TentItem]?) -> Void)){
-        /*
-         let imageNames = ServiceManager.readAssetsFromBundle("Tent.bundle")
-         ServiceManager.loadImagesFromBundle("Tent", imageNames: imageNames){}
-         */
-        /*if let bundlePath = Bundle.main.path(forResource: asset, ofType: "bundle"),
-           let bundle = Bundle(path: bundlePath){
-            for name in imageNames{
-                 if let resourcePath = bundle.path(forResource: splitName[0], ofType: splitName[1]),
-                   let uiImage = UIImage(contentsOfFile: resourcePath){
-                }
-            }
-        }*/
-        
-    }*/
 }

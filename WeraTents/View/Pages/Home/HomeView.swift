@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-
 struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
@@ -25,6 +24,7 @@ struct HomeView:View {
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
+                case .ROUTE_HOME:               EmptyView()
                 }
             }
         }
@@ -36,7 +36,7 @@ extension HomeView{
     
     var mainContent:some View{
         ZStack{
-             content
+            content
             shapedMenu
          }
     }

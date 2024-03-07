@@ -281,11 +281,9 @@ extension SceneViewCoordinator{
     }
     
     func destroy(){
-        /*self.scnView?.scene?.rootNode.removeAllAnimations()
-        self.scnView?.scene?.rootNode.removeFromParentNode()
         self.scnView?.scene = nil
         self.scnView?.removeFromSuperview()
-        self.scnView = nil*/
+        self.scnView = nil
     }
     
 }
@@ -296,10 +294,11 @@ struct SceneViewContainer: UIViewRepresentable {
     typealias Coordinator = SceneViewCoordinator
     let sceneViewCoordinator:SceneViewCoordinator
     
+    
     func makeUIView(context: Context) -> UIViewType {
         let scnView = SCNView(frame:.zero)
         sceneViewCoordinator.setSceneView(scnView)
-       return scnView
+        return scnView
     }
   
     func updateUIView(_ uiView: UIViewType, context: Context){
@@ -313,6 +312,27 @@ struct SceneViewContainer: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         return sceneViewCoordinator
     }
+    
+    
+    /*
+     class Coordinator: NSObject, CheckoutDelegate {
+             var parent: CheckoutView
+             
+             init(_ checkoutView: CheckoutView) {
+                 parent = checkoutView
+             }
+             
+             func checkoutDidFail(error: CheckoutError) {
+             }
+             
+             func checkoutDidComplete() {
+             }
+             
+             func checkoutDidCancel() {
+             }
+         }
+     
+     */
     
     
 }

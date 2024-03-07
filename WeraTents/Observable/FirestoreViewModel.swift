@@ -77,8 +77,10 @@ extension FirestoreViewModel{
     
     func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
         ServiceManager.loadImagesFromBundle("Tent",
-                                            imageNames: imageNames,
-                                            completion: completion)
+                                            imageNames: imageNames){ images in
+            DispatchQueue.main.async { completion(images) }
+        }
+                                            
     }
     
     func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
@@ -182,3 +184,4 @@ extension FirestoreViewModel{
         tentAssets.count > 0
     }
 }
+
