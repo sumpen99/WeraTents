@@ -132,9 +132,6 @@ extension FirestoreViewModel{
             onResult?(nil,data)
        }
     }
-    
-    
-    
 }
 
 //MARK: - FIRESTORE VIEWMODEL UPLOAD DATA
