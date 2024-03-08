@@ -41,6 +41,7 @@ struct TentItem:CarouselItem{
     var shortDescription:String
     var longDescription:String?
     var category:String?
+    var webpage:String?
     var label:String?
     var equipment:[String]?
     var bareInMind:[String]?
@@ -68,6 +69,7 @@ struct TentDb:Codable{
     var shortDescription:String?
     var longDescription:String?
     var category:String?
+    var webpage:String?
     var label:String?
     var equipment:[String]?
     var bareInMind:[String]?
@@ -87,6 +89,7 @@ struct TentDb:Codable{
                         shortDescription:self.shortDescription ?? "",
                         longDescription:self.longDescription ?? "",
                         category:self.category ?? "",
+                        webpage:self.webpage ?? "",
                         label:self.label ?? "",
                         equipment:self.equipment ?? [],
                         bareInMind:self.bareInMind ?? [],

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-
 struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
@@ -17,7 +16,7 @@ struct HomeView:View {
             .safeAreaInset(edge: .top){
                 topLabel
             }
-            .modifier(NavigationViewModifier(color:.black))
+            .modifier(NavigationViewModifier())
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
@@ -25,6 +24,7 @@ struct HomeView:View {
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
+                case .ROUTE_HOME:               EmptyView()
                 }
             }
         }

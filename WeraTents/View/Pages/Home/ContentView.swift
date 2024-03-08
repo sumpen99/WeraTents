@@ -15,20 +15,20 @@ struct ContentView:View{
         self._firestoreViewModel = StateObject(wrappedValue: FirestoreViewModel())
         self._navigationViewModel = StateObject(wrappedValue: NavigationViewModel())
     }
+    
     var body:some View{
         ZStack{
-            if appStateViewModel.launchState == .FINISHED {
+             if appStateViewModel.launchState == .FINISHED {
                 HomeView()
                 .toast(isShowing: $appStateViewModel.showToast)
                 .environmentObject(firestoreViewModel)
                 .environmentObject(navigationViewModel)
             }
         }
-         .task{
-            firestoreViewModel.loadTentAssetsFromLocal()
-            //firestoreViewModel.loadTentAssetsFromServer()
-             //try? await Task.sleep(for: Duration.seconds(0.9 * Animate.ALL.rawValue))
-            self.appStateViewModel.dismiss()
+        .task{
+             if FETCH_LOCALLY{ firestoreViewModel.loadTentAssetsFromLocal() }
+             else{ firestoreViewModel.loadTentAssetsFromServer() }
+             self.appStateViewModel.dismiss()
         }
     }
 }

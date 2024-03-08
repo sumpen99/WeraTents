@@ -7,25 +7,49 @@
 
 import SwiftUI
 
-enum ModelSceneHeader:String{
-    case MODEL_3D       = "3D Model"
-    case MODEL_PICTURES = "Bilder"
+enum ModelDimensionHeader:String{
+    case GRID_ON        = "Grid På"
+    case GRID_OFF       = "Grid Av"
+}
+
+enum ButtonSelection:String{
+    case DESCRIPTION = "Beskrivning"
+    case EQUIPMENT = "Medföljande utrustning"
+    case BARE_IN_MIND = "Tänk på att"
+}
+
+enum HeaderSelection:String{
+    case PRICE = "Pris"
+    case BRAND = "Märke"
+    case MANUFACTURER = "Tillverkare"
+    case PRODUCT_WEIGHT = "Produktvikt"
+    case ARTICLE_NUMBER = "Artikelnummer"
 }
 
 struct ModelHelper{
-    var header:ModelSceneHeader = .MODEL_3D
-    var overlayImage:Bool = false
+    let buttons:[ButtonSelection] = [.DESCRIPTION,.EQUIPMENT,.BARE_IN_MIND]
+    let headers:[HeaderSelection] = [.PRICE,.BRAND,.MANUFACTURER,.PRODUCT_WEIGHT,.ARTICLE_NUMBER]
+    var buttonSelection:ButtonSelection? = .DESCRIPTION
+    var header:ModelDimensionHeader = .GRID_ON
+    var toggleDimensionBox:Bool = true
+    var presentSheet:Bool = false
+    var iconImages:[UIImage] = []
+    var selectedImageIndex:Int = 0
+    var selectedButtonIndex:Int = 0
+    var showTentLabel:Bool = true
     
-    mutating func toggleOverlayImage(){
-        withAnimation{
-            overlayImage.toggle()
+    func currentSelectedImage() -> UIImage?{
+        if 0 < iconImages.count && selectedImageIndex < iconImages.count{
+            return iconImages[selectedImageIndex]
         }
+        return nil
     }
 }
 
 struct ModelSceneView: View {
-    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @EnvironmentObject var navigationViewModel: NavigationViewModel
+    @EnvironmentObject var firestoreViewModel: FirestoreViewModel
+    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @Namespace var animation
     @State var helper:ModelHelper = ModelHelper()
     let selectedTent:TentItem
@@ -35,201 +59,55 @@ struct ModelSceneView: View {
     }
             
     var body: some View{
-        backgroundContent
-        .ignoresSafeArea()
+        mainContent
+        .sheet(isPresented: $helper.presentSheet) { sheetTentInfo }
+        .ignoresSafeArea(.all)
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
-            mainContent
+            topContainer
         }
-        .overlay{
-            if helper.overlayImage{
-                //imageUpScaled
-            }
-        }
-     
     }
 }
-
 
 //MARK: - MAIN CONTENT
 extension ModelSceneView{
-    var backgroundContent:some View{
-        ZStack{
-            Color.background
-        }
-        
-    }
-    
     var mainContent:some View{
         ZStack{
-            VStack{
-                topContainer
-                currentShownHeader()
-            }
+            Color.black
+            SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
+            bottomContainer
         }
-        .padding(.vertical)
-    }
-    
-    var imageUpScaled:some View{
-        ZStack{
-            Color.white
-            selectedTent.img
-            .resizable()
-        }
-        .vCenter()
-        .hCenter()
-        .transition(.opacity.combined(with: .scale))
-        .onTapGesture {
-            withAnimation{
-                helper.overlayImage.toggle()
-            }
-       }
-    }
-     
-}
-
-//MARK: - CONTENT CONTAINER
-extension ModelSceneView{
-    @ViewBuilder
-    func currentShownHeader() ->some View{
-        GeometryReader{ reader in
-            ZStack{
-                if helper.header == .MODEL_3D{
-                    SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
-                }
-                else{
-                    imageContainer(reader.min())
-                }
-            }
-            .transition(.move(edge: .leading))
-        }
+        .ignoresSafeArea(.all)
+        .task{
+             loadImages()
+          }
     }
         
-    func imageContainer(_ size:CGFloat) -> some View{
-        VStack{
-            optionalImages
-            currentImage(size)
-        }
-        .padding(.horizontal)
-    }
-    
-    func currentImage(_ size:CGFloat) -> some View{
-        ZStack{
-            selectedTent.img
-            .resizable()
-        }
-        .frame(width:size,height: size)
-        .onTapGesture {
-            withAnimation{
-                helper.overlayImage.toggle()
-            }
-        }
-    }
-    
-    var optionalImages:some View{
-        HStack{
-            selectedTent.img
-            .resizable()
-            .frame(width:50,height: 50)
-            .padding(2)
-            .background{
-                Rectangle().fill(Color.white)
-            }
-            .hLeading()
-        }
-    }
 }
 
-//MARK: - TOPBAR
+//MARK: - TOPCONTAINER
 extension ModelSceneView{
     var topContainer:some View{
-        VStack{
-            topButtons
-            splitLine()
-            tentBarContainerButtons
-        }
-        .hLeading()
-        .padding(.horizontal)
-    }
-    
-    var topButtons:some View{
         HStack{
             BackButtonAction(action: navigateBack)
-            selectedTentLabel
+            toggleGridButtons.hCenter()
             openInformationButton
         }
-        .hLeading()
-    }
+        .padding([.top,.horizontal])
+   }
     
-    var openInformationButton:some View{
-        Menu(content:{
-            Button(action: { } ){
-                Label("Document", systemImage: "doc")
-            }.padding()
-            Button(action: { } ){
-                Label("Document", systemImage: "doc")
-            }.padding()
-            Button(action: { } ){
-                Label("Document", systemImage: "doc")
-            }.padding()
-            Button(action: { } ){
-                Label("Document", systemImage: "doc")
-            }.padding()
-        },label: {
-            buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
-        })
-      }
-    
-    var selectedTentLabel:some View{
-        Text(selectedTent.name)
-        .foregroundStyle(Color.white)
-        .font(.body)
-        .bold()
-        .hCenter()
-     }
-}
-
-//MARK: - MODEL-SELECTION
-extension ModelSceneView{
-    
-    var tentBarContainerButtons:some View{
+    var toggleGridButtons:some View{
         HStack{
-            tentBarHeaderSwitch
-            //modelButtons
-        }
-        .hLeading()
-    }
-    
-    @ViewBuilder
-    var modelButtons: some View{
-        if helper.header == .MODEL_3D{
-            HStack{
-                Button(action: toggleBorder){
-                    buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
-                }
-                .hTrailing()
-                Button(action: toggleBorder){
-                    buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
-                }
-                .hTrailing()
-            }
-            .hTrailing()
-        }
-        
-    }
-    
-    var tentBarHeaderSwitch:some View{
-        HStack{
-            labelHeaderCell(.MODEL_3D)
-            labelHeaderCell(.MODEL_PICTURES)
+            gridHeaderCell(.GRID_ON)
+            gridHeaderCell(.GRID_OFF)
         }
         .background{
             Color.materialDark
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-    }
+   }
     
-    func labelHeaderCell(_ header:ModelSceneHeader) -> some View{
+    func gridHeaderCell(_ header:ModelDimensionHeader) -> some View{
         return Text(header.rawValue)
         .font(.headline)
         .bold()
@@ -246,30 +124,241 @@ extension ModelSceneView{
                  }
              }
         )
-        .onTapGesture {
+       .onTapGesture {
             withAnimation{
                 helper.header = header
+                sceneViewCoordinator.toggleDimensionBox()
             }
         }
     }
+    
+    var openInformationButton:some View{
+        Menu(content:{
+            UrlLabelButton(label: "Se mer på hemsidan",
+                           image: "network", 
+                           toVisit: selectedTent.webpage)
+            Button(action: { } ){
+                Label("Instruktionsfilmer", systemImage: "play.tv")
+            }.padding()
+          
+        },label: {
+            buttonImage("info.circle",font: TOP_BAR_FONT,foreground: Color.white)
+        })
+      }
+    
+    
 }
 
-//MARK: - BOTTOM SHEET
+//MARK: - BOTTOM CONTAINER
 extension ModelSceneView{
     var bottomContainer:some View{
-        VStack{
+        ZStack{
+            Indicator(width:40,
+                      height:5.0,
+                      minDistance: 10.0,
+                      cornerRadius: 0,
+                      backgroundColor: Color.white,
+                      indicatorColor:Color(uiColor: .lightGray).opacity(0.8)){
+                helper.presentSheet.toggle()
+            }
+            selectedTentLabel
         }
-        .hLeading()
-        .padding(.horizontal)
+        .background{
+            Color.white
+        }
+        .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
+        .hCenter()
+        .vBottom()
     }
+    
+    var selectedTentLabel:some View{
+        Text(selectedTent.name)
+        .frame(height: TIP_OF_SHEET)
+        .foregroundStyle(Color.materialDark)
+        .font(.title3)
+        .bold()
+        .padding([.top,.bottom])
+     }
+    
+    @ViewBuilder
+    var selectedTentLabelAnimated:some View{
+        if helper.showTentLabel {
+            selectedTentLabel
+            .onAppear{
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3){
+                    withAnimation{
+                        helper.showTentLabel = false
+                    }
+                }
+            }
+           
+        }
+        
+     }
+    
+}
+
+//MARK: - SHEET CONTAINER
+extension ModelSceneView{
+    var sheetTentInfo:some View{
+        GeometryReader{ reader in
+            sheetScrollContent(reader.min())
+        }
+        .presentationDragIndicator(.visible)
+        .presentationDetents([.fraction(0.5), .large])
+        .onDisappear{
+            withAnimation{
+                helper.showTentLabel = true
+            }
+        }
+    }
+    
+    func sheetScrollContent(_ size:CGFloat) -> some View{
+        ScrollView{
+           VStack{
+               selectedTentLabelAnimated
+               ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
+               optionalImages(size:max(50,size/5))
+               VStack{
+                   tentLabelSection
+                   buttonSection(size)
+                   buttonValue
+               }
+               .padding()
+           }
+        }
+        .scrollIndicators(.hidden)
+    }
+   
+    func optionalImages(size:CGFloat) -> some View{
+        LazyVGrid(columns:[GridItem(),GridItem(),GridItem(),GridItem()],
+                   spacing: 10,
+                   pinnedViews: [.sectionHeaders]){
+            ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
+                Image(uiImage: uiImage)
+                .resizable()
+                .frame(width:size,height: size)
+                .padding(2)
+                .background{
+                    Rectangle().fill(helper.selectedImageIndex == index ? Color.lightGold : Color.white)
+                }
+               .onTapGesture {
+                    withAnimation{
+                        helper.selectedImageIndex = index
+                    }
+                }
+            }
+         }
+    }
+    
+    var tentLabelSection:some View{
+        SectionFoldableHeavy(header: selectedTentLabel,
+                             content:headerSection,
+                             backgroundColor: Color.lightGold.opacity(0.2))
+        .hLeading()
+    }
+    
+    func buttonSection(_ size:CGFloat) -> some View{
+        HStack{
+            ForEach(helper.buttons,id:\.self){ label in
+                ExpandableButton(buttonSelection:$helper.buttonSelection,label:label,width:size/3.5){
+                    withAnimation{
+                        helper.buttonSelection = helper.buttonSelection == label ? nil : label
+                    }
+                }
+            }
+        }
+        .padding(.top)
+    }
+   
+    var headerSection:some View{
+        HeaderContent(content: VStack{
+            ForEach(helper.headers,id:\.self){ header in
+                switch header{
+                case .PRICE: headerValue(header.rawValue, value: selectedTent.price)
+                case .BRAND: headerValue(header.rawValue, value: selectedTent.label)
+                case .MANUFACTURER: headerValue(header.rawValue, value: selectedTent.manufacturer)
+                case .PRODUCT_WEIGHT: headerValue(header.rawValue, value: selectedTent.productWeight)
+                case .ARTICLE_NUMBER: headerValue(header.rawValue, value: selectedTent.articleNumber)
+                }
+                    
+            }
+        })
+    }
+    
+    @ViewBuilder
+    func headerValue(_ header:String,value:String?) ->some View{
+        if let value = value{
+            HStack{
+                Text(header).font(.body).bold().hLeading()
+                Text(value).font(.callout).hLeading()
+            }
+        }
+        
+    }
+    
+    @ViewBuilder
+    var buttonValue:some View{
+        if let buttonSelection = helper.buttonSelection{
+            switch buttonSelection{
+            case .DESCRIPTION:
+                HeaderContent(content: 
+                    Text(selectedTent.longDescription ?? "").font(.body).hLeading()
+                )
+            case .EQUIPMENT:
+                HeaderContent(content:
+                    VStack(spacing:V_SPACING_REG){
+                        ForEach(selectedTent.equipment ?? [],id:\.self){ equipment in
+                            Text(String(BULLET + equipment)).font(.body).hLeading()
+                        }
+                    }
+                )
+            case .BARE_IN_MIND:
+                HeaderContent(content:
+                        VStack(spacing:V_SPACING_REG){
+                        if let bareInMind = selectedTent.bareInMind{
+                            ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
+                                if index == 0{
+                                    Text(value).font(.headline).bold().hLeading()
+                                }
+                                else{
+                                    Text(String(BULLET + value)).font(.body).hLeading()
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+        }
+        
+    }
+   
 }
 
 //MARK: - FUNCTIONS
 extension ModelSceneView{
-  
-    func navigateBack(){
-        navigationViewModel.popPath()
+    
+    func loadImages(){
+        if let iconStorageIds = selectedTent.iconStorageIds{
+            if FETCH_LOCALLY{
+                firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
+                helper.iconImages = uiImages
+                }
+            }
+            else{
+                firestoreViewModel.loadTentImagesFromServer(iconStorageIds){ uiImage in
+                    helper.iconImages.append(uiImage)
+                }
+            }
+            
+        }
     }
+    
+    func navigateBack(){
+        sceneViewCoordinator.destroy()
+        navigationViewModel.popPath()
+     }
     
     func toggleBorder(){
         sceneViewCoordinator.toggleDimensionBox()

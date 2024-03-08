@@ -8,6 +8,7 @@
 import SwiftUI
 
 enum ModelRoute: Identifiable{
+    case ROUTE_HOME
     case ROUTE_AR
     case ROUTE_CAPTURED_IMAGES
     
@@ -18,33 +19,16 @@ enum ModelRoute: Identifiable{
 }
 
 class NavigationViewModel: ObservableObject{
-    //@Published var selectedTab:MainTabItem = .HOME
     @Published var pathTo:NavigationPath = NavigationPath()
     var notEmptyPath:Bool{ pathTo.count > 0 }
     
-    /*func navTo(_ tab:MainTabItem){
-        if(isActive(tab)){NavigationUtil.popToRootView()}
-        else{nav(tab)}
-    }
-    
-    private func nav(_ tab:MainTabItem){
-        DispatchQueue.main.async {
-            self.clearPath()
-            self.selectedTab = tab
-        }
-    }
-    
-    func isActive(_ tab:MainTabItem) -> Bool{
-        return selectedTab == tab
-    }*/
-    
     func switchPathToRoute<T:Hashable>(_ route:T){
-        clearPath()
-        pathTo.append(route)
+        self.clearPath()
+        self.pathTo.append(route)
     }
     
     func appendToPathWith<T:Hashable>(_ t:T){
-        pathTo.append(t)
+        self.pathTo.append(t)
     }
     
     func clearPath(){

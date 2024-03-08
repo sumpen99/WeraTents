@@ -24,3 +24,21 @@ struct UrlButton:View {
         .buttonStyle(.borderedProminent)
     }
 }
+
+struct UrlLabelButton:View {
+    @Environment(\.openURL) var openURL
+    let label:String
+    let image:String
+    let toVisit:String?
+    var body: some View {
+        Button(action: {
+            if let toVisit = toVisit,
+                let url = URL(string: toVisit){
+                openURL(url)
+            }
+        }, label: {
+           Label(label, systemImage: image)
+        })
+        .padding()
+    }
+}

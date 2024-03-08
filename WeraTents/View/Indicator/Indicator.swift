@@ -8,12 +8,15 @@
 import SwiftUI
 
 struct Indicator:View {
-    let cornerRadius:CGFloat
+    var width:CGFloat = 50.0
+    var height:CGFloat = 6.0
+    var minDistance:CGFloat = 5.0
+    var cornerRadius:CGFloat = CORNER_RADIUS_CAROUSEL
     var backgroundColor:Color = .white
     var indicatorColor:Color = .darkGreen
     let onDragFinnished: (() -> Void)?
     var indicatorDragGesture: some Gesture {
-        DragGesture(minimumDistance: 5.0).onChanged{ value in
+        DragGesture(minimumDistance: minDistance).onChanged{ value in
             withAnimation{
                 onDragFinnished?()
            }
@@ -25,15 +28,15 @@ struct Indicator:View {
             RoundedRectangle(cornerRadius: cornerRadius).fill(backgroundColor)
             Capsule()
             .fill(indicatorColor)
-            .frame(width:50.0,height: 6).vTop().padding()
+            .frame(width:width,height: height).vTop().padding()
         }
-        .frame(height: 25.0)
+        .frame(height: height*4.0)
+        .gesture(indicatorDragGesture)
         .vTop()
         .hCenter()
      }
     
     var body: some View {
         content
-        .gesture(indicatorDragGesture)
     }
 }

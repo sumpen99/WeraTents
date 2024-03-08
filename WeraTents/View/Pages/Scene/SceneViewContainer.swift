@@ -59,8 +59,8 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     }
     
     func addGesturesToSCNView(_ scnView:SCNView){
-        //let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        //self.scnView?.addGestureRecognizer(tapGesture)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        scnView.addGestureRecognizer(tapGesture)
         
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         scnView.addGestureRecognizer(panGesture)
@@ -116,9 +116,6 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             self.scnView = scnView
             
         }
-        else{
-            debugLog(object: "nepp")
-        }
     }
     
 }
@@ -128,7 +125,11 @@ extension SceneViewCoordinator{
     @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {
         switch gestureRecognizer.state {
         case .ended:
-            debugLog(object: "Tap On tent or maybe, most probably, most definitely the whole view")
+            guard let scnView = self.scnView else { return }
+            let hits = scnView.hitTest(gestureRecognizer.location(in: scnView), options: nil)
+            if let _ = hits.first?.node {
+                toggleDimensionBox()
+            }
         default:
             break
         }
@@ -279,6 +280,12 @@ extension SceneViewCoordinator{
         previousPanPoint = nil
     }
     
+    func destroy(){
+        self.scnView?.scene = nil
+        self.scnView?.removeFromSuperview()
+        self.scnView = nil
+    }
+    
 }
 
 struct SceneViewContainer: UIViewRepresentable {
@@ -287,22 +294,45 @@ struct SceneViewContainer: UIViewRepresentable {
     typealias Coordinator = SceneViewCoordinator
     let sceneViewCoordinator:SceneViewCoordinator
     
+    
     func makeUIView(context: Context) -> UIViewType {
         let scnView = SCNView(frame:.zero)
         sceneViewCoordinator.setSceneView(scnView)
-       return scnView
+        return scnView
     }
   
     func updateUIView(_ uiView: UIViewType, context: Context){
     }
     
     static func dismantleUIView(_ sceneView: UIViewType, coordinator: Coordinator) {
+        coordinator.destroy()
         //debugLog(object: "dismantleSceneView: \(sceneView.debugDescription)")
     }
     
     func makeCoordinator() -> Coordinator {
         return sceneViewCoordinator
     }
+    
+    
+    /*
+     class Coordinator: NSObject, CheckoutDelegate {
+             var parent: CheckoutView
+             
+             init(_ checkoutView: CheckoutView) {
+                 parent = checkoutView
+             }
+             
+             func checkoutDidFail(error: CheckoutError) {
+             }
+             
+             func checkoutDidComplete() {
+             }
+             
+             func checkoutDidCancel() {
+             }
+         }
+     
+     */
     
     
 }
