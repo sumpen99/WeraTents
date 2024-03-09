@@ -16,6 +16,32 @@ protocol CarouselItem:Identifiable,Hashable{
     var shortDescription:String { get }
 }
 
+struct VideoItem:Identifiable,Hashable{
+    let id:String
+    let videoUrl:String
+    let title:String
+    
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: VideoItem, rhs: VideoItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+struct VideoResourcesItem:Hashable{
+    let id:String
+    let listOfVideoItems:[VideoItem]
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: VideoResourcesItem, rhs: VideoResourcesItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
 struct TentDimensions{
     let width:Float
     let height:Float

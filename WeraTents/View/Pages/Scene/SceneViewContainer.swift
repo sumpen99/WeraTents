@@ -73,16 +73,18 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     }
     
     func loadTentModel() ->SCNNode?{
-        if let url = Bundle.main.url(forResource: "Assets/tent-2-man-tent", withExtension: "usdz") {
-            let ass = MDLAsset(url: url)
-            ass.loadTextures()
-            let tentNode = SCNNode(mdlObject: ass.object(at: 0))
-            tentNode.name = "TentNode"
+       if let url = Bundle.main.url(forResource: "Assets/tent-2-man-tent", withExtension: "usdz") {
+           let tentNode = SCNReferenceNode(url: url)
+           tentNode?.load()
+            //let ass = MDLAsset(url: url)
+            //ass.loadTextures()
+            //let tentNode = SCNNode(mdlObject: ass.object(at: 0))
+            tentNode?.name = "TentNode"
             return tentNode
         }
         return nil
     }
-    
+     
     func setSceneView(_ scnView:SCNView){
         if let tentModel = loadTentModel() {
             let scene = SCNScene()
@@ -114,7 +116,6 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             scnView.delegate = self
             addGesturesToSCNView(scnView)
             self.scnView = scnView
-            
         }
     }
     
@@ -302,6 +303,7 @@ struct SceneViewContainer: UIViewRepresentable {
     }
   
     func updateUIView(_ uiView: UIViewType, context: Context){
+        
     }
     
     static func dismantleUIView(_ sceneView: UIViewType, coordinator: Coordinator) {

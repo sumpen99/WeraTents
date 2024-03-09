@@ -60,10 +60,10 @@ extension View{
     
 }
 
-func splitLine(color clr:Color = Color.white) -> some View{
+func splitLine(color clr:Color = Color.white,height:CGFloat = 1.0) -> some View{
     Rectangle()
     .fill(clr)
-    .frame(height: 1.0)
+    .frame(height: height)
     .hCenter()
 }
 

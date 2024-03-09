@@ -13,6 +13,7 @@ struct WeraTentsApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @Environment(\.scenePhase) private var phase
     let persistenceController = PersistenceController.shared
+   
     var body: some Scene {
         StyledWindowGroup {
             ZStack{
@@ -39,3 +40,15 @@ struct WeraTentsApp: App {
         }
     }
 }
+
+/*
+//MARK: - TBB Global TLS count is not == 1, instead it is: 2 När vi laddar in usdz filen
+@main
+struct WeraTentsApp: App {
+    var body: some Scene {
+        WindowGroup{
+             ModelSceneTestView()
+        }
+    }
+}
+*/
