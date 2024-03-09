@@ -20,12 +20,14 @@ struct HomeView:View {
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
+            .navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
+                YoutubeView(videoResourcesItem: videoResourcesItem)
+            }
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
-                case .ROUTE_HOME:               EmptyView()
-                }
+                 }
             }
         }
     }
