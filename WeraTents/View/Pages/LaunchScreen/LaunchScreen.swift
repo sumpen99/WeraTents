@@ -22,13 +22,14 @@ struct LaunchScreen:View {
     @ViewBuilder
     var label:some View{
        Text("©Weratents")
-            .font(animate[Animate.SECOND.rawValue] ? .title2 :
-                  animate[Animate.THIRD.rawValue] ? .headline :
-                  .largeTitle)
+        .font(animate[Animate.SECOND.rawValue] ? .title2 :
+              animate[Animate.THIRD.rawValue] ? .headline :
+              .largeTitle)
         .foregroundStyle(Color.white)
-        .opacity(animate[Animate.THIRD.rawValue] ? 0.7 : 1)
-        .rotation3DEffect(.degrees(animate[Animate.SECOND.rawValue] ? 45.0 : 0),
-                          axis: (x:1.0,y:0.0,z:0.0))
+        //.animation(.linear(duration: 0.25),value: animate[Animate.FIRST.rawValue])
+        .opacity(animate[Animate.FIRST.rawValue] ? 0 : 1)
+        /*.rotation3DEffect(.degrees(animate[Animate.SECOND.rawValue] ? 45.0 : 0),
+                          axis: (x:1.0,y:0.0,z:0.0))*/
         .vBottom()
         .hCenter()
     }

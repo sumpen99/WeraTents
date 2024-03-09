@@ -56,7 +56,35 @@ class FirestoreViewModel:ObservableObject{
 
 //MARK: - FIRESTORE VIEWMODEL LOAD DATA
 extension FirestoreViewModel{
-    func loadTentAssetsFromLocal(){
+    
+    func loadTentAssets(){
+        if FETCH_LOCALLY{ loadTentAssetsFromLocal() }
+        else{ loadTentAssetsFromServer() }
+    }
+    
+    func loadTentModelData(_ fileName:String,completion: @escaping (URL?) -> Void){
+        if FETCH_LOCALLY{
+            DispatchQueue.global(qos: .background).async {
+                let url = Bundle.main.url(forResource: "Assets/\(fileName)", withExtension: "usdz")
+                completion(url)
+            }
+        }
+        else{
+            downloadTentModelFromStorage(tentId: fileName){ (error,data) in
+                if let data = data{
+                    ServiceManager.writeDataToTemporary(data, fileName: fileName, ext: "usdz"){ url in
+                        completion(url)
+                    }
+                }
+                else if let error = error{
+                    debugLog(object: error.localizedDescription)
+                }
+                completion(nil)
+            }
+        }
+    }
+    
+    private func loadTentAssetsFromLocal(){
         ServiceManager.readJsonFromBundleFile("data.json",value: TentDb.self){ [weak self] data in
             if let strongSelf = self,
                let data = data{
@@ -74,26 +102,8 @@ extension FirestoreViewModel{
             }
         }
     }
-    
-    func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
-        ServiceManager.loadImagesFromBundle("Tent",
-                                            imageNames: imageNames){ images in
-            DispatchQueue.main.async { completion(images) }
-        }
-                                            
-    }
-    
-    func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
-        for imageName in imageNames{
-            downloadTentIconImageFromStorage(tentId: imageName){ error,uiImage in
-                if let uiImage = uiImage{
-                    completion(uiImage)
-                }
-            }
-        }
-     }
-    
-    func loadTentAssetsFromServer(){
+     
+    private func loadTentAssetsFromServer(){
         let coll = repo.tentCollection()
         coll.getDocuments(){ [weak self] snapshot,error in
             guard let strongSelf = self,
@@ -111,7 +121,32 @@ extension FirestoreViewModel{
             }
         }
     }
-    
+        
+}
+
+//MARK: - FIRESTORE VIEWMODEL LOAD IMAGES
+extension FirestoreViewModel{
+    func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
+        ServiceManager.loadImagesFromBundle("Tent",
+                                            imageNames: imageNames){ images in
+            DispatchQueue.main.async { completion(images) }
+        }
+                                            
+    }
+  
+    func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
+        for imageName in imageNames{
+            downloadTentIconImageFromStorage(tentId: imageName){ error,uiImage in
+                if let uiImage = uiImage{
+                    completion(uiImage)
+                }
+            }
+        }
+     }
+}
+
+//MARK: - FIRESTORE VIEWMODEL DOWNLOAD DATA
+extension FirestoreViewModel{
     func downloadTentIconImageFromStorage(tentId:String,
                                           onResult:((Error?,UIImage?) -> Void)? = nil){
         let ref = repo.tentIconReference(tentId: tentId)

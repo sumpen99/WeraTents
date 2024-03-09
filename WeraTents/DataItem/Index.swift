@@ -74,7 +74,7 @@ struct TentItem:CarouselItem{
     var articleNumber:String?
     var manufacturer:String?
     var iconStorageIds:[String]?
-    var modelStoragesIds:[String]?
+    var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     
     func hash(into hasher: inout Hasher) {
@@ -102,7 +102,7 @@ struct TentDb:Codable{
     var articleNumber:String?
     var manufacturer:String?
     var iconStorageIds:[String]?
-    var modelStoragesIds:[String]?
+    var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
    
     func toTentItem(index:Int,image:Image) -> TentItem{
@@ -122,7 +122,7 @@ struct TentDb:Codable{
                         articleNumber:self.articleNumber ?? "",
                         manufacturer:self.manufacturer ?? "",
                         iconStorageIds:self.iconStorageIds ?? [],
-                        modelStoragesIds:self.modelStoragesIds ?? [],
+                        modelStorageIds:self.modelStorageIds ?? [],
                         instructionVideoUrls:self.instructionVideoUrls ?? [])
     }
 }
