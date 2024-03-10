@@ -26,9 +26,8 @@ struct ContentView:View{
             }
         }
         .task{
-             if FETCH_LOCALLY{ firestoreViewModel.loadTentAssetsFromLocal() }
-             else{ firestoreViewModel.loadTentAssetsFromServer() }
-             self.appStateViewModel.dismiss()
+            firestoreViewModel.loadTentAssets()
+            appStateViewModel.dismiss()
         }
     }
 }

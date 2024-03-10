@@ -116,13 +116,8 @@ extension HomeView{
                  edge: .trailing)
         .overlay{
             if !firestoreViewModel.hasTents{
-                SpinnerAnimation()
-                .frame(width: width/4.0,height: width/4.0)
-                .foregroundStyle(Color.lightGold)
-                .hCenter()
-                .vCenter()
+                SpinnerAnimation(size:width/4.0,foregroundStyle: Color.lightGold)
             }
-            
         }
     }
      
