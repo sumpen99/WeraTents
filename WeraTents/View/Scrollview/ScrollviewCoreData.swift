@@ -37,9 +37,7 @@ struct ScrollViewCoreData<Content: View>: View {
                 }
                 .overlay {
                     if coreDataViewModel.dataIsLoading {
-                        SpinnerAnimation()
-                        .frame(width: reader.min()/2.0,height: reader.min()/2.0)
-                        .foregroundStyle(Color.darkGreen)
+                        SpinnerAnimation(size:reader.min()/2.0,foregroundStyle: Color.lightGold)
                     }
                 }
             }

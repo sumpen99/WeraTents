@@ -92,15 +92,25 @@ struct ModelSceneView: View {
 extension ModelSceneView{
     var mainContent:some View{
         ZStack{
-            Color.black
-            SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
+            Color.background
+            sceneviewContent
             bottomContainer
         }
         .ignoresSafeArea(.all)
         .task{
-             loadImages()
-             loadUSDZModel()
-             animateBottenContainer()
+            firestoreViewModel.updateLoadingStateWith(value: true)
+            loadImages()
+            loadUSDZModel(){ firestoreViewModel.updateLoadingStateWith(value: false) }
+            animateBottenContainer()
+        }
+    }
+    
+    var sceneviewContent:some View{
+        SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
+        .overlay{
+            if firestoreViewModel.isLoadingData{
+                SpinnerAnimation(size:60.0,foregroundStyle: Color.lightGold)
+            }
         }
     }
         
@@ -317,37 +327,48 @@ extension ModelSceneView{
         if let buttonSelection = helper.buttonSelection{
             switch buttonSelection{
             case .DESCRIPTION:
-                if let longDescription = selectedTent.longDescription{
-                    HeaderContent(content:
-                        Text(longDescription).font(.body).hLeading()
-                    )
-                }
-           case .EQUIPMENT:
-                if let equipment = checkArrayOf(type:.EQUIPMENT){
-                    HeaderContent(content:
-                        VStack(spacing:V_SPACING_REG){
-                            ForEach(equipment,id:\.self){ equipment in
-                                Text(String(BULLET + equipment)).font(.body).hLeading()
-                            }
-                    })
-                }
+                descriptionContent
+            case .EQUIPMENT:
+                equipmentContent
             case .BARE_IN_MIND:
-                if let bareInMind = checkArrayOf(type:.BARE_IN_MIND){
-                    HeaderContent(content:
-                        VStack(spacing:V_SPACING_REG){
-                             ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
-                                if index == 0{
-                                    Text(value).font(.headline).bold().hLeading()
-                                }
-                                else{
-                                    Text(String(BULLET + value)).font(.body).hLeading()
-                            }
-                        }
-                    })
-                }
+                bareInMindContent
             }
         }
         
+    }
+    
+    @ViewBuilder
+    var descriptionContent:some View{
+        if let longDescription = selectedTent.longDescription{
+            HeaderContent(content:
+                Text(longDescription).font(.body).hLeading()
+            )
+        }
+    }
+    
+    @ViewBuilder
+    var equipmentContent:some View{
+        if let equipment = checkArrayOf(type:.EQUIPMENT){
+            HeaderContent(content:
+                VStack(spacing:V_SPACING_REG){
+                    ForEach(equipment,id:\.self){ equipment in
+                        Text(String(BULLET + equipment)).font(.body).hLeading()
+                    }
+            })
+        }
+    }
+    
+    @ViewBuilder
+    var bareInMindContent:some View{
+        if let bareInMind = checkArrayOf(type:.BARE_IN_MIND){
+            HeaderContent(content:
+                VStack(spacing:V_SPACING_REG){
+                     ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
+                        if index == 0{ Text(value).font(.body).bold().hLeading() }
+                        else{ Text(String(BULLET + value)).font(.body).hLeading() }
+                     }
+                })
+        }
     }
    
 }
@@ -403,13 +424,16 @@ extension ModelSceneView{
         }
     }
     
-    func loadUSDZModel(){
+    func loadUSDZModel(onCompletion: @escaping () -> Void){
         if let usdzModels = checkArrayOf(type:.USDZ_RESOURCE),
            let modelId = usdzModels.first{
             firestoreViewModel.loadTentModelData(modelId){ url in
-                //LOAD DATA
+                sceneViewCoordinator.setSceneViewFromUrl(url)
+                ServiceManager.removeDataFromTemporary(url)
+                onCompletion()
             }
          }
+         else{ onCompletion() }
     }
     
     func navigateToMovies(){

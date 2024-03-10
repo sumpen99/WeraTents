@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum Animate:Int{
+enum AnimateLaunchState:Int{
     case FIRST
     case SECOND
     case THIRD
@@ -17,17 +17,17 @@ enum Animate:Int{
 
 struct LaunchScreen:View {
     @EnvironmentObject var appStateViewModel:AppStateViewModel
-    @State var animate:[Bool] = Array.init(repeating: false,count: Animate.ALL.rawValue)
+    @State var animate:[Bool] = Array.init(repeating: false,count: AnimateLaunchState.ALL.rawValue)
    
     @ViewBuilder
     var label:some View{
        Text("©Weratents")
-        .font(animate[Animate.SECOND.rawValue] ? .title2 :
-              animate[Animate.THIRD.rawValue] ? .headline :
+        .font(stateIsActive(.SECOND) ? .title2 :
+              stateIsActive(.THIRD) ? .headline :
               .largeTitle)
         .foregroundStyle(Color.white)
         //.animation(.linear(duration: 0.25),value: animate[Animate.FIRST.rawValue])
-        .opacity(animate[Animate.FIRST.rawValue] ? 0 : 1)
+        .opacity(stateIsActive(.FIRST) ? 0 : 1)
         /*.rotation3DEffect(.degrees(animate[Animate.SECOND.rawValue] ? 45.0 : 0),
                           axis: (x:1.0,y:0.0,z:0.0))*/
         .vBottom()
@@ -45,8 +45,15 @@ struct LaunchScreen:View {
             .publish(every: 0.5, on: .current, in: .common)
             .autoconnect()
     
-    
     var body: some View {
+        animatedContent
+        .onDisappear{
+            animationTimer.upstream.connect().cancel()
+        }
+        
+    }
+    
+    var animatedContent:some View{
         GeometryReader{ reader in
             ZStack {
                background
@@ -55,15 +62,14 @@ struct LaunchScreen:View {
             .onReceive(animationTimer) { timerValue in
                 updateAnimation()
             }
-            .frame(width: !animate[Animate.THIRD.rawValue] ? reader.size.width :
-                    !animate[Animate.FADE_OUT.rawValue] ? reader.min()/1.5 : 0 ,
-                   height: !animate[Animate.SECOND.rawValue] ? reader.size.height : 
-                    !animate[Animate.FADE_OUT.rawValue] ? reader.min()/1.5 : 0 )
-           .opacity(animate[Animate.FADE_OUT.rawValue] ? 0 : 1)
+            .frame(width: !stateIsActive(.THIRD) ? reader.size.width :
+                    !stateIsActive(.FADE_OUT) ? reader.min()/1.5 : 0 ,
+                   height: !stateIsActive(.SECOND) ? reader.size.height :
+                    !stateIsActive(.FADE_OUT) ? reader.min()/1.5 : 0 )
+           .opacity(stateIsActive(.FADE_OUT) ? 0 : 1)
             .vCenter()
             .hCenter()
         }
-        
     }
     
     func updateAnimation() {
@@ -74,8 +80,11 @@ struct LaunchScreen:View {
                         animate[index] = true
                     }
                 }
-           default:
-               break
-            }
+            default: break
         }
+    }
+    
+    func stateIsActive(_ state:AnimateLaunchState) -> Bool{
+        return animate[state.rawValue]
+    }
 }

@@ -10,6 +10,7 @@ import SwiftUI
 extension FileManager{
     func temporaryFileURL(fileName: String = UUID().uuidString,ext: String = "usdz") -> URL? {
         return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-            .appendingPathComponent(fileName + ext)
+            .appendingPathComponent(fileName)
+            .appendingPathExtension(ext)
     }
 }

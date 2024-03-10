@@ -14,13 +14,13 @@ enum LaunchState{
 }
 
 class AppStateViewModel:ObservableObject{
-   @MainActor @Published var launchState:LaunchState = .START
+    @MainActor @Published var launchState:LaunchState = .START
     @Published var showToast:Bool = false
     
     @MainActor func dismiss(){
         Task{
             launchState = .CONTINUE
-            try? await Task.sleep(for: Duration.seconds(0.7 * Double(Animate.ALL.rawValue)))
+            try? await Task.sleep(for: Duration.seconds(0.7 * Double(AnimateLaunchState.ALL.rawValue)))
             self.launchState = .FINISHED
         }
     }

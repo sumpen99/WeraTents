@@ -8,6 +8,10 @@ import SwiftUI
 
 class ServiceManager{
     
+    static func localUSDZUrl(fileName:String) -> URL?{
+        return Bundle.main.url(forResource: "\(fileName)", withExtension: "usdz")
+    }
+    
     static func readAssetsFromBundle(_ bundle:String) -> [String]{
         let fileManager = FileManager.default
         let bundleURL = Bundle.main.bundleURL
@@ -60,16 +64,17 @@ class ServiceManager{
         }
     }
     
-    static func removeDataFromTemporary(_ url:URL,completion: @escaping (Bool) -> Void){
+    static func removeDataFromTemporary(_ url:URL?,completion: ((Bool) -> Void)? = nil){
+        guard let url = url else { return }
         DispatchQueue.global(qos: .background).async {
             do{
                 let fm = FileManager.default
                 try fm.removeItem(at: url)
-                completion(true)
+                completion?(true)
             }
             catch{
                 debugLog(object: error.localizedDescription)
-                completion(false)
+                completion?(false)
             }
         }
         
