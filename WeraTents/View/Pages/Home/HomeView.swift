@@ -20,12 +20,14 @@ struct HomeView:View {
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
+            .navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
+                YoutubeView(videoResourcesItem: videoResourcesItem)
+            }
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
-                case .ROUTE_HOME:               EmptyView()
-                }
+                 }
             }
         }
     }
@@ -114,13 +116,8 @@ extension HomeView{
                  edge: .trailing)
         .overlay{
             if !firestoreViewModel.hasTents{
-                SpinnerAnimation()
-                .frame(width: width/4.0,height: width/4.0)
-                .foregroundStyle(Color.lightGold)
-                .hCenter()
-                .vCenter()
+                SpinnerAnimation(size:width/4.0,foregroundStyle: Color.lightGold)
             }
-            
         }
     }
      

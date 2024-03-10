@@ -16,6 +16,32 @@ protocol CarouselItem:Identifiable,Hashable{
     var shortDescription:String { get }
 }
 
+struct VideoItem:Identifiable,Hashable{
+    let id:String
+    let videoUrl:String
+    let title:String
+    
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: VideoItem, rhs: VideoItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+struct VideoResourcesItem:Hashable{
+    let id:String
+    let listOfVideoItems:[VideoItem]
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: VideoResourcesItem, rhs: VideoResourcesItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
 struct TentDimensions{
     let width:Float
     let height:Float
@@ -48,7 +74,7 @@ struct TentItem:CarouselItem{
     var articleNumber:String?
     var manufacturer:String?
     var iconStorageIds:[String]?
-    var modelStoragesIds:[String]?
+    var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     
     func hash(into hasher: inout Hasher) {
@@ -76,7 +102,7 @@ struct TentDb:Codable{
     var articleNumber:String?
     var manufacturer:String?
     var iconStorageIds:[String]?
-    var modelStoragesIds:[String]?
+    var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
    
     func toTentItem(index:Int,image:Image) -> TentItem{
@@ -96,7 +122,7 @@ struct TentDb:Codable{
                         articleNumber:self.articleNumber ?? "",
                         manufacturer:self.manufacturer ?? "",
                         iconStorageIds:self.iconStorageIds ?? [],
-                        modelStoragesIds:self.modelStoragesIds ?? [],
+                        modelStorageIds:self.modelStorageIds ?? [],
                         instructionVideoUrls:self.instructionVideoUrls ?? [])
     }
 }

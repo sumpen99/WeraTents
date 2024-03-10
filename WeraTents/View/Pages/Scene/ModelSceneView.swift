@@ -8,14 +8,25 @@
 import SwiftUI
 
 enum ModelDimensionHeader:String{
-    case GRID_ON        = "Grid På"
-    case GRID_OFF       = "Grid Av"
+    case GRID_ON        = "Dimensioner På"
+    case GRID_OFF       = "Av"
 }
 
 enum ButtonSelection:String{
     case DESCRIPTION = "Beskrivning"
     case EQUIPMENT = "Medföljande utrustning"
     case BARE_IN_MIND = "Tänk på att"
+    
+    static var all: [ButtonSelection]{
+        return [.DESCRIPTION,.EQUIPMENT,.BARE_IN_MIND]
+    }
+}
+
+enum ArrayToCheck{
+    case EQUIPMENT
+    case BARE_IN_MIND
+    case VIDEO_RESOURCE
+    case USDZ_RESOURCE
 }
 
 enum HeaderSelection:String{
@@ -24,11 +35,15 @@ enum HeaderSelection:String{
     case MANUFACTURER = "Tillverkare"
     case PRODUCT_WEIGHT = "Produktvikt"
     case ARTICLE_NUMBER = "Artikelnummer"
+    
+    static var all: [HeaderSelection]{
+        return [.PRICE,.BRAND,.MANUFACTURER,.PRODUCT_WEIGHT,.ARTICLE_NUMBER]
+    }
 }
 
 struct ModelHelper{
-    let buttons:[ButtonSelection] = [.DESCRIPTION,.EQUIPMENT,.BARE_IN_MIND]
-    let headers:[HeaderSelection] = [.PRICE,.BRAND,.MANUFACTURER,.PRODUCT_WEIGHT,.ARTICLE_NUMBER]
+    let buttons:[ButtonSelection] = ButtonSelection.all
+    let headers:[HeaderSelection] = HeaderSelection.all
     var buttonSelection:ButtonSelection? = .DESCRIPTION
     var header:ModelDimensionHeader = .GRID_ON
     var toggleDimensionBox:Bool = true
@@ -37,6 +52,7 @@ struct ModelHelper{
     var selectedImageIndex:Int = 0
     var selectedButtonIndex:Int = 0
     var showTentLabel:Bool = true
+    var showBottomContainer:Bool = false
     
     func currentSelectedImage() -> UIImage?{
         if 0 < iconImages.count && selectedImageIndex < iconImages.count{
@@ -66,6 +82,9 @@ struct ModelSceneView: View {
         .safeAreaInset(edge: .top){
             topContainer
         }
+        .onDisappear{
+            debugLog(object: "dissapear")
+        }
     }
 }
 
@@ -73,14 +92,26 @@ struct ModelSceneView: View {
 extension ModelSceneView{
     var mainContent:some View{
         ZStack{
-            Color.black
-            SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
+            Color.background
+            sceneviewContent
             bottomContainer
         }
         .ignoresSafeArea(.all)
         .task{
-             loadImages()
-          }
+            firestoreViewModel.updateLoadingStateWith(value: true)
+            loadImages()
+            loadUSDZModel(){ firestoreViewModel.updateLoadingStateWith(value: false) }
+            animateBottenContainer()
+        }
+    }
+    
+    var sceneviewContent:some View{
+        SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
+        .overlay{
+            if firestoreViewModel.isLoadingData{
+                SpinnerAnimation(size:60.0,foregroundStyle: Color.lightGold)
+            }
+        }
     }
         
 }
@@ -137,12 +168,13 @@ extension ModelSceneView{
             UrlLabelButton(label: "Se mer på hemsidan",
                            image: "network", 
                            toVisit: selectedTent.webpage)
-            Button(action: { } ){
+            Button(action: navigateToMovies ){
                 Label("Instruktionsfilmer", systemImage: "play.tv")
-            }.padding()
-          
+            }
+            .disabled(disabledVideoButton)
+            .padding()
         },label: {
-            buttonImage("info.circle",font: TOP_BAR_FONT,foreground: Color.white)
+            buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
         })
       }
     
@@ -151,25 +183,31 @@ extension ModelSceneView{
 
 //MARK: - BOTTOM CONTAINER
 extension ModelSceneView{
+    @ViewBuilder
     var bottomContainer:some View{
-        ZStack{
-            Indicator(width:40,
-                      height:5.0,
-                      minDistance: 10.0,
-                      cornerRadius: 0,
-                      backgroundColor: Color.white,
-                      indicatorColor:Color(uiColor: .lightGray).opacity(0.8)){
-                helper.presentSheet.toggle()
+        if helper.showBottomContainer{
+            ZStack{
+                Indicator(width:40,
+                          height:5.0,
+                          minDistance: 10.0,
+                          cornerRadius: 0,
+                          backgroundColor: Color.lightGold,
+                          indicatorColor:Color.white.opacity(0.3)){
+                    helper.presentSheet.toggle()
+                }
+                selectedTentLabel
             }
-            selectedTentLabel
+            .background{
+                Color.lightGold
+            }
+            .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
+            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
+            .hCenter()
+            .vBottom()
+            .animation(.linear(duration: 0.25),value: helper.presentSheet)
+            .transition(.move(edge: .bottom))
         }
-        .background{
-            Color.white
-        }
-        .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
-        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
-        .hCenter()
-        .vBottom()
+        
     }
     
     var selectedTentLabel:some View{
@@ -180,23 +218,6 @@ extension ModelSceneView{
         .bold()
         .padding([.top,.bottom])
      }
-    
-    @ViewBuilder
-    var selectedTentLabelAnimated:some View{
-        if helper.showTentLabel {
-            selectedTentLabel
-            .onAppear{
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3){
-                    withAnimation{
-                        helper.showTentLabel = false
-                    }
-                }
-            }
-           
-        }
-        
-     }
-    
 }
 
 //MARK: - SHEET CONTAINER
@@ -206,50 +227,54 @@ extension ModelSceneView{
             sheetScrollContent(reader.min())
         }
         .presentationDragIndicator(.visible)
-        .presentationDetents([.fraction(0.5), .large])
-        .onDisappear{
-            withAnimation{
-                helper.showTentLabel = true
-            }
-        }
+        .presentationDetents([.large])
+   
     }
     
+    @ViewBuilder
     func sheetScrollContent(_ size:CGFloat) -> some View{
-        ScrollView{
-           VStack{
-               selectedTentLabelAnimated
-               ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
-               optionalImages(size:max(50,size/5))
+        if size != 0{
+            ScrollView{
                VStack{
-                   tentLabelSection
-                   buttonSection(size)
-                   buttonValue
+                   ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
+                   optionalImages(width: size, size: 60.0)
+                   VStack{
+                       tentLabelSection
+                       buttonSection(size)
+                       buttonValue
+                   }
+                   .padding()
                }
-               .padding()
-           }
+            }
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
+        
     }
    
-    func optionalImages(size:CGFloat) -> some View{
-        LazyVGrid(columns:[GridItem(),GridItem(),GridItem(),GridItem()],
-                   spacing: 10,
-                   pinnedViews: [.sectionHeaders]){
-            ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
-                Image(uiImage: uiImage)
-                .resizable()
-                .frame(width:size,height: size)
-                .padding(2)
-                .background{
-                    Rectangle().fill(helper.selectedImageIndex == index ? Color.lightGold : Color.white)
-                }
-               .onTapGesture {
-                    withAnimation{
-                        helper.selectedImageIndex = index
+    @ViewBuilder
+    func optionalImages(width:CGFloat,size:CGFloat) -> some View{
+        if helper.iconImages.count > 0{
+            LazyVGrid(columns:numberOfColumns(maxWidth: width, size: size),
+                       spacing: V_SPACING_REG,
+                       pinnedViews: [.sectionHeaders]){
+                ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
+                    Image(uiImage: uiImage)
+                    .resizable()
+                    .frame(width:size,height: size)
+                    .padding(2)
+                    .background{
+                        Rectangle().fill(helper.selectedImageIndex == index ? Color.lightGold : Color.white)
+                    }
+                   .onTapGesture {
+                        withAnimation{
+                            helper.selectedImageIndex = index
+                        }
                     }
                 }
-            }
-         }
+             }
+            .padding(.horizontal)
+        }
+        
     }
     
     var tentLabelSection:some View{
@@ -282,7 +307,6 @@ extension ModelSceneView{
                 case .PRODUCT_WEIGHT: headerValue(header.rawValue, value: selectedTent.productWeight)
                 case .ARTICLE_NUMBER: headerValue(header.rawValue, value: selectedTent.articleNumber)
                 }
-                    
             }
         })
     }
@@ -303,35 +327,48 @@ extension ModelSceneView{
         if let buttonSelection = helper.buttonSelection{
             switch buttonSelection{
             case .DESCRIPTION:
-                HeaderContent(content: 
-                    Text(selectedTent.longDescription ?? "").font(.body).hLeading()
-                )
+                descriptionContent
             case .EQUIPMENT:
-                HeaderContent(content:
-                    VStack(spacing:V_SPACING_REG){
-                        ForEach(selectedTent.equipment ?? [],id:\.self){ equipment in
-                            Text(String(BULLET + equipment)).font(.body).hLeading()
-                        }
-                    }
-                )
+                equipmentContent
             case .BARE_IN_MIND:
-                HeaderContent(content:
-                        VStack(spacing:V_SPACING_REG){
-                        if let bareInMind = selectedTent.bareInMind{
-                            ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
-                                if index == 0{
-                                    Text(value).font(.headline).bold().hLeading()
-                                }
-                                else{
-                                    Text(String(BULLET + value)).font(.body).hLeading()
-                                }
-                            }
-                        }
-                    }
-                )
+                bareInMindContent
             }
         }
         
+    }
+    
+    @ViewBuilder
+    var descriptionContent:some View{
+        if let longDescription = selectedTent.longDescription{
+            HeaderContent(content:
+                Text(longDescription).font(.body).hLeading()
+            )
+        }
+    }
+    
+    @ViewBuilder
+    var equipmentContent:some View{
+        if let equipment = checkArrayOf(type:.EQUIPMENT){
+            HeaderContent(content:
+                VStack(spacing:V_SPACING_REG){
+                    ForEach(equipment,id:\.self){ equipment in
+                        Text(String(BULLET + equipment)).font(.body).hLeading()
+                    }
+            })
+        }
+    }
+    
+    @ViewBuilder
+    var bareInMindContent:some View{
+        if let bareInMind = checkArrayOf(type:.BARE_IN_MIND){
+            HeaderContent(content:
+                VStack(spacing:V_SPACING_REG){
+                     ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
+                        if index == 0{ Text(value).font(.body).bold().hLeading() }
+                        else{ Text(String(BULLET + value)).font(.body).hLeading() }
+                     }
+                })
+        }
     }
    
 }
@@ -339,11 +376,44 @@ extension ModelSceneView{
 //MARK: - FUNCTIONS
 extension ModelSceneView{
     
+    var disabledVideoButton:Bool{
+        selectedTent.instructionVideoUrls?.count ?? 0 == 0
+    }
+    
+    func checkArrayOf(type:ArrayToCheck) ->[String]?{
+        switch type {
+        case .EQUIPMENT:
+            if let equipment = selectedTent.equipment{
+                return equipment.count > 0 ? equipment : nil
+            }
+        case .BARE_IN_MIND:
+            if let bareInMind = selectedTent.bareInMind{
+                return bareInMind.count > 0 ? bareInMind : nil
+            }
+        case .VIDEO_RESOURCE:
+            if let instructionVideoUrls = selectedTent.instructionVideoUrls{
+                return instructionVideoUrls.count > 0 ? instructionVideoUrls : nil
+            }
+        case .USDZ_RESOURCE:
+            if let modelStorageIds = selectedTent.modelStorageIds{
+                return modelStorageIds.count > 0 ? modelStorageIds : nil
+            }
+        }
+        return nil
+    }
+    
+    func numberOfColumns(maxWidth:CGFloat,size:CGFloat) -> [GridItem]{
+        let itemCount = helper.iconImages.count + 1
+        let padding = CGFloat(itemCount)*V_SPACING_REG
+        let count = max(0.0,floor((maxWidth-padding)/size))
+        return Array.init(repeating: GridItem(), count: Int(count))
+    }
+    
     func loadImages(){
         if let iconStorageIds = selectedTent.iconStorageIds{
             if FETCH_LOCALLY{
                 firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
-                helper.iconImages = uiImages
+                    helper.iconImages = uiImages
                 }
             }
             else{
@@ -351,7 +421,31 @@ extension ModelSceneView{
                     helper.iconImages.append(uiImage)
                 }
             }
-            
+        }
+    }
+    
+    func loadUSDZModel(onCompletion: @escaping () -> Void){
+        if let usdzModels = checkArrayOf(type:.USDZ_RESOURCE),
+           let modelId = usdzModels.first{
+            firestoreViewModel.loadTentModelData(modelId){ url in
+                sceneViewCoordinator.setSceneViewFromUrl(url)
+                ServiceManager.removeDataFromTemporary(url)
+                onCompletion()
+            }
+         }
+         else{ onCompletion() }
+    }
+    
+    func navigateToMovies(){
+        if let instructionVideoUrls = checkArrayOf(type:.VIDEO_RESOURCE){
+            var listOfVideoItems:[VideoItem] = []
+            for videoUrl in instructionVideoUrls{
+                listOfVideoItems.append(VideoItem(id: shortId(),
+                                                  videoUrl: videoUrl,
+                                                  title: ""))
+            }
+            navigationViewModel.appendToPathWith(VideoResourcesItem( id: shortId(),
+                                                                     listOfVideoItems: listOfVideoItems))
         }
     }
     
@@ -362,6 +456,12 @@ extension ModelSceneView{
     
     func toggleBorder(){
         sceneViewCoordinator.toggleDimensionBox()
+    }
+    
+    func animateBottenContainer(){
+        withAnimation{
+            helper.showBottomContainer.toggle()
+        }
     }
     
 }

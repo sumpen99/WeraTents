@@ -8,6 +8,10 @@ import SwiftUI
 
 class ServiceManager{
     
+    static func localUSDZUrl(fileName:String) -> URL?{
+        return Bundle.main.url(forResource: "\(fileName)", withExtension: "usdz")
+    }
+    
     static func readAssetsFromBundle(_ bundle:String) -> [String]{
         let fileManager = FileManager.default
         let bundleURL = Bundle.main.bundleURL
@@ -46,5 +50,34 @@ class ServiceManager{
         }
         DispatchQueue.main.async { completion(images) }
     }
+    
+    static func writeDataToTemporary(_ data:Data?,fileName:String,ext:String,completion: @escaping (URL?) -> Void){
+        DispatchQueue.global(qos: .background).async {
+            let fm = FileManager.default
+            if let tempStorageUrl = fm.temporaryFileURL(fileName: fileName,ext:ext){
+                let result = fm.createFile(atPath: tempStorageUrl.path(), contents: data)
+                completion(result ? tempStorageUrl : nil)
+            }
+            else{
+                completion(nil)
+            }
+        }
+    }
+    
+    static func removeDataFromTemporary(_ url:URL?,completion: ((Bool) -> Void)? = nil){
+        guard let url = url else { return }
+        DispatchQueue.global(qos: .background).async {
+            do{
+                let fm = FileManager.default
+                try fm.removeItem(at: url)
+                completion?(true)
+            }
+            catch{
+                debugLog(object: error.localizedDescription)
+                completion?(false)
+            }
+        }
         
+    }
+     
 }

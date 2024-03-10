@@ -29,7 +29,7 @@ struct ExpandableButton:View {
                 .padding()
             }
         })
-        .frame(width:width,height: isToggled ? baseHeight * 1.5 : baseHeight)
+        .frame(width:width,height: isToggled ? baseHeight * 1.25 : baseHeight)
         .background{Color.lightGreen}
         .clipShape(RoundedRectangle(cornerRadius: 5.0))
     }

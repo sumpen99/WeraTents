@@ -8,7 +8,6 @@
 import SwiftUI
 
 enum ModelRoute: Identifiable{
-    case ROUTE_HOME
     case ROUTE_AR
     case ROUTE_CAPTURED_IMAGES
     

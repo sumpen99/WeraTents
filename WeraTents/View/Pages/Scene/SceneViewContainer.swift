@@ -11,7 +11,6 @@ import SceneKit.ModelIO
 
 class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     var scnView:SCNView?
-    var usdzData:Data?
     var cameraNode: SCNNode?
     var previousPanPoint: CGPoint?
     var startPanPoint: CGPoint?
@@ -21,10 +20,6 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     var lastTime:TimeInterval?
     var prevTime:TimeInterval?
     
-    convenience init(usdzData:Data?){
-        self.init()
-        self.usdzData = usdzData
-    }
     
     func createLightNode() ->SCNNode{
         let lightNode = SCNNode()
@@ -58,33 +53,34 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
         return SCNVector3(x:0, y:center.y, z:adjacentLength)
     }
     
-    func addGesturesToSCNView(_ scnView:SCNView){
+    func addGesturesToSCNView(){
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        scnView.addGestureRecognizer(tapGesture)
+        self.scnView?.addGestureRecognizer(tapGesture)
         
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-        scnView.addGestureRecognizer(panGesture)
+        self.scnView?.addGestureRecognizer(panGesture)
 
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
-        scnView.addGestureRecognizer(pinchGesture)
+        self.scnView?.addGestureRecognizer(pinchGesture)
         
         let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(handleRotation(_:)))
-        scnView.addGestureRecognizer(rotationGesture)
+        self.scnView?.addGestureRecognizer(rotationGesture)
     }
     
-    func loadTentModel() ->SCNNode?{
-        if let url = Bundle.main.url(forResource: "Assets/tent-2-man-tent", withExtension: "usdz") {
-            let ass = MDLAsset(url: url)
-            ass.loadTextures()
-            let tentNode = SCNNode(mdlObject: ass.object(at: 0))
-            tentNode.name = "TentNode"
-            return tentNode
-        }
-        return nil
+    func loadTentModelFromUrl(_ url:URL) ->SCNNode?{
+        let tentNode = SCNReferenceNode(url: url)
+        tentNode?.load()
+        //let ass = MDLAsset(url: url)
+        //ass.loadTextures()
+        //let tentNode = SCNNode(mdlObject: ass.object(at: 0))
+        tentNode?.name = "TentNode"
+        return tentNode
     }
     
-    func setSceneView(_ scnView:SCNView){
-        if let tentModel = loadTentModel() {
+    func setSceneViewFromUrl(_ url:URL?){
+        if let url = url,
+           let scnView = self.scnView,
+           let tentModel = loadTentModelFromUrl(url) {
             let scene = SCNScene()
             let boundinBoxNode = SCNNode.createBorderOnBoundingBox(tentModel.boundingBox,
                                        borderColor: UIColor.gray,
@@ -107,17 +103,13 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             scnView.scene = scene
             scnView.autoenablesDefaultLighting = true
             
-            //scnView.allowsCameraControl = true
+            scnView.allowsCameraControl = true
             
             scnView.pointOfView = cameraNode
-            scnView.backgroundColor = UIColor.black
             scnView.delegate = self
-            addGesturesToSCNView(scnView)
-            self.scnView = scnView
-            
+            //addGesturesToSCNView()
         }
     }
-    
 }
 
 //MARK: SCENEVIEWCOORDINATOR TAP INTERACT
@@ -294,14 +286,15 @@ struct SceneViewContainer: UIViewRepresentable {
     typealias Coordinator = SceneViewCoordinator
     let sceneViewCoordinator:SceneViewCoordinator
     
-    
     func makeUIView(context: Context) -> UIViewType {
         let scnView = SCNView(frame:.zero)
-        sceneViewCoordinator.setSceneView(scnView)
+        scnView.backgroundColor = UIColor(Color.background)
+        sceneViewCoordinator.scnView = scnView
         return scnView
     }
   
     func updateUIView(_ uiView: UIViewType, context: Context){
+        
     }
     
     static func dismantleUIView(_ sceneView: UIViewType, coordinator: Coordinator) {
@@ -312,28 +305,6 @@ struct SceneViewContainer: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         return sceneViewCoordinator
     }
-    
-    
-    /*
-     class Coordinator: NSObject, CheckoutDelegate {
-             var parent: CheckoutView
-             
-             init(_ checkoutView: CheckoutView) {
-                 parent = checkoutView
-             }
-             
-             func checkoutDidFail(error: CheckoutError) {
-             }
-             
-             func checkoutDidComplete() {
-             }
-             
-             func checkoutDidCancel() {
-             }
-         }
-     
-     */
-    
     
 }
 
