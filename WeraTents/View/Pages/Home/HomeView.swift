@@ -13,6 +13,11 @@ struct HomeView:View {
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
+            .onChange(of: firestoreViewModel.tentAssets,initial: true){
+                debugLog(logger:.WARNING,object: firestoreViewModel.tentAssets.count)
+                let shutDownSpinner = firestoreViewModel.tentAssets.count == 0
+                firestoreViewModel.updateLoadingStateWith(state: .TENT_ASSETS, value: shutDownSpinner)
+            }
             .safeAreaInset(edge: .top){
                 topLabel
             }
@@ -22,6 +27,9 @@ struct HomeView:View {
             }
             .navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
                 YoutubeView(videoResourcesItem: videoResourcesItem)
+            }
+            .navigationDestination(for: PdfResourcesItem.self){  pdfResourcesItem in
+                PdfView(pdfResourcesItem: pdfResourcesItem)
             }
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
@@ -115,7 +123,7 @@ extension HomeView{
                  width: width,
                  edge: .trailing)
         .overlay{
-            if !firestoreViewModel.hasTents{
+            if firestoreViewModel.loadingState(.TENT_ASSETS){
                 SpinnerAnimation(size:width/4.0,foregroundStyle: Color.lightGold)
             }
         }

@@ -18,7 +18,7 @@ struct ContentView:View{
     
     var body:some View{
         ZStack{
-             if appStateViewModel.launchState == .FINISHED {
+            if appStateViewModel.launchState[LaunchState.STARTED.rawValue] {
                 HomeView()
                 .toast(isShowing: $appStateViewModel.showToast)
                 .environmentObject(firestoreViewModel)
@@ -26,8 +26,9 @@ struct ContentView:View{
             }
         }
         .task{
+            firestoreViewModel.updateLoadingStateWith(state: .TENT_ASSETS, value: true)
             firestoreViewModel.loadTentAssets()
-            appStateViewModel.dismiss()
+            appStateViewModel.start()
         }
     }
 }

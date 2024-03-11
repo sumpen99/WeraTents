@@ -5,10 +5,23 @@
 //  Created by fredrik sundström on 2024-02-20.
 //
 import SwiftUI
-func debugLog(object: Any, functionName: String = #function, fileName: String = #file, lineNumber: Int = #line){
+
+enum Logger_Warning: String {
+    case ERROR = "🔴"
+    case WARNING = "⚠️"
+    case OK = "📗"
+    case DEFAULT = ""
+}
+
+
+func debugLog(logger:Logger_Warning = .DEFAULT,
+              object: Any,
+              functionName: String = #function,
+              fileName: String = #file,
+              lineNumber: Int = #line){
   #if DEBUG
     let className = (fileName as NSString).lastPathComponent
-    print("<\(className)> \(functionName) [#\(lineNumber)]| \(object)\n")
+    print(logger.rawValue + "<\(className)> \(functionName) [#\(lineNumber)]| \(object)\n")
   #endif
 }
 

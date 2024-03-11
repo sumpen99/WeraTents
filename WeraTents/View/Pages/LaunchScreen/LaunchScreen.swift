@@ -7,17 +7,16 @@
 
 import SwiftUI
 
-enum AnimateLaunchState:Int{
+enum AnimateLaunchState:Int,CaseIterable{
     case FIRST
     case SECOND
     case THIRD
     case FADE_OUT
-    case ALL
 }
 
 struct LaunchScreen:View {
     @EnvironmentObject var appStateViewModel:AppStateViewModel
-    @State var animate:[Bool] = Array.init(repeating: false,count: AnimateLaunchState.ALL.rawValue)
+    @State var animate:[Bool] = Array.init(repeating: false,count: AnimateLaunchState.allCases.count)
    
     @ViewBuilder
     var label:some View{
@@ -73,14 +72,15 @@ struct LaunchScreen:View {
     }
     
     func updateAnimation() {
-        switch appStateViewModel.launchState {
-            case .CONTINUE:
-                if let index = animate.firstIndex(where: {!$0}){
-                    withAnimation(.easeInOut(duration: 0.5)) {
-                        animate[index] = true
-                    }
+        if appStateViewModel.launchState[LaunchState.STARTED.rawValue]{
+            if let index = animate.firstIndex(where: {!$0}){
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    animate[index] = true
                 }
-            default: break
+            }
+        }
+        if animate[AnimateLaunchState.FADE_OUT.rawValue]{
+            appStateViewModel.end()
         }
     }
     
