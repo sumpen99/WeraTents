@@ -14,12 +14,8 @@ struct HomeView:View {
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
             .onChange(of: firestoreViewModel.tentAssets,initial: true){
-                debugLog(logger:.WARNING,object: firestoreViewModel.tentAssets.count)
                 let shutDownSpinner = firestoreViewModel.tentAssets.count == 0
                 firestoreViewModel.updateLoadingStateWith(state: .TENT_ASSETS, value: shutDownSpinner)
-            }
-            .safeAreaInset(edge: .top){
-                topLabel
             }
             .modifier(NavigationViewModifier())
             .navigationDestination(for: TentItem.self){  tent in
@@ -41,72 +37,57 @@ struct HomeView:View {
     }
 }
 
-//MARK: - MAIN CONTENT
+//MARK: - MAIN-CONTENT
 extension HomeView{
     
     var mainContent:some View{
-        ZStack{
-            content
-            shapedMenu
-         }
-    }
-    
-    var content:some View{
-        VStack(spacing:V_HOME_SPACING){
-            scrollContainer
-        }
-        .hCenter()
-    }
-    
-}
-
-//MARK: - SCROLLCONTAINER
-extension HomeView{
-    var scrollContainer:some View{
-        ScrollView{
-            VStack{
-                carouselSection
-             }
-            
+        VStack{
+            labelContainer
+            scrollContent
         }
         .vTop()
     }
+    
+    var scrollContent:some View{
+        ZStack{
+            scrollContainer
+            shapedMenu
+        }
+    }
+    
+    /*
+     VStack{
+         labelContainer
+         scrollContent
+     }
+     .overlay{
+         ZStack{
+             Color.red
+         }
+         .ignoresSafeArea(.all)
+         .vTop()
+         .hCenter()
+     }
+     .vTop()
+     
+     */
 }
 
-//MARK: - CAROUSELSECTION
+//MARK: - SCROLL-CONTAINER
 extension HomeView{
-    
-    var carouselSection:some View{
-        VStack{
-            inspirationLabel
-            carouselContent
-         }
-    }
-    
-    var inspirationLabel:some View{
-        HStack{
-           inspirationtext
-           inspirationButton
-        }
-        .padding([.horizontal])
-    }
-    
-    var inspirationtext:some View{
-        Text("Våra tält")
-        .font(.title)
-        .bold()
-        .foregroundStyle(Color.white).hLeading()
-    }
-    
-    var inspirationButton:some View{
-        Button(action: { }){
-            Image(systemName: "arrow.right")
-             .font(.title)
-             .bold()
-             .foregroundStyle(Color.white)
+    var scrollContainer:some View{
+        ScrollView{
+            VStack(spacing:V_GRID_SPACING){
+                NavigationSection(labelText: "Våra tält", action: {}, content: carouselContent)
+                NavigationSection(labelText: "Varumärken", action: {}, content: brandContent)
+              
+             }
         }
     }
-    
+}
+
+//MARK: - CAROUSEL-SECTION
+extension HomeView{
     var carouselContent:some View{
         ZStack{
             GeometryReader{ reader in
@@ -124,14 +105,33 @@ extension HomeView{
                  edge: .trailing)
         .overlay{
             if firestoreViewModel.loadingState(.TENT_ASSETS){
-                SpinnerAnimation(size:width/4.0,foregroundStyle: Color.lightGold)
+                SpinnerAnimation(size:width/4.0)
             }
         }
     }
-     
 }
 
-//MARK: - TOP LABEL
+//MARK: - BRAND -SECTION
+extension HomeView{
+    var brandContent:some View{
+        ZStack{
+            GeometryReader{ reader in
+                ScrollView(.horizontal){
+                    HStack{
+                        DropShadowButton(buttonText: "Adventure",frameWidth: reader.size.width/4, action: {})
+                        DropShadowButton(buttonText: "Bohus",frameWidth: reader.size.width/4, action: {})
+                        DropShadowButton(buttonText: "Vivalid",frameWidth: reader.size.width/4, action: {})
+                    }
+                }
+            }
+        }
+        .frame(height: HOME_BRAND_HEIGHT)
+        .hCenter()
+    }
+    
+}
+
+//MARK: - TOP-LABEL
 extension HomeView{
     
     var labelText:some View{
@@ -148,16 +148,17 @@ extension HomeView{
          .hTrailing()
     }
     
-    var topLabel:some View{
+    var labelContainer:some View{
         HStack{
            labelText
            labelImage
         }
         .padding(.horizontal)
-   }
+    }
+     
 }
 
-//MARK: -- BOTTOMBAR
+//MARK: -- BOTTOM-BAR
 extension HomeView{
     var navModelARButton:some View{
         Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
