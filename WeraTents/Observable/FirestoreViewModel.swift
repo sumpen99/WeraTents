@@ -10,9 +10,17 @@ import FirebaseFirestore
 import FirebaseStorage
 
 enum DbPath:String{
-    case WERA_TENTS = "Wera_Tents"
-    case TENT_ICONS = "Icons"
-    case TENT_MODELS = "Models"
+    case WERA_TENTS     = "Wera_Tents"
+    case TENT_ICONS     = "Icons"
+    case TENT_MODELS    = "Models"
+    case TENT_PDF       = "Pdf"
+}
+
+enum LoadingState:Int,CaseIterable{
+    case TENT_ASSETS
+    case ICON_OPTIONAL
+    case USDZ_MODEL
+    case PDF_DOCUMENT
 }
 
 //MARK: - FIRESTORE REPOSITORY
@@ -34,54 +42,38 @@ class FirestoreRepository{
         return dB.collection(base).document(tentId)
     }
      
-    func tentIconReference(tentId:String) -> StorageReference{
+    func tentIconReference(fileName:String) -> StorageReference{
         let folder = DbPath.TENT_ICONS.rawValue
-        let path = "\(folder)/\(tentId).png"
-        return storage.reference().child(path)
+        let path = "\(folder)/\(fileName).png"
+        return storage.reference(withPath: path)
     }
     
-    func tentModelReference(tentId:String) -> StorageReference{
+    func tentModelReference(fileName:String) -> StorageReference{
         let folder = DbPath.TENT_MODELS.rawValue
-        let path = "\(folder)/\(tentId).usdz"
-        return storage.reference().child(path)
+        let path = "\(folder)/\(fileName).usdz"
+        return storage.reference(withPath: path)
+    }
+    
+    func tentPdfReference(fileName:String) -> StorageReference{
+        let folder = DbPath.TENT_PDF.rawValue
+        let path = "\(folder)/\(fileName).pdf"
+        return storage.reference(withPath: path)
     }
 }
 
 //MARK: - FIRESTORE VIEWMODEL
 class FirestoreViewModel:ObservableObject{
     @Published var tentAssets:[TentItem] = []
-    @Published var isLoadingData:Bool = false
+    @Published var isLoadingData:[Bool] = Array.init(repeating: false, count: LoadingState.allCases.count)
     let repo = FirestoreRepository()
 }
 
-//MARK: - FIRESTORE VIEWMODEL LOAD DATA
+//MARK: - LOAD TENT ASSETS DATA
 extension FirestoreViewModel{
     
     func loadTentAssets(){
-       if FETCH_LOCALLY{ loadTentAssetsFromLocal() }
+        if FETCH_LOCALLY{ loadTentAssetsFromLocal() }
         else{ loadTentAssetsFromServer() }
-    }
-    
-    func loadTentModelData(_ fileName:String,completion: @escaping (URL?) -> Void){
-        if  FETCH_LOCALLY{
-            DispatchQueue.global(qos: .background).async {
-                let url = ServiceManager.localUSDZUrl(fileName: fileName)
-                DispatchQueue.main.async { completion(url) }
-            }
-        }
-        else{
-            downloadTentModelFromStorage(tentId: fileName){ (error,data) in
-                if let data = data{
-                    ServiceManager.writeDataToTemporary(data, fileName: fileName, ext: "usdz"){ url in
-                        DispatchQueue.main.async { completion(url) }
-                    }
-                }
-                else{
-                    debugLog(object: error?.localizedDescription ?? "Unexpected error")
-                    completion(nil)
-                }
-            }
-        }
     }
     
     private func loadTentAssetsFromLocal(){
@@ -110,10 +102,13 @@ extension FirestoreViewModel{
                 guard let tent = try? doc.data(as : TentDb.self),
                       let iconUrl = tent.iconStorageIds?[0]
                 else{ continue }
-                strongSelf.downloadTentIconImageFromStorage(tentId: iconUrl){ error,uiImage in
+                strongSelf.downloadTentIconImageFromStorage(fileName: iconUrl){ error,uiImage in
                     if let uiImage = uiImage{
                         let index = strongSelf.tentAssets.count
                         strongSelf.tentAssets.append(tent.toTentItem(index: index, image: Image(uiImage: uiImage)))
+                    }
+                    else if let error = error{
+                        debugLog(object: error.localizedDescription)
                     }
                 }
             }
@@ -122,19 +117,55 @@ extension FirestoreViewModel{
         
 }
 
-//MARK: - FIRESTORE VIEWMODEL LOAD IMAGES
+//MARK: - LOAD TENT MODEL DATA
+extension FirestoreViewModel{
+    func loadTentModelData(_ fileName:String,completion: @escaping (URL?) -> Void){
+        if  FETCH_LOCALLY{
+            let url = ServiceManager.localUSDZUrl(fileName: fileName)
+            completion(url)
+        }
+        else{
+            if let url = ServiceManager.fileExistInside(folder: .USDZ,
+                                                        fileName: fileName,
+                                                        ext: TempFolder.USDZ.rawValue){
+                completion(url)
+            }
+            else{ downloadTentModelFromStorage(fileName, completion: completion) }
+        }
+    }
+}
+
+//MARK: - LOAD TENT PDF DATA
+extension FirestoreViewModel{
+    func loadTentPdfData(_ fileName:String,completion: @escaping (URL?) -> Void){
+        if  FETCH_LOCALLY{
+            let url = ServiceManager.localPDFUrl(fileName: fileName)
+            completion(url)
+        }
+        else{
+            if let url = ServiceManager.fileExistInside(folder: .PDF,
+                                                        fileName: fileName,
+                                                        ext: TempFolder.PDF.rawValue){
+                completion(url)
+            }
+            else{ downloadTentPdfFromStorage(fileName, completion: completion) }
+        }
+    }
+    
+}
+
+//MARK: - LOAD IMAGES
 extension FirestoreViewModel{
     func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
         ServiceManager.loadImagesFromBundle("Tent",
                                             imageNames: imageNames){ images in
             DispatchQueue.main.async { completion(images) }
         }
-                                            
     }
   
     func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
         for imageName in imageNames{
-            downloadTentIconImageFromStorage(tentId: imageName){ error,uiImage in
+            downloadTentIconImageFromStorage(fileName: imageName){ error,uiImage in
                 if let uiImage = uiImage{
                     completion(uiImage)
                 }
@@ -143,11 +174,11 @@ extension FirestoreViewModel{
      }
 }
 
-//MARK: - FIRESTORE VIEWMODEL DOWNLOAD DATA
+//MARK: - DOWNLOAD DATA
 extension FirestoreViewModel{
-    func downloadTentIconImageFromStorage(tentId:String,
+    func downloadTentIconImageFromStorage(fileName:String,
                                           onResult:((Error?,UIImage?) -> Void)? = nil){
-        let ref = repo.tentIconReference(tentId: tentId)
+        let ref = repo.tentIconReference(fileName: fileName)
         ref.getData(maxSize: (MAX_STORAGE_PNG_SIZE)){ (data, error) in
             if let data = data,
                let uiImage = UIImage(data: data){
@@ -161,10 +192,10 @@ extension FirestoreViewModel{
             }
        }
     }
-    
-    func downloadTentModelFromStorage(tentId:String, 
+     /*
+    func downloadTentModelFromStorage(fileName:String,
                                       onResult:((Error?,Data?) -> Void)? = nil){
-        let ref = repo.tentModelReference(tentId: tentId)
+        let ref = repo.tentModelReference(fileName: fileName)
         ref.getData(maxSize: (MAX_STORAGE_USDZ_SIZE)){ (data, error) in
             if let data = data { onResult?(nil,data) }
             else if let error = error{
@@ -174,10 +205,30 @@ extension FirestoreViewModel{
                 onResult?(PresentedError.FAILED_TO_DOWNLOAD_MODEL(),nil)
             }
        }
+    }*/
+    
+    func downloadTentModelFromStorage(_ fileName:String,completion: @escaping (URL?) -> Void){
+        if let localUrl = ServiceManager.create(file: fileName,folder: .USDZ,ext: TempFolder.USDZ.rawValue){
+            let ref = repo.tentModelReference(fileName: fileName)
+            ref.write(toFile: localUrl) { url, error in
+                completion(url)
+            }
+       }
+       else{ completion(nil) }
+    }
+    
+    func downloadTentPdfFromStorage(_ fileName:String,completion: @escaping (URL?) -> Void){
+        if let localUrl = ServiceManager.create(file: fileName,folder: .PDF,ext: TempFolder.PDF.rawValue){
+            let ref = repo.tentPdfReference(fileName: fileName)
+            ref.write(toFile: localUrl) { url, error in
+                completion(url)
+            }
+       }
+       else{ completion(nil) }
     }
 }
 
-//MARK: - FIRESTORE VIEWMODEL UPLOAD DATA
+//MARK: - UPLOAD DATA
 extension FirestoreViewModel{
     func uploadTentAssetsFromJson(){
         ServiceManager.readJsonFromBundleFile("data.json",value: TentDb.self){ [weak self] data in
@@ -188,21 +239,17 @@ extension FirestoreViewModel{
                     let doc = strongSelf.repo.tentDocument(tentId: tentId)
                     do{
                         try doc.setData(from:obj){ err in
-                            if let _ = err{
-                                //debugLog(object: err.localizedDescription)
-                            }
+                            if let err = err{ debugLog(object: err.localizedDescription) }
                         }
                     }
-                    catch{
-                        //debugLog(object: error.localizedDescription)
-                    }
+                    catch{ debugLog(object: error.localizedDescription) }
                 }
             }
         }
     }
 }
 
-//MARK: - FIRESTORE VIEWMODEL COLLECTION COUNT
+//MARK: - COLLECTION COUNT
 extension FirestoreViewModel{
     func tentCollectionCount(_ tentId:String){
         let ref = repo.tentCollection()
@@ -218,14 +265,18 @@ extension FirestoreViewModel{
     }
 }
 
-//MARK: - FIRESTORE VIEWMODEL HELPER
+//MARK: - HELPER FUNCTIONS
 extension FirestoreViewModel{
     var hasTents:Bool{
         tentAssets.count > 0
     }
     
-    func updateLoadingStateWith(value state:Bool){
-        self.isLoadingData = state
+    func loadingState(_ state:LoadingState) -> Bool{
+        return self.isLoadingData[state.rawValue]
+    }
+    
+    func updateLoadingStateWith(state:LoadingState,value:Bool){
+        if self.isLoadingData[state.rawValue] == value { return }
+        self.isLoadingData[state.rawValue] = value
     }
 }
-

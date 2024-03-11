@@ -26,6 +26,7 @@ enum ArrayToCheck{
     case EQUIPMENT
     case BARE_IN_MIND
     case VIDEO_RESOURCE
+    case PDF_RESOURCE
     case USDZ_RESOURCE
 }
 
@@ -53,6 +54,7 @@ struct ModelHelper{
     var selectedButtonIndex:Int = 0
     var showTentLabel:Bool = true
     var showBottomContainer:Bool = false
+    var hasNotFetchedData:Bool = true
     
     func currentSelectedImage() -> UIImage?{
         if 0 < iconImages.count && selectedImageIndex < iconImages.count{
@@ -82,9 +84,6 @@ struct ModelSceneView: View {
         .safeAreaInset(edge: .top){
             topContainer
         }
-        .onDisappear{
-            debugLog(object: "dissapear")
-        }
     }
 }
 
@@ -98,17 +97,20 @@ extension ModelSceneView{
         }
         .ignoresSafeArea(.all)
         .task{
-            firestoreViewModel.updateLoadingStateWith(value: true)
-            loadImages()
-            loadUSDZModel(){ firestoreViewModel.updateLoadingStateWith(value: false) }
-            animateBottenContainer()
+            if helper.hasNotFetchedData{
+                firestoreViewModel.updateLoadingStateWith(state:.USDZ_MODEL,value: true)
+                loadImages()
+                loadUSDZModel(){ firestoreViewModel.updateLoadingStateWith(state:.USDZ_MODEL,value: false) }
+                helper.hasNotFetchedData = false
+            }
+            animateBottenContainerWith(value:true)
         }
     }
     
     var sceneviewContent:some View{
         SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
         .overlay{
-            if firestoreViewModel.isLoadingData{
+            if firestoreViewModel.loadingState(.USDZ_MODEL){
                 SpinnerAnimation(size:60.0,foregroundStyle: Color.lightGold)
             }
         }
@@ -165,20 +167,40 @@ extension ModelSceneView{
     
     var openInformationButton:some View{
         Menu(content:{
-            UrlLabelButton(label: "Se mer på hemsidan",
-                           image: "network", 
-                           toVisit: selectedTent.webpage)
-            Button(action: navigateToMovies ){
-                Label("Instruktionsfilmer", systemImage: "play.tv")
-            }
-            .disabled(disabledVideoButton)
-            .padding()
+            youtubeButton
+            pdfButton
+            webPageButton
         },label: {
             buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
         })
       }
     
     
+}
+
+//MARK: - POPUP MENU BUTTONS
+extension ModelSceneView{
+    var webPageButton: some View{
+        UrlLabelButton(label: "Hemsida",
+                       image: "network",
+                       toVisit: selectedTent.webpage)
+    }
+    
+    var youtubeButton: some View{
+        Button(action: navigateToMovies ){
+            Label("Instruktionsfilmer", systemImage: "play.tv")
+        }
+        .disabled(disabledVideoButton)
+        .padding()
+    }
+    
+    var pdfButton: some View{
+        Button(action: navigateToPdf ){
+            Label("Instruktionsmanualer", systemImage: "book.pages")
+        }
+        .disabled(disabledPdfButton)
+        .padding()
+    }
 }
 
 //MARK: - BOTTOM CONTAINER
@@ -380,6 +402,10 @@ extension ModelSceneView{
         selectedTent.instructionVideoUrls?.count ?? 0 == 0
     }
     
+    var disabledPdfButton:Bool{
+        selectedTent.instructionPdfIds?.count ?? 0 == 0
+    }
+    
     func checkArrayOf(type:ArrayToCheck) ->[String]?{
         switch type {
         case .EQUIPMENT:
@@ -397,6 +423,10 @@ extension ModelSceneView{
         case .USDZ_RESOURCE:
             if let modelStorageIds = selectedTent.modelStorageIds{
                 return modelStorageIds.count > 0 ? modelStorageIds : nil
+            }
+        case .PDF_RESOURCE:
+            if let instructionPdfIds = selectedTent.instructionPdfIds{
+                return instructionPdfIds.count > 0 ? instructionPdfIds : nil
             }
         }
         return nil
@@ -429,7 +459,7 @@ extension ModelSceneView{
            let modelId = usdzModels.first{
             firestoreViewModel.loadTentModelData(modelId){ url in
                 sceneViewCoordinator.setSceneViewFromUrl(url)
-                ServiceManager.removeDataFromTemporary(url)
+                //ServiceManager.removeDataFromTemporary(url)
                 onCompletion()
             }
          }
@@ -444,8 +474,21 @@ extension ModelSceneView{
                                                   videoUrl: videoUrl,
                                                   title: ""))
             }
-            navigationViewModel.appendToPathWith(VideoResourcesItem( id: shortId(),
-                                                                     listOfVideoItems: listOfVideoItems))
+            navigationViewModel.appendToPathWith(VideoResourcesItem(id: shortId(),
+                                                                    listOfVideoItems: listOfVideoItems))
+        }
+    }
+    
+    func navigateToPdf(){
+        if let instructionPdfIds = checkArrayOf(type:.PDF_RESOURCE){
+            var listOfPdfItems:[PdfItem] = []
+            for pdfId in instructionPdfIds{
+                listOfPdfItems.append(PdfItem(id: shortId(),
+                                                  pdfId: pdfId,
+                                                  title: ""))
+            }
+            navigationViewModel.appendToPathWith(PdfResourcesItem(id: shortId(),
+                                                                  listOfPdfItems: listOfPdfItems))
         }
     }
     
@@ -458,9 +501,9 @@ extension ModelSceneView{
         sceneViewCoordinator.toggleDimensionBox()
     }
     
-    func animateBottenContainer(){
+    func animateBottenContainerWith(value:Bool){
         withAnimation{
-            helper.showBottomContainer.toggle()
+            helper.showBottomContainer = true
         }
     }
     

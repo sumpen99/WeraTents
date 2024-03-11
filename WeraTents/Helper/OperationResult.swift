@@ -14,6 +14,7 @@ enum PresentedResult:String{
 enum PresentedError: Error {
     case FAILED_TO_DOWNLOAD_IMAGE(message:String = "Failed to download image")
     case FAILED_TO_DOWNLOAD_MODEL(message:String = "Failed to download usdz model")
+    case LOCAL_URL_IS_INVALID(message:String = "Could not create local storage url")
     case OPTIONAL(message:String)
 }
 

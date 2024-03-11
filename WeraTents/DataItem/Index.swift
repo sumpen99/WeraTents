@@ -30,6 +30,20 @@ struct VideoItem:Identifiable,Hashable{
     }
 }
 
+struct PdfItem:Identifiable,Hashable{
+    let id:String
+    let pdfId:String
+    let title:String
+    
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: PdfItem, rhs: PdfItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
 struct VideoResourcesItem:Hashable{
     let id:String
     let listOfVideoItems:[VideoItem]
@@ -38,6 +52,18 @@ struct VideoResourcesItem:Hashable{
     }
         
     static func == (lhs: VideoResourcesItem, rhs: VideoResourcesItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
+struct PdfResourcesItem:Hashable{
+    let id:String
+    let listOfPdfItems:[PdfItem]
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: PdfResourcesItem, rhs: PdfResourcesItem) -> Bool {
         return lhs.id == rhs.id
     }
 }
@@ -76,6 +102,7 @@ struct TentItem:CarouselItem{
     var iconStorageIds:[String]?
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
+    var instructionPdfIds:[String]?
     
     func hash(into hasher: inout Hasher) {
         return hasher.combine(id)
@@ -104,6 +131,7 @@ struct TentDb:Codable{
     var iconStorageIds:[String]?
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
+    var instructionPdfIds:[String]?
    
     func toTentItem(index:Int,image:Image) -> TentItem{
         return TentItem(id: self.id ?? "",
@@ -123,6 +151,7 @@ struct TentDb:Codable{
                         manufacturer:self.manufacturer ?? "",
                         iconStorageIds:self.iconStorageIds ?? [],
                         modelStorageIds:self.modelStorageIds ?? [],
-                        instructionVideoUrls:self.instructionVideoUrls ?? [])
+                        instructionVideoUrls:self.instructionVideoUrls ?? [],
+                        instructionPdfIds: self.instructionPdfIds ?? [])
     }
 }

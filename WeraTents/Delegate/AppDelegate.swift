@@ -14,13 +14,13 @@ class AppDelegate: UIResponder,UIApplicationDelegate{
     
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-       /*var providerFactory:AppCheckProviderFactory
+       var providerFactory:AppCheckProviderFactory
 #if targetEnvironment(simulator)
         providerFactory = AppCheckDebugProviderFactory()
 #else
         providerFactory = WeraAppCheckProvider()
 #endif
-        AppCheck.setAppCheckProviderFactory(providerFactory)*/
+        AppCheck.setAppCheckProviderFactory(providerFactory)
         FirebaseApp.configure()
         AppDelegate.instance = self
         return true
