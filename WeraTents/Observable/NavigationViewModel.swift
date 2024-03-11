@@ -42,7 +42,6 @@ class NavigationViewModel: ObservableObject{
         if notEmptyPath{
             pathTo.removeLast(pathTo.count)
             NavigationUtil.popToRootView()
-            
         }
     }
        

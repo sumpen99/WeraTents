@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+
 let FETCH_LOCALLY:Bool              = true
 let PIXEL_TO_ANGLE:Float            = .pi / 180
 let MAX_ZOOM_LEVEL:CGFloat          = 10

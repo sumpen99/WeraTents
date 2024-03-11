@@ -74,7 +74,7 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     func setARView(_ arView: ARView) {
         self.arView = arView
 #if targetEnvironment(simulator)
-        arView.environment.background = .color(.black)
+        arView.environment.background = .color(UIColor(Color.background))
 #else
         arView.environment.background = .cameraFeed()
 #endif

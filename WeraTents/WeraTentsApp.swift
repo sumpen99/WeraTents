@@ -18,7 +18,7 @@ struct WeraTentsApp: App {
         StyledWindowGroup {
             ZStack{
                 ContentView()
-                if appStateViewModel.launchState != .FINISHED {
+                if !appStateViewModel.launchState[LaunchState.FINNISHED.rawValue] {
                     LaunchScreen()
                 }
             }

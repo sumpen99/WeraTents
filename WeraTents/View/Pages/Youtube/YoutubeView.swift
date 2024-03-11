@@ -54,25 +54,11 @@ extension YoutubeView{
     
     var mainContent:some View{
         VStack{
-            topBar
+            BaseTopBar(label: "Instruktionsfilmer", onNavigateBackAction: navigateBack)
             splitLine(color: Color.white).hCenter().padding(.top,5)
             videoContent.vTop()
         }
         .padding([.top,.horizontal])
-    }
-    
-    var topBar:some View{
-        HStack{
-            BackButtonAction(action: navigateBack)
-            Text("Instruktionsfilmer")
-            .font(.headline)
-            .bold()
-            .frame(height: 33)
-            .foregroundStyle(Color.white)
-            .hCenter()
-            .padding([.vertical],5)
-        }
-        .hLeading()
     }
     
     var videoContent: some View {

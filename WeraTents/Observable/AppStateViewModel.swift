@@ -7,21 +7,22 @@
 
 import SwiftUI
 
-enum LaunchState{
-    case START
-    case CONTINUE
-    case FINISHED
+enum LaunchState:Int,CaseIterable{
+    case STARTED
+    case FINNISHED
 }
 
 class AppStateViewModel:ObservableObject{
-    @MainActor @Published var launchState:LaunchState = .START
+    @MainActor @Published var launchState:[Bool] = Array(repeating: false, count: LaunchState.allCases.count)
     @Published var showToast:Bool = false
     
-    @MainActor func dismiss(){
-        Task{
-            launchState = .CONTINUE
-            try? await Task.sleep(for: Duration.seconds(0.7 * Double(AnimateLaunchState.ALL.rawValue)))
-            self.launchState = .FINISHED
+    @MainActor func start(){
+        launchState[LaunchState.STARTED.rawValue] = true
+    }
+    
+    @MainActor func end(){
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5){
+            self.launchState[LaunchState.FINNISHED.rawValue] = true
         }
     }
     
