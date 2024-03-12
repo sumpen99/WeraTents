@@ -63,9 +63,11 @@ class FirestoreRepository{
 
 //MARK: - FIRESTORE VIEWMODEL
 class FirestoreViewModel:ObservableObject{
-    @Published var tentAssets:[TentItem] = []
     @Published var isLoadingData:[Bool] = Array.init(repeating: false, count: LoadingState.allCases.count)
+    @Published var tentAssets:[TentItem] = []
+    @Published var brandAssets:[String] = []
     let repo = FirestoreRepository()
+    
 }
 
 //MARK: - LOAD TENT ASSETS DATA
@@ -80,12 +82,14 @@ extension FirestoreViewModel{
         ServiceManager.readJsonFromBundleFile("data.json",value: TentDb.self){ [weak self] data in
             if let strongSelf = self,
                let data = data{
-                for tent in data{
+                for tent in data.sorted(by: <){
                     ServiceManager.loadImagesFromBundle("Tent",
                                                        imageNames: [tent.iconStorageIds?[0] ?? ""]){ uiImages in
                         if let uiImage = uiImages.first{
                             let count = strongSelf.tentAssets.count
+                            strongSelf.updateBrandAssets(with: tent.label)
                             strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
+                            strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
                         }
                      }
                 }
@@ -95,7 +99,7 @@ extension FirestoreViewModel{
      
     private func loadTentAssetsFromServer(){
         let coll = repo.tentCollection()
-        coll.getDocuments(){ [weak self] snapshot,error in
+        coll.order(by: "label",descending: true).getDocuments(){ [weak self] snapshot,error in
             guard let strongSelf = self,
                   let snapshot = snapshot else { return }
             for doc in snapshot.documents{
@@ -104,8 +108,10 @@ extension FirestoreViewModel{
                 else{ continue }
                 strongSelf.downloadTentIconImageFromStorage(fileName: iconUrl){ error,uiImage in
                     if let uiImage = uiImage{
-                        let index = strongSelf.tentAssets.count
-                        strongSelf.tentAssets.append(tent.toTentItem(index: index, image: Image(uiImage: uiImage)))
+                        let count = strongSelf.tentAssets.count
+                        strongSelf.updateBrandAssets(with: tent.label)
+                        strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
+                        strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
                     }
                     else if let error = error{
                         debugLog(object: error.localizedDescription)
@@ -269,6 +275,17 @@ extension FirestoreViewModel{
 extension FirestoreViewModel{
     var hasTents:Bool{
         tentAssets.count > 0
+    }
+    
+    var assetCount:Int{
+        tentAssets.count
+    }
+    
+    func updateBrandAssets(with brand:String?){
+        if let brand = brand{
+            if brandAssets.contains(brand){ return }
+            brandAssets.append(brand)
+        }
     }
     
     func loadingState(_ state:LoadingState) -> Bool{

@@ -13,10 +13,6 @@ struct HomeView:View {
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
-            .onChange(of: firestoreViewModel.tentAssets,initial: true){
-                let shutDownSpinner = firestoreViewModel.tentAssets.count == 0
-                firestoreViewModel.updateLoadingStateWith(state: .TENT_ASSETS, value: shutDownSpinner)
-            }
             .modifier(NavigationViewModifier())
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
@@ -79,8 +75,6 @@ extension HomeView{
         ScrollView{
             VStack(spacing:V_GRID_SPACING){
                 NavigationSection(labelText: "Våra tält", action: {}, content: carouselContent)
-                NavigationSection(labelText: "Varumärken", action: {}, content: brandContent)
-              
              }
         }
     }
@@ -91,17 +85,17 @@ extension HomeView{
     var carouselContent:some View{
         ZStack{
             GeometryReader{ reader in
-                carousel(reader.size.width*0.75)
+                carousel(reader.size.width)
                 .hCenter()
             }
         }
-        .frame(height: HOME_CAROUSEL_HEIGHT)
+        .frame(height: HOME_CAROUSEL_HEIGHT+HOME_BRAND_HEIGHT)
     }
     
     func carousel(_ width:CGFloat) ->some View{
         HomeCarousel(
-                 data: $firestoreViewModel.tentAssets,
-                 width: width,
+                 cardWidth: width*0.75,
+                 brandWidth: width,
                  edge: .trailing)
         .overlay{
             if firestoreViewModel.loadingState(.TENT_ASSETS){
@@ -114,19 +108,24 @@ extension HomeView{
 //MARK: - BRAND -SECTION
 extension HomeView{
     var brandContent:some View{
-        ZStack{
-            GeometryReader{ reader in
-                ScrollView(.horizontal){
-                    HStack{
-                        DropShadowButton(buttonText: "Adventure",frameWidth: reader.size.width/4, action: {})
-                        DropShadowButton(buttonText: "Bohus",frameWidth: reader.size.width/4, action: {})
-                        DropShadowButton(buttonText: "Vivalid",frameWidth: reader.size.width/4, action: {})
-                    }
-                }
+        GeometryReader{ reader in
+            ScrollView(.horizontal){
+                brandButtons(reader.size.width)
             }
         }
         .frame(height: HOME_BRAND_HEIGHT)
         .hCenter()
+    }
+    
+    @ViewBuilder
+    func brandButtons(_ size:CGFloat) -> some View{
+        if size > 0{
+            HStack(spacing: V_SPACING_REG){
+                DropShadowButton(buttonText: "Adventure",frameWidth: calculatedWidth(maxWidth: size), action: {})
+                DropShadowButton(buttonText: "Bohus",frameWidth: calculatedWidth(maxWidth: size), action: {})
+                DropShadowButton(buttonText: "Vivalid",frameWidth: calculatedWidth(maxWidth: size), action: {})
+            }
+        }
     }
     
 }
@@ -212,5 +211,15 @@ extension HomeView{
         .frame(height:MENU_HEIGHT)
         .padding([.bottom,.leading,.trailing])
         .vBottom()
+    }
+}
+
+//MARK: - FUNCTIONS
+extension HomeView{
+    func calculatedWidth(maxWidth:CGFloat) -> CGFloat{
+        let itemCount = 3.0
+        let padding = CGFloat(itemCount-1)*V_SPACING_REG
+        let width = (maxWidth-padding)/(itemCount+1)
+        return width < 0 ? 0 : width
     }
 }

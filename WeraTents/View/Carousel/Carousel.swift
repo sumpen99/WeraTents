@@ -14,6 +14,7 @@ struct CarouselIndicators<T:CarouselItem>{
     var closest: CGFloat = 0.0
     var selectedItem:T? = nil
     var selectedIndex:Int = -1
+    var brandList:[String] = ["Adventure","Bohus","Vivaldi"]
 }
 
 struct Carousel<T:CarouselItem>:View {

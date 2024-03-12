@@ -13,6 +13,7 @@ protocol CarouselItem:Identifiable,Hashable{
     var index:Int { get }
     var img:Image { get }
     var name:String { get }
+    var label:String { get }
     var shortDescription:String { get }
 }
 
@@ -88,13 +89,13 @@ struct TentItem:CarouselItem{
     var index:Int
     var name:String
     var img:Image
+    var label:String
     var price:String?
     var productWeight:String?
     var shortDescription:String
     var longDescription:String?
     var category:String?
     var webpage:String?
-    var label:String?
     var equipment:[String]?
     var bareInMind:[String]?
     var articleNumber:String?
@@ -113,7 +114,7 @@ struct TentItem:CarouselItem{
     }
 }
 
-struct TentDb:Codable{
+struct TentDb:Codable,Comparable{
     var id: String?
     var index:Int?
     var name: String?
@@ -138,13 +139,13 @@ struct TentDb:Codable{
                         index: index,
                         name: self.name ?? "",
                         img: image,
+                        label:self.label ?? "",
                         price: self.price ?? "",
                         productWeight:self.productWeight ?? "",
                         shortDescription:self.shortDescription ?? "",
                         longDescription:self.longDescription ?? "",
                         category:self.category ?? "",
                         webpage:self.webpage ?? "",
-                        label:self.label ?? "",
                         equipment:self.equipment ?? [],
                         bareInMind:self.bareInMind ?? [],
                         articleNumber:self.articleNumber ?? "",
@@ -154,4 +155,34 @@ struct TentDb:Codable{
                         instructionVideoUrls:self.instructionVideoUrls ?? [],
                         instructionPdfIds: self.instructionPdfIds ?? [])
     }
+    
+    static func < (lhs: TentDb, rhs: TentDb) -> Bool{
+        if let lhsLabel = lhs.label,
+           let rhsLabel = rhs.label{
+            return lhsLabel < rhsLabel
+        }
+        return false
+    }
+    static func <= (lhs: TentDb, rhs: TentDb) -> Bool{
+        if let lhsLabel = lhs.label,
+           let rhsLabel = rhs.label{
+            return lhsLabel <= rhsLabel
+        }
+        return false
+    }
+    static func >= (lhs: TentDb, rhs: TentDb) -> Bool{
+        if let lhsLabel = lhs.label,
+           let rhsLabel = rhs.label{
+            return lhsLabel >= rhsLabel
+        }
+        return false
+    }
+    static func > (lhs: TentDb, rhs: TentDb) -> Bool{
+        if let lhsLabel = lhs.label,
+           let rhsLabel = rhs.label{
+            return lhsLabel > rhsLabel
+        }
+        return false
+    }
+    
 }
