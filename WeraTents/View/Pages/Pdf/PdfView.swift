@@ -28,10 +28,13 @@ struct PdfView:View {
         }
         .task {
             if let pdfResourceItem = pdfResourcesItem.listOfPdfItems.first{
-                firestoreViewModel.loadTentPdfData(pdfResourceItem.pdfId){ [weak pdfViewCoordinator] url in
-                    guard let pdfViewCoordinator = pdfViewCoordinator,
-                          let url = url else { return }
-                    pdfViewCoordinator.setNewDocumentFrom(url: url)
+                firestoreViewModel.updateLoadingStateWith(state: .PDF_DOCUMENT, value: true)
+                firestoreViewModel.loadTentPdfData(pdfResourceItem.pdfId){ [weak pdfViewCoordinator, weak firestoreViewModel] url in
+                    if let pdfViewCoordinator = pdfViewCoordinator,
+                       let url = url{
+                        pdfViewCoordinator.setNewDocumentFrom(url: url)
+                    }
+                    firestoreViewModel?.updateLoadingStateWith(state: .PDF_DOCUMENT, value: false)
                 }
             }
         }
@@ -48,11 +51,20 @@ extension PdfView{
     
     var mainContent:some View{
         VStack{
-            BaseTopBar(label: "Instruktionsmanualer", onNavigateBackAction: navigateBack)
+            BaseTopBar(label: "Instruktionsmanual", onNavigateBackAction: navigateBack)
             splitLine(color: Color.white).hCenter().padding(.top,5)
-            PdfViewContainer(pdfViewCoordinator: pdfViewCoordinator)
+            pdfContainer
         }
         .padding([.top,.horizontal])
+    }
+    
+    var pdfContainer:some View{
+        PdfViewContainer(pdfViewCoordinator: pdfViewCoordinator)
+        .overlay{
+            if firestoreViewModel.loadingState(.PDF_DOCUMENT){
+                SpinnerAnimation()
+            }
+        }
     }
 }
 

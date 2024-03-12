@@ -6,19 +6,30 @@
 //
 import SwiftUI
 
-struct HomeCarousel<T:CarouselItem>:View {
+struct CarouselHelper{
+    var snappedItem = 0.0
+    var draggingItem = 0.0
+    var activeIndex: Int = 0
+    var closest: CGFloat = 0.0
+    var selectedItem:TentItem? = nil
+    var selectedIndex:Int = -1
+    var brandList:[String] = ["Adventure","Bohus","Vivaldi"]
+}
+
+struct HomeCarousel:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
-    @Binding var data:[T]
-    let width:CGFloat
+    @EnvironmentObject var firestoreViewModel: FirestoreViewModel
+    let cardWidth:CGFloat
+    let brandWidth:CGFloat
     let edge:Edge
-    @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
+    @State private var ind:CarouselHelper = CarouselHelper()
     
     // MARK: - GESTURES
     var carouselDragGesture: some Gesture {
         DragGesture()
         .onChanged { value in
-            ind.draggingItem = ind.snappedItem + value.translation.width / (width/2.0)
-            ind.closest = round(ind.draggingItem).remainder(dividingBy: Double(data.count))
+            ind.draggingItem = ind.snappedItem + value.translation.width / (cardWidth/2.0)
+            ind.closest = round(ind.draggingItem).remainder(dividingBy: Double(dataCount))
             setActiveIndex(ind.closest)
         }
         .onEnded { value in
@@ -26,78 +37,129 @@ struct HomeCarousel<T:CarouselItem>:View {
                 ind.draggingItem = ind.closest
                 ind.snappedItem = ind.draggingItem
             }
-            
-    
-        }
+         }
     }
     
     // MARK: - MAIN BODY
     var body: some View {
-        carousel
-            
+        VStack{
+            carousel
+            brandContent
+        }
     }
 }
 
-
-// MARK: - MAIN CAROUSEL CONTENT
+// MARK: - CAROUSEL CONTENT
 extension HomeCarousel{
    
     var carousel:some View{
         ZStack {
-            ForEach(data) { item in
+            ForEach(firestoreViewModel.tentAssets) { item in
                 card(item)
             }
         }
         .gesture(carouselDragGesture)
-    }
+     }
     
-    func card(_ item:T)-> some View{
+    func card(_ item:TentItem)-> some View{
         ZStack {
             Color.lightBrown
             HStack{
-                VStack{
-                    Text(item.name).font(.caption)
-                        .foregroundStyle(Color.materialDark).bold()
-                    Text(item.shortDescription).font(.caption2).lineLimit(3).vCenter()
-                        .italic().foregroundStyle(Color.materialDark)
-                    Button(action: navigate, label: {
-                        Text("Se mer").bold()
-                    })
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding()
-               .hCenter()
-                ZStack{
-                    item.img
-                    .resizable()
-                }
-                
+                cardText(name: item.name, shortDesc: item.shortDescription)
+                cardImageButton(item.img)
             }
-       }
+        }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-        .frame(width: width, height: HOME_CAROUSEL_HEIGHT)
+        .frame(width: cardWidth, height: HOME_CAROUSEL_HEIGHT)
         .scaleEffect(1.0 - abs(distance(item.index)) * 0.2 )
         .offset(x: xOffset(item.index) * 1.63, y: 0)
         .opacity(1.0 - abs(distance(item.index)) * 0.3 )
         .zIndex(1.0 - abs(distance(item.index)) * 0.1)
     }
-     
+    
+    func cardText(name:String,shortDesc:String) -> some View{
+        VStack{
+            Text(name).font(.caption)
+                .foregroundStyle(Color.materialDark).bold()
+            Text(shortDesc).font(.caption2).lineLimit(3).vCenter()
+                .italic().foregroundStyle(Color.materialDark)
+            Button(action: navigate, label: {
+                Text("Se mer").bold()
+            })
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .hCenter()
+    }
+    
+    func cardImageButton(_ img:Image) -> some View{
+        ZStack{
+            img
+            .resizable()
+        }
+    }
+}
+
+// MARK: - BRAND CONTENT
+extension HomeCarousel{
+    var brandContent:some View{
+        ScrollView(.horizontal){
+            HStack(spacing: V_SPACING_REG){
+                brandButtons
+            }
+        }
+        .frame(height: HOME_BRAND_HEIGHT)
+        .hCenter()
+    }
+    
+    var brandButtons: some View{
+        ForEach(firestoreViewModel.brandAssets,id:\.self){ brand in
+            DropShadowButton(buttonText: brand,frameWidth: calculatedWidth, action: {navigateToBrand(brand)})
+        }
+    }
 }
 
 // MARK: - HELPER FUNCTIONS
 extension HomeCarousel{
     
-    var validIndex:Int{
-        if data.count > 0 && ind.activeIndex >= 0 && ind.activeIndex < data.count{
+    var dataCount:Int{
+        firestoreViewModel.assetCount
+    }
+    
+    var validIndex: Int?{
+        if dataCount > 0 && ind.activeIndex >= 0 && ind.activeIndex < dataCount{
             return ind.activeIndex
         }
-        return -1
+        return nil
+    }
+    
+    var calculatedWidth: CGFloat{
+        let itemCount = 3.0
+        let padding = CGFloat(itemCount-1)*V_SPACING_REG
+        let width = (brandWidth-padding)/(itemCount+1)
+        return width < 0 ? 0 : width
+    }
+    
+    func validIndex(of number:Int) -> Int?{
+        if dataCount > 0 && number >= 0 && number < dataCount{
+            return number
+        }
+        return nil
     }
     
     func navigate(){
-        let index = validIndex
-        if index != -1{
-            navigationViewModel.appendToPathWith(data[index])
+        if let index = validIndex{
+            navigationViewModel.appendToPathWith(firestoreViewModel.tentAssets[index])
+        }
+     }
+    
+    func navigateToBrand(_ brand:String){
+        if let index = validIndex{
+            if brand == firestoreViewModel.tentAssets[index].label { return }
+            if let itemIndex = firestoreViewModel.tentAssets.firstIndex(where: {$0.label == brand }),
+               let navToIndex = validIndex(of:itemIndex){
+                setNewIndex(navToIndex)
+            }
         }
     }
    
@@ -108,34 +170,42 @@ extension HomeCarousel{
             return
         }
         let newValue = current + inc
-        let toMove = newValue / (width/2.0)
+        let toMove = newValue / (cardWidth/2.0)
         ind.draggingItem = ind.snappedItem + toMove
-        ind.closest = round(ind.draggingItem).remainder(dividingBy: Double(data.count))
+        ind.closest = round(ind.draggingItem).remainder(dividingBy: Double(dataCount))
         setActiveIndex(ind.closest)
         DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
             spinCarousel(current: newValue,inc:inc,iterations: iterations+1,abort: abort)
         })
         
     }
-    
+     
     func distance(_ item: Int) -> Double {
-        return (ind.draggingItem - Double(item)).remainder(dividingBy: Double(data.count))
+        return (ind.draggingItem - Double(item)).remainder(dividingBy: Double(dataCount))
     }
     
     func xOffset(_ item: Int) -> Double {
-        let angle = Double.pi * 2 / Double(data.count) * distance(item)
-        return sin(angle) * width
+        let angle = Double.pi * 2 / Double(dataCount) * distance(item)
+        return sin(angle) * cardWidth
     }
     
     func yOffset(_ item: Int) -> Double {
-        let angle = Double.pi * 2 / Double(data.count) * distance(item)
-        return cos(angle) * width
+        let angle = Double.pi * 2 / Double(dataCount) * distance(item)
+        return cos(angle) * cardWidth
     }
     
     func setActiveIndex(_ value:CGFloat){
-        self.ind.activeIndex = data.count + Int(value)
-        if self.ind.activeIndex > data.count || Int(value) >= 0 {
+        self.ind.activeIndex = dataCount + Int(value)
+        if self.ind.activeIndex > dataCount || Int(value) >= 0 {
             self.ind.activeIndex = Int(value)
+        }
+    }
+    
+    func setNewIndex(_ value:Int){
+        withAnimation{
+            self.ind.activeIndex = value
+            self.ind.draggingItem = Double(value)
+            self.ind.snappedItem = Double(value)
         }
     }
  

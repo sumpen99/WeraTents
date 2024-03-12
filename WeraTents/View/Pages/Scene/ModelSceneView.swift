@@ -111,7 +111,7 @@ extension ModelSceneView{
         SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
         .overlay{
             if firestoreViewModel.loadingState(.USDZ_MODEL){
-                SpinnerAnimation(size:60.0,foregroundStyle: Color.lightGold)
+                SpinnerAnimation()
             }
         }
     }
@@ -196,7 +196,7 @@ extension ModelSceneView{
     
     var pdfButton: some View{
         Button(action: navigateToPdf ){
-            Label("Instruktionsmanualer", systemImage: "book.pages")
+            Label("Instruktionsmanual", systemImage: "book.pages")
         }
         .disabled(disabledPdfButton)
         .padding()
@@ -238,6 +238,7 @@ extension ModelSceneView{
         .foregroundStyle(Color.materialDark)
         .font(.title3)
         .bold()
+        .italic()
         .padding([.top,.bottom])
      }
 }
@@ -386,7 +387,7 @@ extension ModelSceneView{
             HeaderContent(content:
                 VStack(spacing:V_SPACING_REG){
                      ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
-                        if index == 0{ Text(value).font(.body).bold().hLeading() }
+                        if index == 0{ Text(value).font(.body).italic().hLeading() }
                         else{ Text(String(BULLET + value)).font(.body).hLeading() }
                      }
                 })

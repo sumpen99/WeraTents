@@ -32,7 +32,7 @@ struct SectionFoldableHeavy<Header:View,Content: View>: View{
     let header:Header
     let content:Content
     let backgroundColor:Color
-    @State var showContent:Bool = true
+    @State var showContent:Bool = false
     var body: some View {
         Section {
             ZStack{
@@ -49,7 +49,7 @@ struct SectionFoldableHeavy<Header:View,Content: View>: View{
                       header: header,
                       isOn: $showContent,
                       onLabel: "Dölj",
-                      offLabel: "Visa"
+                      offLabel: "Visa mer"
             )
         } footer: {}
     }
