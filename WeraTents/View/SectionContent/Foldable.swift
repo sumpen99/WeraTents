@@ -40,7 +40,7 @@ struct SectionFoldableHeavy<Header:View,Content: View>: View{
                     content
                 }
                 else{
-                    splitLine(color: backgroundColor).vBottom().hCenter()
+                    SplitLine(color:backgroundColor).vBottom().hCenter()
                 }
             }
             

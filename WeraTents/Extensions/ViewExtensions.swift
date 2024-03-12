@@ -60,13 +60,6 @@ extension View{
     
 }
 
-func splitLine(color clr:Color = Color.white,height:CGFloat = 1.0) -> some View{
-    Rectangle()
-    .fill(clr)
-    .frame(height: height)
-    .hCenter()
-}
-
 func roundedImage(_ name:String,
                   font:Font,
                   scale:Image.Scale,

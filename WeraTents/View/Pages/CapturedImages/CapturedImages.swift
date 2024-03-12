@@ -380,7 +380,7 @@ extension CapturedImages{
                 libraryLabel
                 editButton
             }
-            splitLine()
+            SplitLine()
             settingsItemMenuList
         }
         
@@ -418,7 +418,7 @@ extension CapturedImages{
     var editTopBar:some View{
         VStack{
             editTopBarButtons
-            splitLine()
+            SplitLine()
             editTopBarSection
         }
     }

@@ -9,6 +9,7 @@ import SwiftUI
 struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
+    @State var openMenuSwitch:Bool = false
   
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
@@ -41,32 +42,81 @@ extension HomeView{
             labelContainer
             scrollContent
         }
+        .overlay{
+            overlayedMenu
+        }
         .vTop()
     }
     
+    @ViewBuilder
     var scrollContent:some View{
         ZStack{
             scrollContainer
-            shapedMenu
+            MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
         }
     }
     
-    /*
-     VStack{
-         labelContainer
-         scrollContent
-     }
-     .overlay{
-         ZStack{
-             Color.red
-         }
-         .ignoresSafeArea(.all)
-         .vTop()
-         .hCenter()
-     }
-     .vTop()
-     
-     */
+    @ViewBuilder
+    var overlayedMenu:some View{
+        if openMenuSwitch{
+            ZStack{
+                Color.white.opacity(0.3)
+                VStack{
+                    HStack{
+                        Text("Starta ny AR-upplevelse!")
+                        .foregroundStyle(Color.white)
+                        .bold()
+                        .font(.headline)
+                        ZStack{
+                            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
+                            .fill(Color.materialDark)
+                            Image(systemName: "camera.metering.center.weighted")
+                            .font(.title3)
+                            .foregroundStyle(Color.white)
+                            .padding()
+                            .frame(width: ICON_WIDTH,height:ICON_WIDTH)
+                        }
+                        .frame(width: ICON_WIDTH,height:ANIMATED_MENU_HEIGHT)
+                    }
+                    .hTrailing()
+                    HStack{
+                        Text("Starta ny AR-upplevelse!")
+                        .foregroundStyle(Color.white)
+                        .bold()
+                        .font(.headline)
+                        ZStack{
+                            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
+                            .fill(Color.materialDark)
+                            Image(systemName: "camera.metering.center.weighted")
+                            .font(.title3)
+                            .foregroundStyle(Color.white)
+                            .background{ Color.materialDark }
+                            .padding()
+                            .frame(width: ICON_WIDTH,height:ICON_WIDTH)
+                        }
+                        .frame(width: ICON_WIDTH,height:ANIMATED_MENU_HEIGHT)
+                    }
+                    .hTrailing()
+                    
+                }
+                .transition(.move(edge: .bottom))
+                .vBottom()
+                .hTrailing()
+                .padding(.trailing)
+                .padding(.bottom,ANIMATED_MENU_HEIGHT-5)
+            }
+            .onTapGesture {
+                withAnimation{
+                    openMenuSwitch.toggle()
+                }
+            }
+            .ignoresSafeArea(.all)
+            .vTop()
+            .hCenter()
+            //.transition(.opacity)
+        }
+    }
+    
 }
 
 //MARK: - SCROLL-CONTAINER
@@ -105,28 +155,9 @@ extension HomeView{
     }
 }
 
-//MARK: - BRAND -SECTION
+//MARK: - CAPTURED-IMAGES-SECTION
 extension HomeView{
-    var brandContent:some View{
-        GeometryReader{ reader in
-            ScrollView(.horizontal){
-                brandButtons(reader.size.width)
-            }
-        }
-        .frame(height: HOME_BRAND_HEIGHT)
-        .hCenter()
-    }
     
-    @ViewBuilder
-    func brandButtons(_ size:CGFloat) -> some View{
-        if size > 0{
-            HStack(spacing: V_SPACING_REG){
-                DropShadowButton(buttonText: "Adventure",frameWidth: calculatedWidth(maxWidth: size), action: {})
-                DropShadowButton(buttonText: "Bohus",frameWidth: calculatedWidth(maxWidth: size), action: {})
-                DropShadowButton(buttonText: "Vivalid",frameWidth: calculatedWidth(maxWidth: size), action: {})
-            }
-        }
-    }
     
 }
 
@@ -155,63 +186,6 @@ extension HomeView{
         .padding(.horizontal)
     }
      
-}
-
-//MARK: -- BOTTOM-BAR
-extension HomeView{
-    var navModelARButton:some View{
-        Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
-            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightGold)
-                .imageScale(.large)
-            .padding(15.0)
-            .background{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.materialDarkest)
-            }
-        })
-        .offset(y:-4)
-    }
-    
-    var videoButton:some View{
-        Button(action: {}, label: {
-            buttonImage("video.circle.fill", font: .title, foreground: Color.lightGold)
-            .padding(10.0)
-            .background{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
-            }
-        })
-    }
-    
-    var accountButton:some View{
-        Button(action: {}, label: {
-            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightGold)
-            .padding(10.0)
-            .background{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
-            }
-        })
-    }
-    
-    @ViewBuilder
-    var bottomButtons:some View{
-        HStack{
-            videoButton
-            navModelARButton.hCenter()
-            accountButton
-        }
-        .padding([.leading,.trailing])
-    }
-     
-    var shapedMenu:some View{
-        ZStack{
-            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.materialDark)
-            OvalShapeMenu()
-            .fill(Color.materialDark)
-            bottomButtons
-       }
-        .frame(height:MENU_HEIGHT)
-        .padding([.bottom,.leading,.trailing])
-        .vBottom()
-    }
 }
 
 //MARK: - FUNCTIONS
