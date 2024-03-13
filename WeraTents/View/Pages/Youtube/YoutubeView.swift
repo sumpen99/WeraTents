@@ -34,7 +34,7 @@ struct YoutubeView:View {
                 self.selectedVideoItem = videoResourcesItem
             }
         }
-        .onChange(of: self.selectedVideoItem,initial: false){ (_ , videoItem) in
+        .onChange(of: self.selectedVideoItem,initial: true){ (_ , videoItem) in
             guard let videoItem = videoItem else{
                 return self.youTubePlayer.stop()
             }
@@ -55,7 +55,7 @@ extension YoutubeView{
     var mainContent:some View{
         VStack{
             BaseTopBar(label: "Instruktionsfilmer", onNavigateBackAction: navigateBack)
-            splitLine(color: Color.white).hCenter().padding(.top,5)
+            SplitLine(color:Color.white).hCenter().padding(.top,5)
             videoContent.vTop()
         }
         .padding([.top,.horizontal])

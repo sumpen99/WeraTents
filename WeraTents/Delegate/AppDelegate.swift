@@ -45,11 +45,11 @@ class AppDelegate: UIResponder,UIApplicationDelegate{
     
     func applicationWillTerminate(_ application: UIApplication){
         PersistenceController.deleteAllDataFromEntity("ScreenshotModel")
-        debugLog(object: "free up core data")
+        debugLog(logger:.OK,object: "free up core data")
     }
     
     func applicationDidReceiveMemoryWarning(_ application: UIApplication){
-        debugLog(object: "Oops I Daisy. Memory is an issue")
+        debugLog(logger:.ERROR,object: "Oops I Daisy. Memory is an issue")
     }
     
 }
