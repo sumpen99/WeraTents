@@ -34,7 +34,7 @@ struct YoutubeView:View {
                 self.selectedVideoItem = videoResourcesItem
             }
         }
-        .onChange(of: self.selectedVideoItem,initial: false){ (_ , videoItem) in
+        .onChange(of: self.selectedVideoItem,initial: true){ (_ , videoItem) in
             guard let videoItem = videoItem else{
                 return self.youTubePlayer.stop()
             }

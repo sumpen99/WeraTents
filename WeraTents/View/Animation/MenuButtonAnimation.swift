@@ -18,6 +18,7 @@ struct MenuHelper{
     var scaleAmount = 1.0
     var menuBarWidth:CGFloat = 0.0
     var paddingHorizontal:CGFloat = 0.0
+    var paddingHorizontalOpen:CGFloat = 0.0
 }
 
 struct MenuButtonAnimation:View {
@@ -27,7 +28,12 @@ struct MenuButtonAnimation:View {
      
     @ViewBuilder
     var body: some View {
-        content
+        VStack{
+            openButtonList
+            content
+        }
+        .padding(.horizontal)
+        .vBottom()
     }
     
     var content:some View{
@@ -40,7 +46,9 @@ struct MenuButtonAnimation:View {
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
                 helper.menuBarWidth = newSize * 0.85
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
+                helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
+            .shadow(color:Color.white,radius: CORNER_RADIUS_BRAND)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
@@ -51,8 +59,28 @@ struct MenuButtonAnimation:View {
             .padding([.bottom])
             .vBottom()
             .hTrailing()
+            .background{
+                arButtonOpen
+            }
         }
-        .padding(.horizontal)
+        .frame(height: ANIMATED_MENU_HEIGHT)
+    }
+    
+    @ViewBuilder
+    var openButtonList:some View{
+        if openMenuSwitch{
+            VStack{
+                helpButton
+                accountButton
+                contactButton
+                settingsButton
+            }
+            .hTrailing()
+            .vBottom()
+            .padding([.bottom])
+            .padding(.trailing,(ICON_WIDTH-ICON_OPEN_WIDTH)/2.0)
+            .transition(.scale.combined(with: .opacity))
+        }
     }
     
     @ViewBuilder
@@ -68,7 +96,6 @@ struct MenuButtonAnimation:View {
             expandMenuButton
         }
      }
-    
 }
 
 //MARK: - GESTURE
@@ -107,21 +134,92 @@ extension MenuButtonAnimation{
 
 //MARK: - BUTTON AND TEXT
 extension MenuButtonAnimation{
-    var textLabel: some View{
-        Text("Starta ny AR-upplevelse!")
+    
+    
+    var settingsButton:some View{
+        Button(action: { debugLog(object: "Settings button ")}, label: {
+            HStack{
+                textLabelBase("Inställningar")
+                imageBase("gear")
+            }
+        })
+        .hTrailing()
+    }
+    
+    var accountButton:some View{
+        Button(action: { debugLog(object: "Account button ")}, label: {
+            HStack{
+                textLabelBase("Konto")
+                imageBase("person")
+            }
+        })
+        .hTrailing()
+    }
+    
+    var contactButton:some View{
+        Button(action: { debugLog(object: "Contact button ")}, label: {
+            HStack{
+                textLabelBase("Kontakt")
+                imageBase("person.crop.artframe")
+            }
+        })
+        .hTrailing()
+    }
+    
+    var helpButton:some View{
+        Button(action: { debugLog(object: "Help button ")}, label: {
+            HStack{
+                textLabelBase("Hjälp")
+                imageBase("questionmark")
+            }
+        })
+        .hTrailing()
+    }
+    
+    func imageBase(_ name:String) -> some View{
+        Image(systemName: name)
+        .font(.title3)
+        .bold()
+        .foregroundStyle(Color.materialDark)
+        .padding()
+        .background(Color.white)
+        .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
+        .clipShape(Circle())
+        .shadow(color:Color.white,radius: CORNER_RADIUS_BRAND)
+    }
+    
+    func textLabelBase(_ text:String) -> some View{
+        Text(text)
         .foregroundStyle(Color.white)
         .bold()
         .font(.headline)
-        .opacity(openMenuSwitch ? 0 : helper.pressedSection == .TEXT_CENTER ? 0.5 : 1.0)
+    }
+    
+    var textLabel: some View{
+        textLabelBase("Starta ny AR-upplevelse!")
+        .opacity(helper.pressedSection == .TEXT_CENTER ? 0.5 : 1.0)
         .hCenter()
      }
+    
+    @ViewBuilder
+    var arButtonOpen: some View{
+        if openMenuSwitch{
+            Button(action: navigate, label: {
+                textLabelBase("AR-upplevelse")
+            })
+            .hTrailing()
+            .padding(.trailing,ICON_WIDTH)
+            .padding([.bottom,.trailing])
+            .transition(.move(edge: .trailing))
+        }
+    }
     
     var startARButton: some View{
         Image(systemName: "camera.metering.center.weighted")
         .font(.title3)
         .foregroundStyle(Color.white)
         .frame(width: ICON_WIDTH)
-        .opacity(openMenuSwitch ? 0 : helper.pressedSection == .ICON_LEFT ? 0.5 : 1.0)
+        .opacity(helper.pressedSection == .ICON_LEFT ? 0.5 : 1.0)
     }
     
     var expandMenuButton: some View{
@@ -129,7 +227,7 @@ extension MenuButtonAnimation{
         .font(.title3)
         .foregroundStyle(Color.white)
         .frame(width: ICON_WIDTH)
-        .opacity(openMenuSwitch ? 0 : helper.pressedSection == .ICON_RIGHT ? 0.5 : 1.0)
+        .opacity(helper.pressedSection == .ICON_RIGHT ? 0.5 : 1.0)
     }
 }
 
@@ -149,12 +247,7 @@ extension MenuButtonAnimation{
     }
     
     func navigate(){
-        if openMenuSwitch{
-            toggleMenu()
-        }
-        else{
-            navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)
-        }
+        navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)
     }
     
     func toggleMenu(){

@@ -40,83 +40,27 @@ extension HomeView{
     var mainContent:some View{
         VStack{
             labelContainer
-            scrollContent
+            scrollContainer
         }
         .overlay{
-            overlayedMenu
+            menuAnimation
         }
         .vTop()
     }
     
-    @ViewBuilder
-    var scrollContent:some View{
+    var menuAnimation:some View{
         ZStack{
-            scrollContainer
-            MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
+           overlayedMenu
+           MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
         }
     }
-    
+   
     @ViewBuilder
     var overlayedMenu:some View{
         if openMenuSwitch{
-            ZStack{
-                Color.white.opacity(0.3)
-                VStack{
-                    HStack{
-                        Text("Starta ny AR-upplevelse!")
-                        .foregroundStyle(Color.white)
-                        .bold()
-                        .font(.headline)
-                        ZStack{
-                            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                            .fill(Color.materialDark)
-                            Image(systemName: "camera.metering.center.weighted")
-                            .font(.title3)
-                            .foregroundStyle(Color.white)
-                            .padding()
-                            .frame(width: ICON_WIDTH,height:ICON_WIDTH)
-                        }
-                        .frame(width: ICON_WIDTH,height:ANIMATED_MENU_HEIGHT)
-                    }
-                    .hTrailing()
-                    HStack{
-                        Text("Starta ny AR-upplevelse!")
-                        .foregroundStyle(Color.white)
-                        .bold()
-                        .font(.headline)
-                        ZStack{
-                            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                            .fill(Color.materialDark)
-                            Image(systemName: "camera.metering.center.weighted")
-                            .font(.title3)
-                            .foregroundStyle(Color.white)
-                            .background{ Color.materialDark }
-                            .padding()
-                            .frame(width: ICON_WIDTH,height:ICON_WIDTH)
-                        }
-                        .frame(width: ICON_WIDTH,height:ANIMATED_MENU_HEIGHT)
-                    }
-                    .hTrailing()
-                    
-                }
-                .transition(.move(edge: .bottom))
-                .vBottom()
-                .hTrailing()
-                .padding(.trailing)
-                .padding(.bottom,ANIMATED_MENU_HEIGHT-5)
-            }
-            .onTapGesture {
-                withAnimation{
-                    openMenuSwitch.toggle()
-                }
-            }
-            .ignoresSafeArea(.all)
-            .vTop()
-            .hCenter()
-            //.transition(.opacity)
+            LayOverView(closeView: $openMenuSwitch)
         }
     }
-    
 }
 
 //MARK: - SCROLL-CONTAINER

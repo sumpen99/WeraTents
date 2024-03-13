@@ -41,9 +41,7 @@ struct LibraryHelper{
     }
     
     mutating func updateState(){
-        withAnimation{
-            state = emptyLabelsList ? .BASE : state
-        }
+        state = emptyLabelsList ? .BASE : state
     }
     
     mutating func updateLabelsList(_ labels:[String]){
@@ -75,10 +73,7 @@ struct LibraryHelper{
     }
     
     mutating func clearSelectedItem(){
-        withAnimation{
-            selectedScreenShotModel = nil
-            
-        }
+        selectedScreenShotModel = nil
     }
     
     mutating func clearAllData(){
@@ -215,8 +210,10 @@ extension CapturedImages{
         if library.selectedScreenShotModel != nil{
             ZStack{
 #if targetEnvironment(simulator)
-                Color.white
-                ScrollView{
+                Image("profile_black_white")
+                    .resizable()
+                    .scaledToFit()
+                /*ScrollView{
                     VStack{
                         
                         Image("profile_black_white")
@@ -241,7 +238,7 @@ extension CapturedImages{
                     }
                     .hLeading()
                     .padding()
-                }
+                }*/
            
 #else
                 if let item = library.selectedScreenShotModel,
@@ -479,7 +476,9 @@ extension CapturedImages{
     func setCurrentLabels(){
         coreDataViewModel.requestAllUniqueLabels(){ labels in
             library.updateLabelsList(labels)
-            library.updateState()
+            withAnimation{
+                library.updateState()
+            }
         }
     }
      

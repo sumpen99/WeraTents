@@ -25,6 +25,7 @@ let CORNER_RADIUS_BRAND             = 5.0
 let CORNER_RADIUS_SHEET             = 10.0
 let CORNER_RADIUS_MENU              = 35.0
 let ICON_WIDTH                      = 50.0
+let ICON_OPEN_WIDTH                 = 40.0
 let MENU_HEIGHT                     = 75.0
 let ANIMATED_MENU_HEIGHT            = 55.0
 let SHEET_MENU_HEIGHT               = 55.0

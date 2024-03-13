@@ -103,11 +103,11 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
             scnView.scene = scene
             scnView.autoenablesDefaultLighting = true
             
-            scnView.allowsCameraControl = true
+            //scnView.allowsCameraControl = true
             
             scnView.pointOfView = cameraNode
             scnView.delegate = self
-            //addGesturesToSCNView()
+            addGesturesToSCNView()
         }
     }
 }
