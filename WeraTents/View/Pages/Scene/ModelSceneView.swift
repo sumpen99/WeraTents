@@ -303,7 +303,8 @@ extension ModelSceneView{
     var tentLabelSection:some View{
         SectionFoldableHeavy(header: selectedTentLabel,
                              content:headerSection,
-                             backgroundColor: Color.lightGold.opacity(0.2))
+                             splitColor: Color.lightGold.opacity(0.2),
+                             toggleColor:Color.darkGreen)
         .hLeading()
     }
     

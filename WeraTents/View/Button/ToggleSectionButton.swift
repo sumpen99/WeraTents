@@ -40,6 +40,7 @@ struct ToggleSectionButtonHeavy<Header:View>: View {
   @Binding var isOn: Bool
   let onLabel: String
   let offLabel: String
+  let color:Color 
   
   var body: some View {
     Button(action: {
@@ -47,9 +48,9 @@ struct ToggleSectionButtonHeavy<Header:View>: View {
         isOn.toggle()
       }
     }, label: {
-        Text(isOn ? onLabel : offLabel).font(.body)
+        Text(isOn ? onLabel : offLabel).font(.body).bold()
     })
-    .foregroundColor(Color.darkGreen)
+    .foregroundColor(color)
     .hTrailing()
     .overlay(
         header

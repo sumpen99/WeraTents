@@ -15,7 +15,7 @@ enum PressedSection:CaseIterable{
 
 struct MenuHelper{
     var pressedSection:PressedSection?
-    var scaleAmount = 1.0
+    var scaleAmount:CGFloat = 1.0
     var menuBarWidth:CGFloat = 0.0
     var paddingHorizontal:CGFloat = 0.0
     var paddingHorizontalOpen:CGFloat = 0.0

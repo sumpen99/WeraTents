@@ -271,8 +271,20 @@ extension FirestoreViewModel{
     }
 }
 
+//MARK: - SPLIT TENT INTO PARTS
+extension FirestoreViewModel{
+    func splitAssetsOnBrand(_ label:String?) ->[TentItem]{
+        return tentAssets.filter({$0.label == label})
+    }
+}
+
 //MARK: - HELPER FUNCTIONS
 extension FirestoreViewModel{
+    
+    var firstBrand:String?{
+        tentAssets.first?.label
+    }
+    
     var hasTents:Bool{
         tentAssets.count > 0
     }
