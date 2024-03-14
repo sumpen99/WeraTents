@@ -12,7 +12,6 @@ struct ScrollviewLabelHeader:View {
     let thickness:CGFloat
     @Binding var bindingLabel:String?
     @Binding var bindingList:[String]
-    @State var scaleAmount:CGFloat = 1.0
     
     var body: some View {
         content
@@ -25,6 +24,7 @@ struct ScrollviewLabelHeader:View {
             LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
                 ForEach(bindingList, id: \.self) { label in
                     SelectedHeader(namespace: namespace,
+                                   namespaceName: "CURRENT_SELECTED_HEADER",
                                    label: label,
                                    thickness: thickness,
                                    bindingLabel: $bindingLabel)

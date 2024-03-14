@@ -213,14 +213,14 @@ extension ModelSceneView{
                           height:5.0,
                           minDistance: 10.0,
                           cornerRadius: 0,
-                          backgroundColor: Color.lightGold,
-                          indicatorColor:Color.white.opacity(0.3)){
+                          backgroundColor: Color.lightBrown,
+                          indicatorColor:Color.black.opacity(0.3)){
                     helper.presentSheet.toggle()
                 }
                 selectedTentLabel
             }
             .background{
-                Color.lightGold
+                Color.lightBrown
             }
             .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
@@ -339,7 +339,7 @@ extension ModelSceneView{
     func headerValue(_ header:String,value:String?) ->some View{
         if let value = value{
             HStack{
-                Text(header).font(.body).bold().hLeading()
+                Text(header).font(.body).hLeading()
                 Text(value).font(.callout).hLeading()
             }
         }

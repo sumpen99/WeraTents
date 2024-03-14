@@ -95,7 +95,7 @@ struct MenuButtonAnimation:View {
             }
             expandMenuButton
         }
-     }
+      }
 }
 
 //MARK: - GESTURE

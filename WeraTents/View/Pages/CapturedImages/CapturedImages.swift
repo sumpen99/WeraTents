@@ -264,14 +264,24 @@ extension CapturedImages{
 
 //MARK: - SCROLL-LABEL-LIST
 extension CapturedImages{
-     
+  
     var settingsItemMenuList:some View{
-        ScrollviewLabelHeader(namespace: namespace,
-                              thickness: 5.0,
-                              bindingLabel: $library.labelHeader,
-                              bindingList: $library.labelHeaderList)
+        ScrollView(.horizontal){
+            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
+                ForEach(library.labelHeaderList, id: \.self) { label in
+                    SelectedHeader(namespace: namespace,
+                                   namespaceName: "CURRENT_SELECTED_HEADER",
+                                   label: label,
+                                   thickness: 5.0,
+                                   bindingLabel: $library.labelHeader)
+               }
+            }
+            .padding()
+        }
+        .frame(height:MENU_HEIGHT)
+        .scrollIndicators(.never)
     }
-    
+  
 }
 
 //MARK: - BUTTONS

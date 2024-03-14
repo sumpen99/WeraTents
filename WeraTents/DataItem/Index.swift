@@ -90,6 +90,7 @@ struct TentItem:CarouselItem{
     var name:String
     var img:Image
     var label:String
+    var modelId:String
     var price:String?
     var productWeight:String?
     var shortDescription:String
@@ -124,6 +125,7 @@ struct TentDb:Codable,Comparable{
     var longDescription:String?
     var category:String?
     var webpage:String?
+    var modelId:String?
     var label:String?
     var equipment:[String]?
     var bareInMind:[String]?
@@ -140,6 +142,7 @@ struct TentDb:Codable,Comparable{
                         name: self.name ?? "",
                         img: image,
                         label:self.label ?? "",
+                        modelId: self.modelId ?? "",
                         price: self.price ?? "",
                         productWeight:self.productWeight ?? "",
                         shortDescription:self.shortDescription ?? "",

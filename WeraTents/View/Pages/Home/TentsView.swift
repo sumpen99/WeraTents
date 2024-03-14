@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TentsHelper{
     var selectedBrand:String?
+    var selectedModel:String?
 }
 
 struct TentsView:View {
@@ -37,42 +38,86 @@ extension TentsView{
     
     var mainContent:some View{
         VStack{
-            BaseTopBar(label: "Vår kollektion", onNavigateBackAction: navigateBack)
+            BaseTopBar(label: "Kollektion", onNavigateBackAction: navigateBack)
             SplitLine(color:Color.white).hCenter().padding(.top,5)
-            collectionContainer
-            brandSection
+            brandHeaderList
+            modelHeaderList
+            cardByModelId
         }
         .padding([.top,.horizontal])
     }
     
-    var collectionContainer:some View{
-        ScrollviewLabelHeader(namespace: namespace,
-                              thickness: 5.0,
-                              bindingLabel: $helper.selectedBrand,
-                              bindingList: $firestoreViewModel.brandAssets)
-    }
 }
 
-//MARK: -- SECTION
+//MARK: -- BRAND HEADER LIST
+extension TentsView{
+    var brandHeaderList:some View{
+        ScrollView(.horizontal){
+            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
+                ForEach(firestoreViewModel.brandAsset.keys, id: \.self) { label in
+                    SelectedHeader(namespace: namespace,
+                                   namespaceName: "CURRENT_SELECTED_BRAND",
+                                   label: label,
+                                   thickness: 5.0,
+                                   bindingLabel: $helper.selectedBrand)
+               }
+            }
+            .padding()
+        }
+        .frame(height:MENU_HEIGHT_HEADER)
+        .scrollIndicators(.never)
+        .onChange(of: helper.selectedBrand, initial: true){ oldValue,newValue in
+            helper.selectedModel = firestoreViewModel.initializeFirstModelOfBrand(newValue)
+        }
+     }
+    
+}
+
+//MARK: -- MODEL HEADER LIST
 extension TentsView{
    
-    var brandSection: some View{
-        ScrollView{
-            LazyVGrid(columns: [GridItem(),GridItem()],
-                      spacing: V_GRID_SPACING,
-                      pinnedViews: [.sectionHeaders]){
-                ForEach(firestoreViewModel.splitAssetsOnBrand(helper.selectedBrand),id:\.self){ tent in
-                    ZStack{
-                        Color.red
-                        Text(tent.name)
-                    }
-                    .frame(height: 150.0)
-                }
-        
+    var modelHeaderList:some View{
+        ScrollView(.horizontal){
+            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
+                ForEach(firestoreViewModel.secureModelList(helper.selectedBrand), id: \.self) { label in
+                    SelectedHeader(namespace: namespace,
+                                   namespaceName: "CURRENT_SELECTED_MODEL",
+                                   label: label,
+                                   thickness: 5.0,
+                                   bindingLabel: $helper.selectedModel,
+                                   selectedAnimation:.UNDERLINE)
+              }
             }
+            .padding()
         }
-        
+        .frame(height:MENU_HEIGHT_HEADER)
+        .scrollIndicators(.never)
+        .padding(.top)
     }
+  
+}
+
+//MARK: -- CARD
+extension TentsView{
+   
+    @ViewBuilder
+    var cardByModelId: some View{
+        if let tent = firestoreViewModel.secureTentItem(brand: helper.selectedBrand,
+                                                        modelId: helper.selectedModel){
+            ScrollView{
+                VStack{
+                    ZStack {
+                        tent.img
+                        .resizable()
+                        .scaledToFit()
+                    }
+                    Text(tent.shortDescription).hLeading().foregroundStyle(Color.white).vTop()
+                }
+            }
+            .padding(.top)
+        }
+    }
+    
 }
 
 //MARK: - FUNCTIONS
