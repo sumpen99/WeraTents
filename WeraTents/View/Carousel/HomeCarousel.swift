@@ -13,7 +13,11 @@ struct CarouselHelper{
     var closest: CGFloat = 0.0
     var selectedItem:TentItem? = nil
     var selectedIndex:Int = -1
-    var brandList:[String] = ["Adventure","Bohus","Vivaldi"]
+    var cardIsTappedScale:CGFloat = 1.0
+     
+    mutating func resetTap(){
+        cardIsTappedScale = 1.0
+    }
 }
 
 struct HomeCarousel:View {
@@ -46,6 +50,9 @@ struct HomeCarousel:View {
             carousel
             brandContent
         }
+        .onAppear{
+            ind.resetTap()
+        }
     }
 }
 
@@ -64,35 +71,45 @@ extension HomeCarousel{
     func card(_ item:TentItem)-> some View{
         ZStack {
             Color.lightBrown
-            HStack{
-                cardText(name: item.name, shortDesc: item.shortDescription)
-                cardImageButton(item.img)
+            HStack(spacing:0){
+                VStack(spacing:0){
+                    cardText(name: item.name, shortDesc: item.shortDescription)
+                    cardButton
+                }
+                .padding(.top)
+                cardImage(item.img)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
         .frame(width: cardWidth, height: HOME_CAROUSEL_HEIGHT)
-        .scaleEffect(1.0 - abs(distance(item.index)) * 0.2 )
+        .shadow(color:Color.lightGold,radius: 2.0)
+        .scaleEffect(cardIsOnTop(item.index) ? ind.cardIsTappedScale :
+                     1.0 - abs(distance(item.index)) * 0.2 )
         .offset(x: xOffset(item.index) * 1.63, y: 0)
         .opacity(1.0 - abs(distance(item.index)) * 0.3 )
         .zIndex(1.0 - abs(distance(item.index)) * 0.1)
     }
     
     func cardText(name:String,shortDesc:String) -> some View{
-        VStack{
-            Text(name).font(.caption)
-                .foregroundStyle(Color.materialDark).bold()
-            Text(shortDesc).font(.caption2).lineLimit(3).vCenter()
-                .italic().foregroundStyle(Color.materialDark)
-            Button(action: navigate, label: {
-                Text("Se mer").bold()
-            })
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
+        VStack(spacing: V_SPACING_REG){
+            Text(name)
+            .font(.caption)
+            .foregroundStyle(Color.materialDark)
+            .bold()
+            Text(shortDesc).font(.caption2)
+            .italic()
+            .foregroundStyle(Color.materialDark)
+       }
+        .vTop()
+        .padding(.horizontal)
         .hCenter()
     }
     
-    func cardImageButton(_ img:Image) -> some View{
+    var cardButton:some View{
+        PressedCardButton(cardIsTappedScale: $ind.cardIsTappedScale,action: navigate)
+   }
+    
+    func cardImage(_ img:Image) -> some View{
         ZStack{
             img
             .resizable()
@@ -113,7 +130,7 @@ extension HomeCarousel{
     }
     
     var brandButtons: some View{
-        ForEach(firestoreViewModel.brandAssets,id:\.self){ brand in
+        ForEach(firestoreViewModel.brandAsset.keys,id:\.self){ brand in
             DropShadowButton(buttonText: brand,frameWidth: calculatedWidth, action: {navigateToBrand(brand)})
         }
     }
@@ -178,6 +195,10 @@ extension HomeCarousel{
             spinCarousel(current: newValue,inc:inc,iterations: iterations+1,abort: abort)
         })
         
+    }
+    
+    func cardIsOnTop(_ index:Int) -> Bool{
+        return index == self.ind.activeIndex
     }
      
     func distance(_ item: Int) -> Double {

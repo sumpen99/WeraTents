@@ -15,6 +15,7 @@ protocol CarouselItem:Identifiable,Hashable{
     var name:String { get }
     var label:String { get }
     var shortDescription:String { get }
+    var price:String{ get }
 }
 
 struct VideoItem:Identifiable,Hashable{
@@ -84,18 +85,62 @@ struct TentMeta{
     }
 }
 
+struct TentItemDimensions:Codable{
+    var width:String?
+    var minHeight:String?
+    var maxHeight:String?
+    var depth:String?
+    var depthDescription:String?
+    var preferedHeight:String?
+    var infoText:String?
+   
+    var sizeDesc:String{
+        "\(widthDesc) x \(depthDesc)"
+    }
+    
+    var heightDesc:String{
+        "\(preferedHeightDesc)"
+    }
+     
+    var widthDesc:String{
+        if let width = width{
+            return width
+        }
+        return "[bredd] cm"
+    }
+    
+    var depthDesc:String{
+        if let depthDescription = depthDescription{
+            return depthDescription
+        }
+        else if let depth = depth{
+            return "\(depth) cm"
+        }
+        return "[djup] cm"
+    }
+    
+    var preferedHeightDesc:String{
+        if let preferedHeight = preferedHeight{
+            return preferedHeight
+        }
+        return "[höjd] cm"
+    }
+}
+
 struct TentItem:CarouselItem{
     var id:String
     var index:Int
     var name:String
     var img:Image
     var label:String
-    var price:String?
-    var productWeight:String?
+    var modelId:String
     var shortDescription:String
+    var price:String
+    var productWeight:String?
     var longDescription:String?
     var category:String?
     var webpage:String?
+    var dimensions:TentItemDimensions?
     var equipment:[String]?
     var bareInMind:[String]?
     var articleNumber:String?
@@ -124,7 +169,9 @@ struct TentDb:Codable,Comparable{
     var longDescription:String?
     var category:String?
     var webpage:String?
+    var modelId:String?
     var label:String?
+    var dimensions:TentItemDimensions?
     var equipment:[String]?
     var bareInMind:[String]?
     var articleNumber:String?
@@ -140,20 +187,22 @@ struct TentDb:Codable,Comparable{
                         name: self.name ?? "",
                         img: image,
                         label:self.label ?? "",
-                        price: self.price ?? "",
-                        productWeight:self.productWeight ?? "",
+                        modelId: self.modelId ?? "",
                         shortDescription:self.shortDescription ?? "",
-                        longDescription:self.longDescription ?? "",
-                        category:self.category ?? "",
-                        webpage:self.webpage ?? "",
-                        equipment:self.equipment ?? [],
-                        bareInMind:self.bareInMind ?? [],
-                        articleNumber:self.articleNumber ?? "",
-                        manufacturer:self.manufacturer ?? "",
-                        iconStorageIds:self.iconStorageIds ?? [],
-                        modelStorageIds:self.modelStorageIds ?? [],
-                        instructionVideoUrls:self.instructionVideoUrls ?? [],
-                        instructionPdfIds: self.instructionPdfIds ?? [])
+                        price: self.price ?? "",
+                        productWeight:self.productWeight,
+                        longDescription:self.longDescription,
+                        category:self.category,
+                        webpage:self.webpage,
+                        dimensions: self.dimensions,
+                        equipment:self.equipment,
+                        bareInMind:self.bareInMind,
+                        articleNumber:self.articleNumber,
+                        manufacturer:self.manufacturer,
+                        iconStorageIds:self.iconStorageIds,
+                        modelStorageIds:self.modelStorageIds,
+                        instructionVideoUrls:self.instructionVideoUrls,
+                        instructionPdfIds: self.instructionPdfIds)
     }
     
     static func < (lhs: TentDb, rhs: TentDb) -> Bool{
@@ -181,6 +230,14 @@ struct TentDb:Codable,Comparable{
         if let lhsLabel = lhs.label,
            let rhsLabel = rhs.label{
             return lhsLabel > rhsLabel
+        }
+        return false
+    }
+    
+    static func == (lhs: TentDb, rhs: TentDb) -> Bool {
+        if let lhsLabel = lhs.label,
+           let rhsLabel = rhs.label{
+            return lhsLabel == rhsLabel
         }
         return false
     }

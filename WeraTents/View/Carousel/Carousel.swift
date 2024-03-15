@@ -50,16 +50,7 @@ struct Carousel<T:CarouselItem>:View {
     
         }
     }
-    /*
-    var carouselLongTapGeasture:some Gesture{
-        LongPressGesture()
-            .onEnded(){ value in
-                withAnimation{
-                    onSelected?(data[ind.activeIndex])
-                    isOpen.toggle()
-                }
-            }
-    }*/
+
      
     var carouselTapGesture: some Gesture {
         TapGesture()

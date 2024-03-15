@@ -27,7 +27,7 @@ struct SplitLine:View {
     }
     
     var hSplit: some View{
-        Rectangle()
+        Capsule()
         .fill(color)
         .frame(height: thickness)
         .hCenter()

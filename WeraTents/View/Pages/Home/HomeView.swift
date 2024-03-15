@@ -27,8 +27,9 @@ struct HomeView:View {
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
+                case .ROUTE_TENTS:              TentsView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
-                 }
+                }
             }
         }
     }
@@ -68,7 +69,9 @@ extension HomeView{
     var scrollContainer:some View{
         ScrollView{
             VStack(spacing:V_GRID_SPACING){
-                NavigationSection(labelText: "Våra tält", action: {}, content: carouselContent)
+                NavigationSection(labelText: "Våra tält",
+                                  action: navigateToTents,
+                                  content: carouselContent)
              }
         }
     }
@@ -108,6 +111,14 @@ extension HomeView{
 //MARK: - TOP-LABEL
 extension HomeView{
     
+    var labelContainer:some View{
+        HStack{
+           labelText
+           labelImage
+        }
+        .padding(.horizontal)
+    }
+    
     var labelText:some View{
         VStack{
             Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
@@ -122,18 +133,15 @@ extension HomeView{
          .hTrailing()
     }
     
-    var labelContainer:some View{
-        HStack{
-           labelText
-           labelImage
-        }
-        .padding(.horizontal)
-    }
-     
 }
 
 //MARK: - FUNCTIONS
 extension HomeView{
+    
+    func navigateToTents(){
+        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
+    }
+    
     func calculatedWidth(maxWidth:CGFloat) -> CGFloat{
         let itemCount = 3.0
         let padding = CGFloat(itemCount-1)*V_SPACING_REG

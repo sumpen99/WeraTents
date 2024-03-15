@@ -8,7 +8,7 @@
 import SwiftUI
 import FirebaseFirestore
 import FirebaseStorage
-
+import OrderedCollections
 enum DbPath:String{
     case WERA_TENTS     = "Wera_Tents"
     case TENT_ICONS     = "Icons"
@@ -61,11 +61,26 @@ class FirestoreRepository{
     }
 }
 
+struct BrandIndexes{
+    typealias MODEL_ID = String
+    var startIndex:Int
+    var endIndex:Int
+    var count:Int = 1
+    var modelIds:OrderedDictionary<MODEL_ID,Int>
+    
+    init(startIndex: Int, endIndex: Int,modelId:String) {
+        self.startIndex = startIndex
+        self.endIndex = endIndex
+        self.modelIds = [modelId:startIndex]
+    }
+}
+
 //MARK: - FIRESTORE VIEWMODEL
 class FirestoreViewModel:ObservableObject{
+    typealias  BRAND = String
     @Published var isLoadingData:[Bool] = Array.init(repeating: false, count: LoadingState.allCases.count)
     @Published var tentAssets:[TentItem] = []
-    @Published var brandAssets:[String] = []
+    @Published var brandAsset:OrderedDictionary<BRAND,BrandIndexes> = [:]
     let repo = FirestoreRepository()
     
 }
@@ -87,7 +102,9 @@ extension FirestoreViewModel{
                                                        imageNames: [tent.iconStorageIds?[0] ?? ""]){ uiImages in
                         if let uiImage = uiImages.first{
                             let count = strongSelf.tentAssets.count
-                            strongSelf.updateBrandAssets(with: tent.label)
+                            strongSelf.updateBrandAssetsIndexes(with: tent.label,
+                                                                index: count,
+                                                                modelId:tent.modelId)
                             strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
                             strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
                         }
@@ -99,7 +116,9 @@ extension FirestoreViewModel{
      
     private func loadTentAssetsFromServer(){
         let coll = repo.tentCollection()
-        coll.order(by: "label",descending: true).getDocuments(){ [weak self] snapshot,error in
+        coll.order(by: "label",descending: true)
+            .order(by: "modelId", descending: true)
+            .getDocuments(){ [weak self] snapshot,error in
             guard let strongSelf = self,
                   let snapshot = snapshot else { return }
             for doc in snapshot.documents{
@@ -109,7 +128,9 @@ extension FirestoreViewModel{
                 strongSelf.downloadTentIconImageFromStorage(fileName: iconUrl){ error,uiImage in
                     if let uiImage = uiImage{
                         let count = strongSelf.tentAssets.count
-                        strongSelf.updateBrandAssets(with: tent.label)
+                        strongSelf.updateBrandAssetsIndexes(with: tent.label,
+                                                            index: count,
+                                                            modelId:tent.modelId)
                         strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
                         strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
                     }
@@ -190,12 +211,15 @@ extension FirestoreViewModel{
                let uiImage = UIImage(data: data){
                onResult?(nil,uiImage)
             }
-            else if let error = error{ 
+            else{
+                onResult?(nil,UIImage(systemName: "photo"))
+            }
+            /*else if let error = error{
                 onResult?(PresentedError.FAILED_TO_DOWNLOAD_IMAGE(message:error.localizedDescription),nil)
             }
             else{
                 onResult?(PresentedError.FAILED_TO_DOWNLOAD_IMAGE(),nil)
-            }
+            }*/
        }
     }
      /*
@@ -271,8 +295,24 @@ extension FirestoreViewModel{
     }
 }
 
+//MARK: - SPLIT TENT INTO PARTS
+extension FirestoreViewModel{
+    func brandRange(_ label:String?) ->Range<Int>{
+        if let label = label,
+           let brandAsset = brandAsset[label]{
+            return (brandAsset.startIndex..<brandAsset.endIndex+1)
+        }
+        return (0..<0)
+    }
+}
+
 //MARK: - HELPER FUNCTIONS
 extension FirestoreViewModel{
+    
+    var firstBrand:String?{
+        tentAssets.first?.label
+    }
+    
     var hasTents:Bool{
         tentAssets.count > 0
     }
@@ -280,11 +320,48 @@ extension FirestoreViewModel{
     var assetCount:Int{
         tentAssets.count
     }
+     
+    func secureTentItem(brand:String?,modelId:String?) -> TentItem?{
+        if let brand = brand,
+           let modelId = modelId,
+           let index = brandAsset[brand]?.modelIds[modelId]{
+           return secureTentItem(index)
+        }
+        return nil
+    }
     
-    func updateBrandAssets(with brand:String?){
-        if let brand = brand{
-            if brandAssets.contains(brand){ return }
-            brandAssets.append(brand)
+    func secureTentItem(_ index:Int) -> TentItem?{
+        if 0 <= index && index < assetCount{
+            return tentAssets[index]
+        }
+        return nil
+    }
+    
+    func secureModelList(_ brand:String?) -> [String]{
+        guard let brand = brand,
+              let asset = brandAsset[brand] else{ return [] }
+        return asset.modelIds.keys.elements
+    }
+    
+    func initializeFirstModelOfBrand(_ brand:String?) -> String?{
+        if let brand = brand,
+           let asset = brandAsset[brand]{
+            return asset.modelIds.keys.first
+        }
+        return nil
+    }
+    
+    func updateBrandAssetsIndexes(with brand:String?,index:Int,modelId:String?){
+        if let brand = brand,
+           let modelId=modelId{
+            if let _ = brandAsset[brand]{
+                brandAsset[brand]?.endIndex = index
+                brandAsset[brand]?.modelIds[modelId] = index
+            }
+            else{
+                brandAsset[brand] = BrandIndexes(startIndex: index,endIndex: index,modelId:modelId)
+            }
+            
         }
     }
     

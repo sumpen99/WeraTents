@@ -12,7 +12,6 @@ enum LibraryState{
     case EDIT
 }
 
-
 struct LibraryHelper{
     var state:LibraryState = .BASE
     var deleteModelsId:[String] = []
@@ -86,7 +85,7 @@ struct CapturedImages:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @StateObject var coreDataViewModel:CoreDataViewModel
     @State var library:LibraryHelper = LibraryHelper()
-    @Namespace var animation
+    @Namespace var namespace
    
     init() {
         self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
@@ -265,45 +264,18 @@ extension CapturedImages{
 
 //MARK: - SCROLL-LABEL-LIST
 extension CapturedImages{
-     
+  
     var settingsItemMenuList:some View{
-        ScrollView(.horizontal){
-            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
-                ForEach(library.labelHeaderList, id: \.self) { label in
-                    labelHeaderCell(label)
-               }
-            }
-            .padding()
-        }
-        .frame(height:MENU_HEIGHT)
-        .scrollIndicators(.never)
+        
+        ScrollviewLabelHeader(namespace: namespace,
+                              namespaceName: "CURRENT_SELECTED_BRAND",
+                              thickness: 5.0,
+                              bindingList: library.labelHeaderList,
+                              selectedAnimation: .UNDERLINE,
+                              menuHeight: MENU_HEIGHT_HEADER,
+                              bindingLabel: $library.labelHeader)
     }
-    
-    func labelHeaderCell(_ label:String) -> some View{
-        return Text(label)
-        .font(.headline)
-        .bold()
-        .frame(height: 33)
-        .foregroundStyle(label == library.labelHeader ? Color.white : Color.gray )
-        .padding([.vertical],5)
-        .padding([.horizontal],10)
-        .background(
-             ZStack{
-                 if label == library.labelHeader{
-                     RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-                         .stroke(style: .init(lineWidth: 2.0))
-                         .foregroundStyle(Color.white)
-                    .matchedGeometryEffect(id: "CURRENTHEADER", in: animation)
-                 }
-             }
-        )
-        .onTapGesture {
-            withAnimation{
-                library.labelHeader = label
-            }
-        }
-    }
-     
+  
 }
 
 //MARK: - BUTTONS
@@ -434,7 +406,7 @@ extension CapturedImages{
         currentTopBarButtons()
         .animation(.linear(duration: 0.5),value: library.state)
         .transition(.opacity.combined(with: .scale))
-        .matchedGeometryEffect(id: "CURRENTTOPMENY", in: animation)
+        .matchedGeometryEffect(id: "CURRENT_TOP_MENU", in: namespace)
         .padding()
     }
 }

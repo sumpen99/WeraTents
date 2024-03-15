@@ -102,6 +102,9 @@ extension ServiceManager{
                let uiImage = UIImage(contentsOfFile: resourcePath){
                 images.append(uiImage)
             }
+            else if let uiImage = UIImage(systemName: "photo"){
+                images.append(uiImage)
+            }
         }
         DispatchQueue.main.async { completion(images) }
     }

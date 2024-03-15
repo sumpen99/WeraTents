@@ -15,7 +15,7 @@ struct HeaderContent<Content:View>:View {
         }
         .padding()
         .background{
-            Color.lightGold.opacity(0.2)
+            Color.lightBrown.opacity(0.2)
         }
         .clipShape(RoundedRectangle(cornerRadius: 5.0))
     }

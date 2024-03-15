@@ -28,28 +28,31 @@ struct SectionFoldable<Content: View>: View{
     }
 }
 
+
 struct SectionFoldableHeavy<Header:View,Content: View>: View{
     let header:Header
     let content:Content
-    let backgroundColor:Color
+    let splitColor:Color
+    let toggleColor:Color
+    let onLabelText:String
+    let offLabelText:String
     @State var showContent:Bool = false
+    
     var body: some View {
         Section {
             ZStack{
-                if showContent{
-                    content
-                }
-                else{
-                    SplitLine(color:backgroundColor).vBottom().hCenter()
-                }
+                if showContent{ content }
+                else{ SplitLine(color:splitColor).hCenter() }
             }
+            
             
         } header: {
             ToggleSectionButtonHeavy(
                       header: header,
                       isOn: $showContent,
-                      onLabel: "Dölj",
-                      offLabel: "Visa mer"
+                      onLabel: onLabelText,
+                      offLabel: offLabelText,
+                      color: toggleColor
             )
         } footer: {}
     }
