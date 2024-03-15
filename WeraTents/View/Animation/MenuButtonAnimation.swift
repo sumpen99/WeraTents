@@ -40,7 +40,7 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                .fill(Color.materialDark)
+                .fill(Color.darkGreen)
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
@@ -48,7 +48,7 @@ struct MenuButtonAnimation:View {
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
                 helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
-            .shadow(color:Color.white,radius: CORNER_RADIUS_BRAND)
+            .shadow(color:Color.lightGreen,radius: 2.0)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
@@ -185,7 +185,7 @@ extension MenuButtonAnimation{
         .background(Color.white)
         .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
         .clipShape(Circle())
-        .shadow(color:Color.white,radius: CORNER_RADIUS_BRAND)
+        .shadow(color:Color.white,radius: 2.0)
     }
     
     func textLabelBase(_ text:String) -> some View{

@@ -116,7 +116,9 @@ extension FirestoreViewModel{
      
     private func loadTentAssetsFromServer(){
         let coll = repo.tentCollection()
-        coll.order(by: "label",descending: true).getDocuments(){ [weak self] snapshot,error in
+        coll.order(by: "label",descending: true)
+            .order(by: "modelId", descending: true)
+            .getDocuments(){ [weak self] snapshot,error in
             guard let strongSelf = self,
                   let snapshot = snapshot else { return }
             for doc in snapshot.documents{
@@ -209,12 +211,15 @@ extension FirestoreViewModel{
                let uiImage = UIImage(data: data){
                onResult?(nil,uiImage)
             }
-            else if let error = error{ 
+            else{
+                onResult?(nil,UIImage(systemName: "photo"))
+            }
+            /*else if let error = error{
                 onResult?(PresentedError.FAILED_TO_DOWNLOAD_IMAGE(message:error.localizedDescription),nil)
             }
             else{
                 onResult?(PresentedError.FAILED_TO_DOWNLOAD_IMAGE(),nil)
-            }
+            }*/
        }
     }
      /*

@@ -48,7 +48,8 @@ struct ToggleSectionButtonHeavy<Header:View>: View {
         isOn.toggle()
       }
     }, label: {
-        Text(isOn ? onLabel : offLabel).font(.body).bold()
+        Image(systemName: isOn ? "chevron.up" : "chevron.up.chevron.down").font(.body).bold()
+        //Text(isOn ? onLabel : offLabel).font(.body).bold()
     })
     .foregroundColor(color)
     .hTrailing()

@@ -9,13 +9,16 @@ import SwiftUI
 
 struct ScrollviewLabelHeader:View {
     let namespace:Namespace.ID
+    let namespaceName:String
     let thickness:CGFloat
+    let bindingList:[String]
+    let selectedAnimation:SelectedAnimation
+    let menuHeight:CGFloat
     @Binding var bindingLabel:String?
-    @Binding var bindingList:[String]
     
     var body: some View {
         content
-        .frame(height:MENU_HEIGHT)
+        .frame(height: menuHeight)
         .scrollIndicators(.never)
     }
     
@@ -24,10 +27,11 @@ struct ScrollviewLabelHeader:View {
             LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
                 ForEach(bindingList, id: \.self) { label in
                     SelectedHeader(namespace: namespace,
-                                   namespaceName: "CURRENT_SELECTED_HEADER",
+                                   namespaceName: namespaceName,
                                    label: label,
                                    thickness: thickness,
-                                   bindingLabel: $bindingLabel)
+                                   bindingLabel: $bindingLabel,
+                                   selectedAnimation: selectedAnimation)
                }
             }
             .padding()

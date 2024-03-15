@@ -38,7 +38,7 @@ extension UINavigationBar {
         ]
         appearance.titleTextAttributes = attrsSmall
         appearance.largeTitleTextAttributes = attrsLarge
-        appearance.shadowColor = UIColor(named:"dark-green")
+        //appearance.shadowColor = UIColor(named:"dark-green")
       
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance

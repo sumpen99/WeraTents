@@ -266,20 +266,14 @@ extension CapturedImages{
 extension CapturedImages{
   
     var settingsItemMenuList:some View{
-        ScrollView(.horizontal){
-            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
-                ForEach(library.labelHeaderList, id: \.self) { label in
-                    SelectedHeader(namespace: namespace,
-                                   namespaceName: "CURRENT_SELECTED_HEADER",
-                                   label: label,
-                                   thickness: 5.0,
-                                   bindingLabel: $library.labelHeader)
-               }
-            }
-            .padding()
-        }
-        .frame(height:MENU_HEIGHT)
-        .scrollIndicators(.never)
+        
+        ScrollviewLabelHeader(namespace: namespace,
+                              namespaceName: "CURRENT_SELECTED_BRAND",
+                              thickness: 5.0,
+                              bindingList: library.labelHeaderList,
+                              selectedAnimation: .UNDERLINE,
+                              menuHeight: MENU_HEIGHT_HEADER,
+                              bindingLabel: $library.labelHeader)
     }
   
 }

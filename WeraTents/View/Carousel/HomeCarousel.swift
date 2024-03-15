@@ -82,7 +82,7 @@ extension HomeCarousel{
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
         .frame(width: cardWidth, height: HOME_CAROUSEL_HEIGHT)
-        .shadow(color:Color.lightGold,radius: 2.0,x:0,y:2.0)
+        .shadow(color:Color.lightGold,radius: 2.0)
         .scaleEffect(cardIsOnTop(item.index) ? ind.cardIsTappedScale :
                      1.0 - abs(distance(item.index)) * 0.2 )
         .offset(x: xOffset(item.index) * 1.63, y: 0)

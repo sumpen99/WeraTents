@@ -24,9 +24,6 @@ struct TentsView:View {
         .safeAreaInset(edge: .top){
             mainContent
         }
-        .task {
-            helper.selectedBrand = firestoreViewModel.firstBrand
-        }
     }
 }
     
@@ -40,11 +37,22 @@ extension TentsView{
         VStack{
             BaseTopBar(label: "Kollektion", onNavigateBackAction: navigateBack)
             SplitLine(color:Color.white).hCenter().padding(.top,5)
-            brandHeaderList
-            modelHeaderList
-            cardByModelId
+            scrollContent
+            
         }
         .padding([.top,.horizontal])
+    }
+    
+    var scrollContent:some View{
+        ScrollView{
+            VStack{
+                brandHeaderList
+                modelHeaderList
+                cardByModelId
+            }
+            .padding(.top)
+        }
+        .scrollIndicators(.hidden)
     }
     
 }
@@ -52,47 +60,60 @@ extension TentsView{
 //MARK: -- BRAND HEADER LIST
 extension TentsView{
     var brandHeaderList:some View{
-        ScrollView(.horizontal){
-            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
-                ForEach(firestoreViewModel.brandAsset.keys, id: \.self) { label in
-                    SelectedHeader(namespace: namespace,
-                                   namespaceName: "CURRENT_SELECTED_BRAND",
-                                   label: label,
-                                   thickness: 5.0,
-                                   bindingLabel: $helper.selectedBrand)
-               }
-            }
-            .padding()
-        }
-        .frame(height:MENU_HEIGHT_HEADER)
-        .scrollIndicators(.never)
-        .onChange(of: helper.selectedBrand, initial: true){ oldValue,newValue in
-            helper.selectedModel = firestoreViewModel.initializeFirstModelOfBrand(newValue)
-        }
-     }
+        SectionFoldableHeavy(header: headerBrandText,
+                             content: headerBrandContent,
+                             splitColor: Color.lightGold.opacity(0.2),
+                             toggleColor:Color.darkGreen,
+                             onLabelText: "Dölj",
+                             offLabelText: "Visa",
+                             showContent: true)
+        .padding(.top)
+    }
     
+    var headerBrandText:some View{
+        Text("Märken").bold().foregroundStyle(Color.white)
+    }
+    
+    var headerBrandContent:some View{
+        ScrollviewLabelHeader(namespace: namespace,
+                              namespaceName: "CURRENT_SELECTED_BRAND",
+                              thickness: 3.0,
+                              bindingList: firestoreViewModel.brandAsset.keys.elements,
+                              selectedAnimation: .UNDERLINE,
+                              menuHeight: MENU_HEIGHT_HEADER,
+                              bindingLabel: $helper.selectedBrand)
+        .onChange(of: helper.selectedBrand, initial: false){ oldValue,newValue in
+            helper.selectedModel = nil
+        }
+    }
 }
 
 //MARK: -- MODEL HEADER LIST
 extension TentsView{
    
     var modelHeaderList:some View{
-        ScrollView(.horizontal){
-            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
-                ForEach(firestoreViewModel.secureModelList(helper.selectedBrand), id: \.self) { label in
-                    SelectedHeader(namespace: namespace,
-                                   namespaceName: "CURRENT_SELECTED_MODEL",
-                                   label: label,
-                                   thickness: 5.0,
-                                   bindingLabel: $helper.selectedModel,
-                                   selectedAnimation:.UNDERLINE)
-              }
-            }
-            .padding()
-        }
-        .frame(height:MENU_HEIGHT_HEADER)
-        .scrollIndicators(.never)
+        SectionFoldableHeavy(header: headerModelText,
+                             content: headerModelContent,
+                             splitColor: Color.lightGold.opacity(0.2),
+                             toggleColor:Color.darkGreen,
+                             onLabelText: "Dölj",
+                             offLabelText: "Visa",
+                             showContent: true)
         .padding(.top)
+    }
+    
+    var headerModelText:some View{
+        Text("Modeller").bold().foregroundStyle(Color.white)
+    }
+    
+    var headerModelContent:some View{
+        ScrollviewLabelHeader(namespace: namespace,
+                                         namespaceName: "CURRENT_SELECTED_MODEL",
+                                         thickness: 3.0,
+                                         bindingList: firestoreViewModel.secureModelList(helper.selectedBrand),
+                                         selectedAnimation: .UNDERLINE,
+                                         menuHeight: MENU_HEIGHT_HEADER,
+                                         bindingLabel: $helper.selectedModel)
     }
   
 }
@@ -104,18 +125,77 @@ extension TentsView{
     var cardByModelId: some View{
         if let tent = firestoreViewModel.secureTentItem(brand: helper.selectedBrand,
                                                         modelId: helper.selectedModel){
-            ScrollView{
-                VStack{
-                    ZStack {
-                        tent.img
-                        .resizable()
-                        .scaledToFit()
-                    }
-                    Text(tent.shortDescription).hLeading().foregroundStyle(Color.white).vTop()
+            ZStack{
+                Color.lightBrown
+                VStack(spacing:V_SPACING_REG){
+                    cardImage(tent.img)
+                    cardDimensionText(tent.dimensions)
+                    cardShortDescriptionText(tent.shortDescription)
+                    cardPriceText(tent.price)
+                    cardButton(tent.index)
                 }
             }
-            .padding(.top)
+            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+            .shadow(color:Color.lightGold,radius: 2.0,x:0,y:0)
+            .padding()
+                
         }
+    }
+    
+    func cardButton(_ index:Int) -> some View{
+        Button(action: { navigateTo(index) }, label: {
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.title3)
+                .bold()
+        })
+        .foregroundStyle(Color.darkGreen)
+        .padding([.bottom,.trailing],4.0)
+        .hTrailing()
+    }
+    
+    func cardImage(_ img:Image) -> some View{
+        img
+        .resizable()
+        .scaledToFit()
+        .vTop()
+    }
+        
+    func cardShortDescriptionText(_ shortDescription:String) -> some View{
+        Text(shortDescription)
+        .italic()
+        .hLeading()
+        .padding([.horizontal,.top])
+    }
+    
+    func cardPriceText(_ price:String) -> some View{
+        Text(price)
+        .font(.title)
+        .hLeading()
+        .padding([.horizontal,.top])
+    }
+    
+    @ViewBuilder
+    func cardDimensionText(_ dimensions:TentItemDimensions?) -> some View{
+        if let dimensions = dimensions{
+            VStack(spacing: V_SPACING_REG){
+                cardFoldableSection(headerText: "Storlek:", contentText: dimensions.sizeDesc)
+                cardFoldableSection(headerText: "Monteringshöjd:", contentText: dimensions.heightDesc)
+                if let infotext = dimensions.infoText{
+                    cardFoldableSection(headerText: "Information:", contentText: infotext)
+                }
+            }
+            .padding(.horizontal)
+        }
+        
+    }
+    
+    func cardFoldableSection(headerText:String,contentText:String) -> some View{
+        SectionFoldableHeavy(header: Text(headerText).bold(),
+                             content: Text(contentText).hLeading(),
+                             splitColor: Color.lightGold.opacity(0.2),
+                             toggleColor:Color.darkGreen,
+                             onLabelText: "Dölj",
+                             offLabelText: "Visa")
     }
     
 }
@@ -124,5 +204,9 @@ extension TentsView{
 extension TentsView{
     func navigateBack(){
         navigationViewModel.popPath()
+    }
+    
+    func navigateTo(_ index:Int){
+        navigationViewModel.appendToPathWith(firestoreViewModel.tentAssets[index])
     }
 }

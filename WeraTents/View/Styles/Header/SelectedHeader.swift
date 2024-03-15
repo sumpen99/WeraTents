@@ -28,7 +28,12 @@ struct SelectedHeader:View {
         content
         .onTapGesture {
             withAnimation{
-                bindingLabel = label
+                if label == bindingLabel{
+                    bindingLabel = nil
+                }
+                else{
+                    bindingLabel = label
+                }
             }
         }
         
