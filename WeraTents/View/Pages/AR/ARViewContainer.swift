@@ -117,25 +117,31 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         }
     }
     
-    func action(_ action:Actions){
+    func action(_ action:Actions,onResult:((Bool) -> Void)? = nil){
         guard let focusEntity = self.focusEntity else { return }
         switch action {
         case .PLACE_3D_MODEL:
             self.arView?.loadEntityAsync(focusEntity.position){ success,dimensions in
-                self.modelState = success ? .HAS_MODEL : .HAS_SELECTION
-                self.setFocusState()
+                self.animateModelState(success ? .HAS_MODEL : .HAS_SELECTION)
                 self.selectedTentMeta?.setDimension(dimensions)
+                onResult?(success)
             }
         case .REMOVE_3D_MODEL:
-            self.arView?.removeModel(){ result in
-                if result{
-                    self.modelState = .HAS_SELECTION
-                }
+            self.arView?.removeModel(){ success in
+                self.animateModelState(success ? .HAS_SELECTION : self.modelState)
                 self.setFocusState()
+                onResult?(success)
             }
        case .KILL_SESSION:
             self.arView?.kill()
        }
+    }
+    
+    func animateModelState(_ state:ModelState){
+        withAnimation{
+            self.modelState = state
+        }
+        self.setFocusState()
     }
     
     /*
@@ -206,9 +212,9 @@ extension ARView{
 //MARK: -- LOAD MODEL FROM APP
 extension ARView{
     func loadEntityAsync(_ position:SIMD3<Float>,onResult:((Bool,TentDimensions?) ->Void)? = nil) {
-        let usdzPath = "Assets/tent-2-man-tent.usdz"
+        let usdzPath = ServiceManager.localUSDZUrl(fileName: "tent-2-man-tent")
         var cancellable: AnyCancellable? = nil
-        cancellable = ModelEntity.loadModelAsync(named: usdzPath)
+        cancellable = ModelEntity.loadModelAsync(contentsOf: usdzPath!)
         .sink(receiveCompletion: { error in
             debugLog(object:"Error while reading usdz file: \(error)")
           cancellable?.cancel()
@@ -222,9 +228,9 @@ extension ARView{
     
     func placeModel(modelEntity:ModelEntity,position: SIMD3<Float>){
         var smpl = SimpleMaterial()
-        smpl.color.tint = .blue
-        smpl.metallic = 0.7
-        smpl.roughness = 0.2
+        smpl.color.tint = .white
+       // smpl.metallic = 0.7
+       // smpl.roughness = 0.2
                 
         var pbr = PhysicallyBasedMaterial()
         pbr.baseColor.tint = .green

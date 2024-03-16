@@ -42,7 +42,6 @@ final class PersistenceController {
         let context = backgroundContext ?? shared.container.viewContext
         guard context.hasChanges else { throw CoreDataError.SAVE_FAILED("Context has no changes") }
         try context.save()
-        
     }
     
     static func deleteAllDataFromEntity(_ name:String){
