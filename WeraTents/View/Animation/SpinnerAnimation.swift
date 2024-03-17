@@ -23,7 +23,7 @@ struct SpinnerTimer{
 struct SpinnerAnimation: View {
     @State var animate:[Bool] = Array.init(repeating: false,count: 3)
     var timer:SpinnerTimer = SpinnerTimer()
-    let size:CGFloat
+    var size:CGFloat = 60.0
     var text:String = "Väntar..."
     var textColor:Color = Color.black
     var foregroundStyle:Color = Color.lightGold

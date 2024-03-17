@@ -31,14 +31,12 @@ enum ArrayToCheck{
 }
 
 enum HeaderSelection:String{
-    case PRICE = "Pris"
     case BRAND = "Märke"
     case MANUFACTURER = "Tillverkare"
-    case PRODUCT_WEIGHT = "Produktvikt"
     case ARTICLE_NUMBER = "Artikelnummer"
     
     static var all: [HeaderSelection]{
-        return [.PRICE,.BRAND,.MANUFACTURER,.PRODUCT_WEIGHT,.ARTICLE_NUMBER]
+        return [.BRAND,.MANUFACTURER,.ARTICLE_NUMBER]
     }
 }
 
@@ -111,7 +109,7 @@ extension ModelSceneView{
         SceneViewContainer(sceneViewCoordinator: sceneViewCoordinator)
         .overlay{
             if firestoreViewModel.loadingState(.USDZ_MODEL){
-                SpinnerAnimation(size:60.0,foregroundStyle: Color.lightGold)
+                SpinnerAnimation()
             }
         }
     }
@@ -153,7 +151,7 @@ extension ModelSceneView{
                  if header == helper.header{
                      RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
                     .fill(Color.white)
-                    .matchedGeometryEffect(id: "CURRENTSCENEHEADER", in: animation)
+                    .matchedGeometryEffect(id: "CURRENT_SCENE_ HEADER", in: animation)
                  }
              }
         )
@@ -196,7 +194,7 @@ extension ModelSceneView{
     
     var pdfButton: some View{
         Button(action: navigateToPdf ){
-            Label("Instruktionsmanualer", systemImage: "book.pages")
+            Label("Instruktionsmanual", systemImage: "book.pages")
         }
         .disabled(disabledPdfButton)
         .padding()
@@ -213,14 +211,14 @@ extension ModelSceneView{
                           height:5.0,
                           minDistance: 10.0,
                           cornerRadius: 0,
-                          backgroundColor: Color.lightGold,
-                          indicatorColor:Color.white.opacity(0.3)){
+                          backgroundColor: Color.lightBrown,
+                          indicatorColor:Color.black.opacity(0.3)){
                     helper.presentSheet.toggle()
                 }
-                selectedTentLabel
+                //selectedTentLabel
             }
             .background{
-                Color.lightGold
+                Color.lightBrown
             }
             .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
@@ -261,7 +259,7 @@ extension ModelSceneView{
                    ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
                    optionalImages(width: size, size: 60.0)
                    VStack{
-                       tentLabelSection
+                       tentFoldableSection
                        buttonSection(size)
                        buttonValue
                    }
@@ -298,12 +296,35 @@ extension ModelSceneView{
         }
         
     }
+     
+    @ViewBuilder
+    var tentFoldableSection:some View{
+        VStack(spacing:V_SPACING_REG){
+            tentLabelSection
+            foldableSection(headerText: "Pris",
+                            contentText: selectedTent.price)
+            foldableSection(headerText: "Produktvikt",
+                            contentText: selectedTent.productWeight ?? "")
+            dimensionContent
+        }
+    }
     
     var tentLabelSection:some View{
         SectionFoldableHeavy(header: selectedTentLabel,
                              content:headerSection,
-                             backgroundColor: Color.lightGold.opacity(0.2))
-        .hLeading()
+                             splitColor: Color.lightGold.opacity(0.2),
+                             toggleColor:Color.darkGreen,
+                             onLabelText: "Dölj",
+                             offLabelText: "Visa")
+    }
+    
+    func foldableSection(headerText:String,contentText:String) -> some View{
+        SectionFoldableHeavy(header: Text(headerText).bold(),
+                             content: HeaderContent(content:Text(contentText).hLeading()),
+                             splitColor: Color.lightGold.opacity(0.2),
+                             toggleColor:Color.darkGreen,
+                             onLabelText: "Dölj",
+                             offLabelText: "Visa")
     }
     
     func buttonSection(_ size:CGFloat) -> some View{
@@ -323,10 +344,8 @@ extension ModelSceneView{
         HeaderContent(content: VStack{
             ForEach(helper.headers,id:\.self){ header in
                 switch header{
-                case .PRICE: headerValue(header.rawValue, value: selectedTent.price)
                 case .BRAND: headerValue(header.rawValue, value: selectedTent.label)
                 case .MANUFACTURER: headerValue(header.rawValue, value: selectedTent.manufacturer)
-                case .PRODUCT_WEIGHT: headerValue(header.rawValue, value: selectedTent.productWeight)
                 case .ARTICLE_NUMBER: headerValue(header.rawValue, value: selectedTent.articleNumber)
                 }
             }
@@ -337,7 +356,7 @@ extension ModelSceneView{
     func headerValue(_ header:String,value:String?) ->some View{
         if let value = value{
             HStack{
-                Text(header).font(.body).bold().hLeading()
+                Text(header).font(.body).hLeading()
                 Text(value).font(.callout).hLeading()
             }
         }
@@ -386,10 +405,24 @@ extension ModelSceneView{
             HeaderContent(content:
                 VStack(spacing:V_SPACING_REG){
                      ForEach(Array(zip(bareInMind.indices,bareInMind)),id:\.0){ (index,value) in
-                        if index == 0{ Text(value).font(.body).bold().hLeading() }
+                        if index == 0{ Text(value).font(.body).italic().hLeading() }
                         else{ Text(String(BULLET + value)).font(.body).hLeading() }
                      }
                 })
+        }
+    }
+    
+    @ViewBuilder
+    var dimensionContent:some View{
+        if let dimensions = selectedTent.dimensions{
+            foldableSection(headerText: "Storlek",
+                            contentText: dimensions.sizeDesc)
+            foldableSection(headerText: "Monteringshöjd",
+                            contentText: dimensions.heightDesc)
+            if let infotext = dimensions.infoText{
+                foldableSection(headerText: "Information",
+                                contentText: infotext)
+            }
         }
     }
    

@@ -12,7 +12,6 @@ enum LibraryState{
     case EDIT
 }
 
-
 struct LibraryHelper{
     var state:LibraryState = .BASE
     var deleteModelsId:[String] = []
@@ -41,9 +40,7 @@ struct LibraryHelper{
     }
     
     mutating func updateState(){
-        withAnimation{
-            state = emptyLabelsList ? .BASE : state
-        }
+        state = emptyLabelsList ? .BASE : state
     }
     
     mutating func updateLabelsList(_ labels:[String]){
@@ -75,10 +72,7 @@ struct LibraryHelper{
     }
     
     mutating func clearSelectedItem(){
-        withAnimation{
-            selectedScreenShotModel = nil
-            
-        }
+        selectedScreenShotModel = nil
     }
     
     mutating func clearAllData(){
@@ -91,7 +85,7 @@ struct CapturedImages:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @StateObject var coreDataViewModel:CoreDataViewModel
     @State var library:LibraryHelper = LibraryHelper()
-    @Namespace var animation
+    @Namespace var namespace
    
     init() {
         self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
@@ -187,20 +181,14 @@ extension CapturedImages{
     @ViewBuilder
     func screenShotCard(_ item:ScreenshotModel?) -> some View{
         ZStack{
-#if targetEnvironment(simulator)
-        Image("profile_black_white")
-        .resizable()
-        .scaledToFit()
-#else
-        if let item = item,
-           let image = item.image,
-           let data = image.data,
-           let uiImage = UIImage(data: data){
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
-        }
-#endif
+            if let item = item,
+               let image = item.image,
+               let data = image.data,
+               let uiImage = UIImage(data: data){
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            }
         }
         .overlay{
             cardIsSelected(item?.id)
@@ -214,36 +202,6 @@ extension CapturedImages{
     var selectedCard:some View{
         if library.selectedScreenShotModel != nil{
             ZStack{
-#if targetEnvironment(simulator)
-                Color.white
-                ScrollView{
-                    VStack{
-                        
-                        Image("profile_black_white")
-                            .resizable()
-                            .scaledToFit()
-                        Text(library.selectedScreenShotModel?.name ?? "")
-                            .font(.title)
-                            .bold()
-                            .hLeading()
-                        Text("Width: \(library.selectedScreenShotModel?.width ?? 0.0)")
-                            .font(.body)
-                            .bold()
-                            .hLeading()
-                        Text("Height: \(library.selectedScreenShotModel?.height ?? 0.0)")
-                            .font(.body)
-                            .bold()
-                            .hLeading()
-                        Text("Depth: \(library.selectedScreenShotModel?.depth ?? 0.0)")
-                            .font(.body)
-                            .bold()
-                            .hLeading()
-                    }
-                    .hLeading()
-                    .padding()
-                }
-           
-#else
                 if let item = library.selectedScreenShotModel,
                    let image = item.image,
                    let data = image.data,
@@ -251,10 +209,9 @@ extension CapturedImages{
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()
-        }
-#endif
+                }
             }
-             .transition(.opacity.combined(with: .scale))
+            .transition(.opacity.combined(with: .scale))
             .onTapGesture {
                 withAnimation{
                     library.clearSelectedItem()
@@ -268,45 +225,18 @@ extension CapturedImages{
 
 //MARK: - SCROLL-LABEL-LIST
 extension CapturedImages{
-     
+  
     var settingsItemMenuList:some View{
-        ScrollView(.horizontal){
-            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
-                ForEach(library.labelHeaderList, id: \.self) { label in
-                    labelHeaderCell(label)
-               }
-            }
-            .padding()
-        }
-        .frame(height:MENU_HEIGHT)
-        .scrollIndicators(.never)
+        
+        ScrollviewLabelHeader(namespace: namespace,
+                              namespaceName: "CURRENT_SELECTED_BRAND",
+                              thickness: 5.0,
+                              bindingList: library.labelHeaderList,
+                              selectedAnimation: .UNDERLINE,
+                              menuHeight: MENU_HEIGHT_HEADER,
+                              bindingLabel: $library.labelHeader)
     }
-    
-    func labelHeaderCell(_ label:String) -> some View{
-        return Text(label)
-        .font(.headline)
-        .bold()
-        .frame(height: 33)
-        .foregroundStyle(label == library.labelHeader ? Color.white : Color.gray )
-        .padding([.vertical],5)
-        .padding([.horizontal],10)
-        .background(
-             ZStack{
-                 if label == library.labelHeader{
-                     RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-                         .stroke(style: .init(lineWidth: 2.0))
-                         .foregroundStyle(Color.white)
-                    .matchedGeometryEffect(id: "CURRENTHEADER", in: animation)
-                 }
-             }
-        )
-        .onTapGesture {
-            withAnimation{
-                library.labelHeader = label
-            }
-        }
-    }
-     
+  
 }
 
 //MARK: - BUTTONS
@@ -380,7 +310,7 @@ extension CapturedImages{
                 libraryLabel
                 editButton
             }
-            splitLine()
+            SplitLine()
             settingsItemMenuList
         }
         
@@ -418,7 +348,7 @@ extension CapturedImages{
     var editTopBar:some View{
         VStack{
             editTopBarButtons
-            splitLine()
+            SplitLine()
             editTopBarSection
         }
     }
@@ -437,7 +367,7 @@ extension CapturedImages{
         currentTopBarButtons()
         .animation(.linear(duration: 0.5),value: library.state)
         .transition(.opacity.combined(with: .scale))
-        .matchedGeometryEffect(id: "CURRENTTOPMENY", in: animation)
+        .matchedGeometryEffect(id: "CURRENT_TOP_MENU", in: namespace)
         .padding()
     }
 }
@@ -479,7 +409,9 @@ extension CapturedImages{
     func setCurrentLabels(){
         coreDataViewModel.requestAllUniqueLabels(){ labels in
             library.updateLabelsList(labels)
-            library.updateState()
+            withAnimation{
+                library.updateState()
+            }
         }
     }
      

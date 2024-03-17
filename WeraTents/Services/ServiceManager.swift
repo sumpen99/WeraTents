@@ -5,6 +5,7 @@
 //  Created by fredrik sundström on 2024-02-23.
 //
 import SwiftUI
+import AVKit
 
 enum TempFolder:String{
     case USDZ = "usdz"
@@ -33,7 +34,31 @@ class ServiceManager{
                 .appendingPathComponent(fileName)
                 .appendingPathExtension(ext)
     }
-      
+       
+}
+
+//MARK: - PLAY SOUND
+extension ServiceManager{
+    static var mySound:SystemSoundID = {
+        var aSound:SystemSoundID = 1108
+        if let soundURL = Bundle.main.url(forResource: "Detection", withExtension: "wav"){
+            AudioServicesCreateSystemSoundID(soundURL as CFURL, &aSound)
+        } else {
+            debugLog(object:"No sound file found")
+        }
+        return aSound
+    }()
+
+    static func play() { AudioServicesPlaySystemSound(mySound) }
+
+    static func prepare() -> SystemSoundID { return mySound }
+    
+    static func playSystemSound(with systemSoundID:SystemSoundID){
+        AudioServicesPlaySystemSoundWithCompletion(systemSoundID,{
+            AudioServicesRemoveSystemSoundCompletion(systemSoundID)
+            AudioServicesDisposeSystemSoundID(systemSoundID)
+        })
+    }
 }
 
 //MARK: - CREATE FOLDER AND FILES
@@ -100,6 +125,9 @@ extension ServiceManager{
                let bundle = Bundle(path: bundlePath),
                let resourcePath = bundle.path(forResource: imageName, ofType: "png"),
                let uiImage = UIImage(contentsOfFile: resourcePath){
+                images.append(uiImage)
+            }
+            else if let uiImage = UIImage(systemName: "photo"){
                 images.append(uiImage)
             }
         }

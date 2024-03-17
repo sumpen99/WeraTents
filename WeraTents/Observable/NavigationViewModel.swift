@@ -9,6 +9,7 @@ import SwiftUI
 
 enum ModelRoute: Identifiable{
     case ROUTE_AR
+    case ROUTE_TENTS
     case ROUTE_CAPTURED_IMAGES
     
     var id: Int {
@@ -27,7 +28,7 @@ class NavigationViewModel: ObservableObject{
     }
     
     func appendToPathWith<T:Hashable>(_ t:T){
-        self.pathTo.append(t)
+         self.pathTo.append(t)
     }
     
     func clearPath(){

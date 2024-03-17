@@ -9,18 +9,11 @@ import SwiftUI
 struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
+    @State var openMenuSwitch:Bool = false
   
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
-            .onChange(of: firestoreViewModel.tentAssets,initial: true){
-                debugLog(logger:.WARNING,object: firestoreViewModel.tentAssets.count)
-                let shutDownSpinner = firestoreViewModel.tentAssets.count == 0
-                firestoreViewModel.updateLoadingStateWith(state: .TENT_ASSETS, value: shutDownSpinner)
-            }
-            .safeAreaInset(edge: .top){
-                topLabel
-            }
             .modifier(NavigationViewModifier())
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
@@ -34,105 +27,97 @@ struct HomeView:View {
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
+                case .ROUTE_TENTS:              TentsView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
-                 }
+                }
             }
         }
     }
 }
 
-//MARK: - MAIN CONTENT
+//MARK: - MAIN-CONTENT
 extension HomeView{
     
     var mainContent:some View{
-        ZStack{
-            content
-            shapedMenu
-         }
-    }
-    
-    var content:some View{
-        VStack(spacing:V_HOME_SPACING){
+        VStack{
+            labelContainer
             scrollContainer
         }
-        .hCenter()
-    }
-    
-}
-
-//MARK: - SCROLLCONTAINER
-extension HomeView{
-    var scrollContainer:some View{
-        ScrollView{
-            VStack{
-                carouselSection
-             }
-            
+        .overlay{
+            menuAnimation
         }
         .vTop()
     }
+    
+    var menuAnimation:some View{
+        ZStack{
+           overlayedMenu
+           MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
+        }
+    }
+   
+    @ViewBuilder
+    var overlayedMenu:some View{
+        if openMenuSwitch{
+            LayOverView(closeView: $openMenuSwitch)
+        }
+    }
 }
 
-//MARK: - CAROUSELSECTION
+//MARK: - SCROLL-CONTAINER
 extension HomeView{
-    
-    var carouselSection:some View{
-        VStack{
-            inspirationLabel
-            carouselContent
-         }
-    }
-    
-    var inspirationLabel:some View{
-        HStack{
-           inspirationtext
-           inspirationButton
-        }
-        .padding([.horizontal])
-    }
-    
-    var inspirationtext:some View{
-        Text("Våra tält")
-        .font(.title)
-        .bold()
-        .foregroundStyle(Color.white).hLeading()
-    }
-    
-    var inspirationButton:some View{
-        Button(action: { }){
-            Image(systemName: "arrow.right")
-             .font(.title)
-             .bold()
-             .foregroundStyle(Color.white)
+    var scrollContainer:some View{
+        ScrollView{
+            VStack(spacing:V_GRID_SPACING){
+                NavigationSection(labelText: "Våra tält",
+                                  action: navigateToTents,
+                                  content: carouselContent)
+             }
         }
     }
-    
+}
+
+//MARK: - CAROUSEL-SECTION
+extension HomeView{
     var carouselContent:some View{
         ZStack{
             GeometryReader{ reader in
-                carousel(reader.size.width*0.75)
+                carousel(reader.size.width)
                 .hCenter()
             }
         }
-        .frame(height: HOME_CAROUSEL_HEIGHT)
+        .frame(height: HOME_CAROUSEL_HEIGHT+HOME_BRAND_HEIGHT)
     }
     
     func carousel(_ width:CGFloat) ->some View{
         HomeCarousel(
-                 data: $firestoreViewModel.tentAssets,
-                 width: width,
+                 cardWidth: width*0.75,
+                 brandWidth: width,
                  edge: .trailing)
         .overlay{
             if firestoreViewModel.loadingState(.TENT_ASSETS){
-                SpinnerAnimation(size:width/4.0,foregroundStyle: Color.lightGold)
+                SpinnerAnimation(size:width/4.0)
             }
         }
     }
-     
 }
 
-//MARK: - TOP LABEL
+//MARK: - CAPTURED-IMAGES-SECTION
 extension HomeView{
+    
+    
+}
+
+//MARK: - TOP-LABEL
+extension HomeView{
+    
+    var labelContainer:some View{
+        HStack{
+           labelText
+           labelImage
+        }
+        .padding(.horizontal)
+    }
     
     var labelText:some View{
         VStack{
@@ -148,68 +133,19 @@ extension HomeView{
          .hTrailing()
     }
     
-    var topLabel:some View{
-        HStack{
-           labelText
-           labelImage
-        }
-        .padding(.horizontal)
-   }
 }
 
-//MARK: -- BOTTOMBAR
+//MARK: - FUNCTIONS
 extension HomeView{
-    var navModelARButton:some View{
-        Button(action: { navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)}, label: {
-            buttonImage("rectangle.split.1x2", font: .largeTitle, foreground: Color.lightGold)
-                .imageScale(.large)
-            .padding(15.0)
-            .background{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.materialDarkest)
-            }
-        })
-        .offset(y:-4)
+    
+    func navigateToTents(){
+        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
     }
     
-    var videoButton:some View{
-        Button(action: {}, label: {
-            buttonImage("video.circle.fill", font: .title, foreground: Color.lightGold)
-            .padding(10.0)
-            .background{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
-            }
-        })
-    }
-    
-    var accountButton:some View{
-        Button(action: {}, label: {
-            buttonImage("person.crop.circle.fill", font: .title, foreground: Color.lightGold)
-            .padding(10.0)
-            .background{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU/2.0).fill(Color.materialDarkest)
-            }
-        })
-    }
-    
-    @ViewBuilder
-    var bottomButtons:some View{
-        HStack{
-            videoButton
-            navModelARButton.hCenter()
-            accountButton
-        }
-        .padding([.leading,.trailing])
-    }
-     
-    var shapedMenu:some View{
-        ZStack{
-            RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU).fill(Color.materialDark)
-            OvalShapeMenu()
-            .fill(Color.materialDark)
-            bottomButtons
-       }
-        .frame(height:MENU_HEIGHT)
-        .padding([.bottom,.leading,.trailing])
-        .vBottom()
+    func calculatedWidth(maxWidth:CGFloat) -> CGFloat{
+        let itemCount = 3.0
+        let padding = CGFloat(itemCount-1)*V_SPACING_REG
+        let width = (maxWidth-padding)/(itemCount+1)
+        return width < 0 ? 0 : width
     }
 }

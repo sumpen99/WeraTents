@@ -16,4 +16,12 @@ extension GeometryProxy{
     func max()->CGFloat{
         self.size.width > self.size.height ? self.size.width : self.size.height
     }
+    
+    func boundingRect() ->CGRect{
+        CGRect(x: 0,y: 0,width: self.size.width,height: self.size.height)
+    }
+    
+    func center() -> CGSize{
+        CGSizeMake(self.size.width/2, self.size.height/2)
+    }
 }
