@@ -11,16 +11,14 @@ enum ArAnimationState:Int,CaseIterable{
     case FLASH_SCREEN
     case SEND_CARD
     case SHOW_CAROUSEL
-    case TOGGLE_CAPTURED_IMAGES
     case SAVING_SCREEN_SHOT
     case DELAY_CAPTURE_BUTTON
-    case HAS_CAPTURED_IMAGES
+    case SHOW_TAKEN_PICTURE
 }
 
 struct ArHelper{
     var animationState:[Bool] = Array(repeating: false, count: ArAnimationState.allCases.count)
-    var capturedImageCount:Int = 0
-    var imageData:[Data] = []
+    var lastImageData:Data?
     func stateOf(animation state:ArAnimationState) -> Bool{
         return animationState[state.rawValue]
     }
@@ -50,33 +48,30 @@ struct ModelARView: View {
             
     var body: some View{
         mainContent
-        .onChange(of: helper.animationState[ArAnimationState.SAVING_SCREEN_SHOT.rawValue],
-                  initial: false){ oldValue,newValue in
-            if oldValue{
-                DispatchQueue.main.asyncAfter(deadline: .now()+1.0){
-                    helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
-                }
-            }
-        }
         .ignoresSafeArea()
         .safeAreaInset(edge: .bottom){
             bottomButtons
         }
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
-            topButtons
+            backButton
         }
         .overlay{
             if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
                 ScreenShotAnimation(arAnimationState:$helper.animationState,
-                                    imageData: helper.imageData.last)
+                                    imageData: helper.lastImageData)
             }
+            else if helper.stateOf(animation: .SHOW_TAKEN_PICTURE){
+                SwipableCard(isShown:$helper.animationState[ArAnimationState.SHOW_TAKEN_PICTURE.rawValue],
+                             data: helper.lastImageData,
+                             action:actionAfterCapturedImage)
+             }
         }
         .overlay{
             carouselContent
         }
-        
     }
+    
 }
 
 
@@ -87,63 +82,44 @@ extension ModelARView{
         ZStack{
             Color.background
             arContent
-            ZStack{
-                ForEach(helper.imageData.indices,id:\.self){ index in
-                    i(helper.imageData[index],index:index)
-                }
-            }
-            .hCenter()
-            .vCenter()
         }
     }
     
-    @ViewBuilder
-    func i(_ data:Data,index:Int) -> some View{
-        if let uiImage = UIImage(data: data){
-            ZStack{
-                Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFit()
-            }
-            .zIndex(1.0 - CGFloat(index) * 0.1)
-            .scaleEffect(1.0-(0.1*CGFloat(index)))
-            .position(CGPoint(x:0,y:-CGFloat(index)*10.0))
-            .frame(width:80.0,height:80.0)
-            //.rotation3DEffect(.degrees(1), axis: (x:1.0,y:0.0,z:0.0))
-         }
-    }
-    
-     var arContent:some View{
-         ZStack{
-             ARViewContainer(arViewCoordinator: arViewCoordinator)
-         }
+    var arContent:some View{
+         ARViewContainer(arViewCoordinator: arViewCoordinator)
          .task {
              arViewCoordinator.run()
          }
+    }
+    var backButton:some View{
+        BackButtonAction(action: navigateBack)
+        .hLeading()
+        .padding()
     }
     
 }
 
 //MARK: - CAROUSEL
 extension ModelARView{
+    @ViewBuilder
     var carouselContent:some View{
-        GeometryReader{ reader in
+        if helper.stateOf(animation: .SHOW_CAROUSEL){
             ZStack{
-                if helper.stateOf(animation: .SHOW_CAROUSEL){
+                GeometryReader{ reader in
                     Carousel(isOpen:$helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue],
                              data: $firestoreViewModel.tentAssets,
                              size: min(reader.size.width,reader.size.height)/3,
-                             edge: .trailing,
                              onSelected:onSelectedItem)
                 }
             }
-            .hCenter()
-            .vCenter()
+            .animation(.linear(duration: 0.25),
+                       value: helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue])
+            .transition(.move(edge: .trailing))
         }
     }
 }
 
-//MARK: - BOTTOMBAR
+//MARK: - BOTTOM BUTTONS
 extension ModelARView{
     var captureImageButton:some View{
         Button(action: captureImage, label: {
@@ -165,9 +141,8 @@ extension ModelARView{
     }
     
     var placeModelButton:some View{
-        Button(action: {
-            placeModel()
-        },label:   {
+        Button(action:placeModel,
+               label:{
             roundedImage("plus",font:.largeTitle,
                          scale:.large,
                          radius: 70.0,
@@ -178,9 +153,8 @@ extension ModelARView{
     }
     
     var removeModelButton:some View{
-        Button(action: {
-            removeModel()
-        },label:{
+        Button(action:removeModel,
+               label:{
             roundedImage("minus",
                          font:.title,
                          scale:.medium,
@@ -194,7 +168,7 @@ extension ModelARView{
     var showCarouselButton:some View{
         Button(action: {
             if !firestoreViewModel.hasTents{ return }
-            withAnimation(.easeInOut(duration: 0.45)){
+            withAnimation{
                 helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue].toggle()
             }
             
@@ -210,32 +184,31 @@ extension ModelARView{
         .frame(alignment: .trailing)
     }
     
-    func centerButton() -> some View{
-        ZStack{
-            if arViewCoordinator.activeAddButton{
-                placeModelButton
-            }
-            else if arViewCoordinator.activeCaptureButton{
-                captureImageButton
-            }
+    @ViewBuilder
+    var centerButton: some View{
+        if arViewCoordinator.activeAddButton{
+            placeModelButton
+        }
+        else if arViewCoordinator.activeCaptureButton{
+            captureImageButton
         }
      }
     
-    func leadingButton() -> some View{
-        ZStack{
-            if arViewCoordinator.activeRemoveButton{
-                removeModelButton
-            }
+    @ViewBuilder
+    var leadingButton: some View{
+        if arViewCoordinator.activeRemoveButton{
+            removeModelButton
+            .transition(.opacity)
         }
       }
     
     var interactButtons:some View{
         ZStack{
-            leadingButton().hLeading()
-            centerButton().hCenter()
+            leadingButton.hLeading()
+            centerButton.hCenter()
             showCarouselButton.hTrailing()
         }
-        .transition(.opacity)
+        .frame(height: 70.0)
     }
     
     var bottomButtons:some View{
@@ -244,42 +217,54 @@ extension ModelARView{
     }
 }
 
-//MARK: - TOPBAR
+//MARK: - FUNCTIONS CAPTURED IMAGES
 extension ModelARView{
-    
-    var topButtons:some View{
-        HStack{
-            BackButtonAction(action: navigateBack)
-            navigateToCapturedImagesButton
+    func captureImage(){
+        helper.setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
+                          values: [true,true,true])
+        arViewCoordinator.captureSnapshot(){ data in
+            if let data = data{
+                helper.lastImageData = data
+                helper.setStateOf(animation: .SEND_CARD, value: true)
+            }
+            else{
+                appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
+                    helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
+                }
+            }
         }
-        .hLeading()
-        .padding()
     }
     
-    @ViewBuilder
-    var navigateToCapturedImagesButton:some View{
-        if helper.stateOf(animation: .HAS_CAPTURED_IMAGES){
-            Button(action: navigateToCapturedImages , label: {
-                buttonImage("photo.stack.fill",font: TOP_BAR_FONT,foreground: Color.white)
-                //.rotationEffect(Angle(degrees: 45.0))
-                //.badge(count: $capturedImageCount)
-            })
-            .hTrailing()
-            .symbolEffect(.bounce.down, value: helper.stateOf(animation: .TOGGLE_CAPTURED_IMAGES))
+    func actionAfterCapturedImage(didSave:Bool) -> Void{
+        if didSave{
+            saveCapturedImage()
         }
-        
+        helper.lastImageData = nil
+        helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+    }
+    
+    func saveCapturedImage(){
+        if let data = helper.lastImageData{
+            let managedObjectContext = PersistenceController.shared.container.viewContext
+            let model = ScreenshotModel(context:managedObjectContext)
+            model.buildWithName(arViewCoordinator.selectedTentMeta)
+            let image = ScreenshotImage(context:managedObjectContext)
+            image.id = model.id
+            image.data = data
+            model.image = image
+            do{
+                try PersistenceController.saveContext()
+                appStateViewModel.activateToast(.BASE,"Sparat!")
+            }
+            catch{
+                appStateViewModel.activateToast(.FAIL,"Misslyckades med att spara!")
+            }
+        }
     }
 }
 
-//MARK: - FUNCTIONS
+//MARK: - FUNCTIONS ARVIEW-COORDINATOR
 extension ModelARView{
-    
-    func navigateToCapturedImages(){
-        arViewCoordinator.pause()
-        arViewCoordinator.action(.REMOVE_3D_MODEL){ result in
-            navigationViewModel.appendToPathWith(ModelRoute.ROUTE_CAPTURED_IMAGES)
-        }
-    }
     
     func navigateBack(){
         releaseMemory()
@@ -297,7 +282,7 @@ extension ModelARView{
     func placeModel(){
         arViewCoordinator.action(.PLACE_3D_MODEL){ [weak appStateViewModel] result in
             if !result{
-                appStateViewModel?.activateToast(.FAIL,"Fel uppstod!"){
+                appStateViewModel?.activateToast(.FAIL,"Ett fel uppstod!"){
                     helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
                 }
             }
@@ -308,35 +293,4 @@ extension ModelARView{
         arViewCoordinator.newSelectedTent(tent)
     }
     
-    func captureImage(){
-        helper.setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
-                          values: [true,true,true])
-        let managedObjectContext = PersistenceController.shared.container.viewContext
-        arViewCoordinator.captureSnapshot(){ data in
-            if let data = data{
-                let model = ScreenshotModel(context:managedObjectContext)
-                model.buildWithName(arViewCoordinator.selectedTentMeta)
-                let image = ScreenshotImage(context:managedObjectContext)
-                image.id = model.id
-                image.data = data
-                model.image = image
-                do{
-                    try PersistenceController.saveContext()
-                    helper.imageData.append(data)
-                    helper.setStateOf(animation: .SEND_CARD, value: true)
-                }
-                catch{
-                    appStateViewModel.activateToast(.FAIL,"Error"){
-                        helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
-                    }
-                }
-            }
-            else{
-                appStateViewModel.activateToast(.FAIL,"Error"){
-                    helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
-                }
-            }
-        }
-       
-    }
 }

@@ -129,7 +129,6 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         case .REMOVE_3D_MODEL:
             self.arView?.removeModel(){ success in
                 self.animateModelState(success ? .HAS_SELECTION : self.modelState)
-                self.setFocusState()
                 onResult?(success)
             }
        case .KILL_SESSION:
@@ -216,8 +215,7 @@ extension ARView{
         var cancellable: AnyCancellable? = nil
         cancellable = ModelEntity.loadModelAsync(contentsOf: usdzPath!)
         .sink(receiveCompletion: { error in
-            debugLog(object:"Error while reading usdz file: \(error)")
-          cancellable?.cancel()
+            cancellable?.cancel()
             onResult?(false,nil)
         }, receiveValue: { modelEntity in
             self.placeModel(modelEntity: modelEntity, position: position)

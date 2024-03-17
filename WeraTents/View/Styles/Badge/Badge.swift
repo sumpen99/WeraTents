@@ -14,7 +14,7 @@ struct Badge: ViewModifier {
     func body(content: Content) -> some View {
         ZStack {
             content
-            .background{
+            .overlay{
                 if count > 0{
                     badgeView
                 }
@@ -24,9 +24,9 @@ struct Badge: ViewModifier {
      
     var badgeView: some View {
         ZStack{
-            Circle().fill(Color.white)
+            Circle().fill(Color.lightBrown)
             Text("\(count)")
-            .foregroundStyle(Color.red)
+            .foregroundStyle(Color.lightGold)
             .bold()
          }
         .frame(width: 25.0,height: 25.0)
