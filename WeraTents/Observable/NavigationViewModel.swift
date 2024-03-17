@@ -28,7 +28,7 @@ class NavigationViewModel: ObservableObject{
     }
     
     func appendToPathWith<T:Hashable>(_ t:T){
-        self.pathTo.append(t)
+         self.pathTo.append(t)
     }
     
     func clearPath(){

@@ -64,17 +64,22 @@ func roundedImage(_ name:String,
                   font:Font,
                   scale:Image.Scale,
                   radius:CGFloat,
-                  foreground:Color=Color.black,
-                  background:Color=Color.white) -> some View{
+                  foreground:Color,
+                  background:Color,
+                  thicknes:CGFloat) -> some View{
         Image(systemName: name)
         .font(font)
         .bold()
         .foregroundStyle(foreground)
         .imageScale(scale)
         .padding()
-        .background(background)
+        .background(
+            Circle()
+            .stroke(lineWidth: thicknes)
+            .foregroundStyle(background)
+        )
         .frame(width: radius,height:radius)
-        .clipShape(Circle())
+        
 }
 
 func buttonImage(_ name:String,

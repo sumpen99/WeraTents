@@ -21,7 +21,6 @@ struct Carousel<T:CarouselItem>:View {
     @Binding var isOpen:Bool
     @Binding var data:[T]
     let size:CGFloat
-    let edge:Edge
     var onSelected:((TentMeta) -> Void)? = nil
     @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
     
@@ -83,21 +82,18 @@ struct Carousel<T:CarouselItem>:View {
             background
             carouselContent
         }
-     }
+      }
     
     // MARK: - MAIN BODY
     var body: some View {
         content
-        .transition(.move(edge: edge))
     }
 }
 
 // MARK: BACKGROUND
 extension Carousel{
     var background:some View{
-        ZStack{
-            Color.white.opacity(0.1)
-        }
+        Color.white.opacity(0.1)
         .ignoresSafeArea()
         .hCenter()
         .vTop()
