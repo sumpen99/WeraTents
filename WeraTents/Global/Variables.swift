@@ -31,6 +31,7 @@ let MENU_HEIGHT_HEADER              = 40.0
 let ANIMATED_MENU_HEIGHT            = 55.0
 let SHEET_MENU_HEIGHT               = 55.0
 let HOME_CAROUSEL_HEIGHT            = 150.0
+let HOME_CAPTURED_HEIGHT            = 250.0
 let HOME_BRAND_HEIGHT               = 75.0
 let V_SPACING_REG                   = 10.0
 let V_GRID_SPACING                  = 20.0

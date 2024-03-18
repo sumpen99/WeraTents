@@ -26,14 +26,18 @@ class AppStateViewModel:ObservableObject{
         }
     }
     
+    @MainActor
     func activateToast(_ state:ToastState,_ message:String,onDone:(() -> Void)? = nil){
         ToastConfiguration.config(state: state, message: message)
-        withAnimation{
-            showToast = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + ToastConfiguration.duration){
-                self.showToast = false
-                onDone?()
+        DispatchQueue.main.async {
+            withAnimation{
+                self.showToast = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + ToastConfiguration.duration){
+                    self.showToast = false
+                    onDone?()
+                }
             }
         }
+        
     }
 }

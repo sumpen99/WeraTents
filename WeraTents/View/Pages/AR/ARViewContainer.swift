@@ -144,28 +144,21 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     }
     
     /*
-    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
-        self.arView?.snapshot(saveToHDR: false) { (image) in
-            if let image = image,
-               let pngImage = image.pngData(),
-               let compressedImage = UIImage(data: pngImage){
-                callback?(compressedImage)
-                return
-            }
-        }
-        callback?(nil)
-    }*/
+    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){ (image) in
+         if let image = image,
+            let data = image.jpegData(compressionQuality: 1) ?? image.pngData(){
+             callback?(data)
+         }
+         else{
+             callback?(nil)
+         }
+     }*/
     
-    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
-        self.arView?.snapshot(saveToHDR: false) { (image) in
-            if let image = image,
-               let data = image.jpegData(compressionQuality: 1) ?? image.pngData(){
-                callback?(data)
-            }
-            else{
-                callback?(nil)
-            }
+    func captureSnapshot(_ callback:@escaping (UIImage?) ->Void){
+        if let arView = arView{
+            arView.snapshot(saveToHDR: false,completion: callback) 
         }
+        else{ callback(nil) }
         
     }
     

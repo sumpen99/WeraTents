@@ -20,7 +20,7 @@ struct TentsView:View {
     var body: some View {
         background
         .toolbar(.hidden)
-        .ignoresSafeArea(.all)
+        .ignoresSafeArea()
         .safeAreaInset(edge: .top){
             mainContent
         }
@@ -31,16 +31,15 @@ struct TentsView:View {
 extension TentsView{
     var background:some View{
         Color.background
+        .vCenter()
+        .hCenter()
     }
     
     var mainContent:some View{
         VStack{
             BaseTopBar(label: "Kollektion", onNavigateBackAction: navigateBack)
-            SplitLine(color:Color.white).hCenter().padding(.top,5)
             scrollContent
-            
-        }
-        .padding([.top,.horizontal])
+       }
     }
     
     var scrollContent:some View{
@@ -53,6 +52,7 @@ extension TentsView{
             .padding(.top)
         }
         .scrollIndicators(.hidden)
+        .padding(.horizontal)
     }
     
 }
@@ -144,7 +144,7 @@ extension TentsView{
     
     func cardButton(_ index:Int) -> some View{
         Button(action: { navigateTo(index) }, label: {
-            Image(systemName: "arrow.up.left.and.arrow.down.right")
+            Image(systemName: "square.split.diagonal.2x2.fill")
                 .font(.title3)
                 .bold()
         })

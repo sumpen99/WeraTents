@@ -9,6 +9,7 @@ import SwiftUI
 
 enum ToastState{
     case BASE
+    case SUCCESS
     case FAIL
 }
 
@@ -16,7 +17,7 @@ struct ToastConfiguration {
     static var message:String = ""
     static var textColor:Color = Color.white
     static var font:Font = .system(size: 14)
-    static var backgroundColor:Color = Color.materialDarkest
+    static var backgroundColor:Color = Color.white
     static var duration:TimeInterval = Toast.short
     static var transition:AnyTransition = .opacity
     static var animation:Animation = .linear(duration: 0.3)
@@ -24,7 +25,9 @@ struct ToastConfiguration {
     static func config(state:ToastState,message:String,duration:TimeInterval = Toast.short){
         switch state{
         case .BASE:
-            self.textColor = Color.white
+            self.textColor = Color.materialDarkest
+        case .SUCCESS:
+            self.textColor = Color.materialDarkest
         case .FAIL:
             self.textColor = Color.red
         }

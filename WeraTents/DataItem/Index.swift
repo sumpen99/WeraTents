@@ -70,6 +70,11 @@ struct PdfResourcesItem:Hashable{
     }
 }
 
+struct BrandModel:Equatable{
+    let brand:String?
+    let modelId:String?
+}
+
 struct TentDimensions{
     let width:Float
     let height:Float
@@ -77,7 +82,10 @@ struct TentDimensions{
 }
 
 struct TentMeta{
-    var title:String = ""
+    let name:String
+    let modelId:String
+    let shortDesc:String
+    let label:String
     var dimensions:TentDimensions?
     
     mutating func setDimension(_ dimensions:TentDimensions?){
@@ -156,6 +164,13 @@ struct TentItem:CarouselItem{
         
     static func == (lhs: TentItem, rhs: TentItem) -> Bool {
         return lhs.id == rhs.id
+    }
+    
+    func toTentMeta() -> TentMeta{
+        return TentMeta(name: self.name,
+                        modelId: self.modelId,
+                        shortDesc: self.shortDescription,
+                        label: self.label)
     }
 }
 

@@ -52,7 +52,6 @@ extension PdfView{
     var mainContent:some View{
         VStack{
             BaseTopBar(label: "Instruktionsmanual", onNavigateBackAction: navigateBack)
-            SplitLine(color:Color.white).hCenter().padding(.top,5)
             pdfContainer
         }
         .padding([.top,.horizontal])

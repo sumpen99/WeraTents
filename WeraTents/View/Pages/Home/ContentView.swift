@@ -14,6 +14,7 @@ struct ContentView:View{
     init(){
         self._firestoreViewModel = StateObject(wrappedValue: FirestoreViewModel())
         self._navigationViewModel = StateObject(wrappedValue: NavigationViewModel())
+        UINavigationBar.changeAppearance(clear: true)
     }
     
     var body:some View{

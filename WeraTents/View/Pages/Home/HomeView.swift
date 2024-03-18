@@ -10,10 +10,14 @@ struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var openMenuSwitch:Bool = false
+    @State var brandModel:BrandModel?
   
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
+            .safeAreaInset(edge: .top){
+                labelContainer
+            }
             .modifier(NavigationViewModifier())
             .navigationDestination(for: TentItem.self){  tent in
                 ModelSceneView(selectedTent:tent)
@@ -39,27 +43,9 @@ struct HomeView:View {
 extension HomeView{
     
     var mainContent:some View{
-        VStack{
-            labelContainer
-            scrollContainer
-        }
+        scrollContainer
         .overlay{
-            menuAnimation
-        }
-        .vTop()
-    }
-    
-    var menuAnimation:some View{
-        ZStack{
-           overlayedMenu
-           MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
-        }
-    }
-   
-    @ViewBuilder
-    var overlayedMenu:some View{
-        if openMenuSwitch{
-            LayOverView(closeView: $openMenuSwitch)
+            MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
         }
     }
 }
@@ -68,32 +54,37 @@ extension HomeView{
 extension HomeView{
     var scrollContainer:some View{
         ScrollView{
-            VStack(spacing:V_GRID_SPACING){
+            LazyVStack(spacing:V_GRID_SPACING){
                 NavigationSection(labelText: "Våra tält",
                                   action: navigateToTents,
-                                  content: carouselContent)
+                                  content: carouselContent,
+                                  backgroundColor: Color.white.opacity(0.03))
+                NavigationSection(labelText: "För dig",
+                                  action: navigateToCapturedImages,
+                                  content: userLatestContent,
+                                  backgroundColor: Color.white.opacity(0.03))
              }
         }
+        .scrollIndicators(.hidden)
     }
 }
 
 //MARK: - CAROUSEL-SECTION
 extension HomeView{
     var carouselContent:some View{
-        ZStack{
-            GeometryReader{ reader in
-                carousel(reader.size.width)
-                .hCenter()
-            }
+        GeometryReader{ reader in
+            carousel(reader.size.width)
+            .hCenter()
         }
         .frame(height: HOME_CAROUSEL_HEIGHT+HOME_BRAND_HEIGHT)
     }
     
     func carousel(_ width:CGFloat) ->some View{
         HomeCarousel(
-                 cardWidth: width*0.75,
-                 brandWidth: width,
-                 edge: .trailing)
+                brandModel:$brandModel,
+                cardWidth: width*0.75,
+                brandWidth: width,
+                edge: .trailing)
         .overlay{
             if firestoreViewModel.loadingState(.TENT_ASSETS){
                 SpinnerAnimation(size:width/4.0)
@@ -104,8 +95,37 @@ extension HomeView{
 
 //MARK: - CAPTURED-IMAGES-SECTION
 extension HomeView{
+    var userLatestContent:some View{
+        LazyVGrid(columns: [GridItem(),GridItem()]
+                  ,alignment: .center,
+                  spacing: V_GRID_SPACING,
+                  pinnedViews: .sectionHeaders){
+            ForEach(CoreDataFetcher.fetchedRequestWithLimit(limit: 300,
+                                                            sortedOn: "date"),id:\.self){ item in
+                screenshotCard(item)
+             }
+        }
+        .padding(.horizontal)
+        .padding(.bottom,MENU_HEIGHT)
+    }
     
-    
+    @ViewBuilder
+    func screenshotCard(_ item:ScreenshotModel) -> some View{
+        if let image = item.image,
+           let imageData = image.data,
+           let uiImage = UIImage(data: imageData){
+            PressedCard(image: Image(uiImage: uiImage),
+                        labelText: item.name ?? "",
+                        descriptionText: item.date?.toISO8601String() ?? "",
+                        scaleFactor: 0.95,
+                        height: HOME_CAPTURED_HEIGHT,
+                        imageLabel: "square.split.diagonal.2x2.fill"){
+                self.brandModel = BrandModel(brand: item.label,
+                                             modelId: item.modelId)
+              
+            }
+       }
+    }
 }
 
 //MARK: - TOP-LABEL
@@ -117,6 +137,7 @@ extension HomeView{
            labelImage
         }
         .padding(.horizontal)
+        
     }
     
     var labelText:some View{
@@ -140,6 +161,10 @@ extension HomeView{
     
     func navigateToTents(){
         navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
+    }
+    
+    func navigateToCapturedImages(){
+        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_CAPTURED_IMAGES)
     }
     
     func calculatedWidth(maxWidth:CGFloat) -> CGFloat{

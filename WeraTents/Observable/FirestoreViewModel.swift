@@ -78,7 +78,8 @@ struct BrandIndexes{
 //MARK: - FIRESTORE VIEWMODEL
 class FirestoreViewModel:ObservableObject{
     typealias  BRAND = String
-    @Published var isLoadingData:[Bool] = Array.init(repeating: false, count: LoadingState.allCases.count)
+    @Published var isLoadingData:[Bool] = Array.init(repeating: false, 
+                                                     count: LoadingState.allCases.count)
     @Published var tentAssets:[TentItem] = []
     @Published var brandAsset:OrderedDictionary<BRAND,BrandIndexes> = [:]
     let repo = FirestoreRepository()
@@ -326,6 +327,15 @@ extension FirestoreViewModel{
            let modelId = modelId,
            let index = brandAsset[brand]?.modelIds[modelId]{
            return secureTentItem(index)
+        }
+        return nil
+    }
+    
+    func secureTentItemIndex(brand:String?,modelId:String?) -> Int?{
+        if let brand = brand,
+           let modelId = modelId,
+           let index = brandAsset[brand]?.modelIds[modelId]{
+           return index
         }
         return nil
     }

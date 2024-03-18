@@ -23,6 +23,7 @@ struct CarouselHelper{
 struct HomeCarousel:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
+    @Binding var brandModel:BrandModel?
     let cardWidth:CGFloat
     let brandWidth:CGFloat
     let edge:Edge
@@ -50,9 +51,17 @@ struct HomeCarousel:View {
             carousel
             brandContent
         }
+        .onChange(of: brandModel, initial: false){
+            if let brand = brandModel?.brand,
+               let modelId = brandModel?.modelId,
+               let index = firestoreViewModel.secureTentItemIndex(brand: brand, modelId: modelId){
+                setNewIndex(index)
+            }
+        }
         .onAppear{
             ind.resetTap()
         }
+        
     }
 }
 
@@ -74,10 +83,13 @@ extension HomeCarousel{
             HStack(spacing:0){
                 VStack(spacing:0){
                     cardText(name: item.name, shortDesc: item.shortDescription)
-                    cardButton
+                    PressedCardButton(cardIsTappedScale: $ind.cardIsTappedScale,
+                                      scaleFactor: 0.8,
+                                      imageLabel: "square.split.diagonal.2x2.fill",
+                                      action: navigate)
                 }
                 .padding(.top)
-                cardImage(item.img)
+                item.img.resizable()
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
@@ -105,16 +117,6 @@ extension HomeCarousel{
         .hCenter()
     }
     
-    var cardButton:some View{
-        PressedCardButton(cardIsTappedScale: $ind.cardIsTappedScale,action: navigate)
-   }
-    
-    func cardImage(_ img:Image) -> some View{
-        ZStack{
-            img
-            .resizable()
-        }
-    }
 }
 
 // MARK: - BRAND CONTENT
@@ -223,6 +225,7 @@ extension HomeCarousel{
     }
     
     func setNewIndex(_ value:Int){
+        if self.ind.activeIndex == value { return }
         withAnimation{
             self.ind.activeIndex = value
             self.ind.draggingItem = Double(value)
