@@ -11,7 +11,10 @@ extension ScreenshotModel{
     func buildWithName(_ meta:TentMeta?){
         if let meta = meta{
             self.id = shortId(length: 6)
-            self.name = meta.title
+            self.name = meta.name
+            self.label = meta.label
+            self.shortDesc = meta.shortDesc
+            self.modelId = meta.modelId
             self.date = Date()
             if let dimensions = meta.dimensions{
                 self.width = dimensions.width

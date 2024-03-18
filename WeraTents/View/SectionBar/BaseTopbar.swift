@@ -16,16 +16,17 @@ struct BaseTopBar:View {
     }
     
     var topBar:some View{
-        HStack{
-            BackButtonAction(action: onNavigateBackAction)
-            Text(label)
-            .font(.headline)
-            .bold()
-            .frame(height: 33)
-            .foregroundStyle(Color.white)
-            .hCenter()
-            .padding([.vertical],5)
+        VStack{
+            HStack{
+                BackButtonAction(action: onNavigateBackAction)
+                Text(label)
+                .font(.headline)
+                .bold()
+                .foregroundStyle(Color.white)
+                .hCenter()
+            }
+            SplitLine()
         }
-        .hLeading()
-    }
+        .padding()
+   }
 }

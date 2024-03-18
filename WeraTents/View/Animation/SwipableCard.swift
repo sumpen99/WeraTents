@@ -53,7 +53,7 @@ struct SafeAreaBounds{
 
 struct SwipableCard: View {
     @Binding var isShown:Bool
-    let data:Data?
+    let uiImage:UIImage?
     let action:(Bool) -> Void
     @GestureState private var startLocation: CGPoint? = nil
     @State var location = CGPoint()
@@ -68,8 +68,7 @@ struct SwipableCard: View {
     
     @ViewBuilder
     var content:some View{
-        if let data = data,
-           let uiImage = UIImage(data: data){
+        if let uiImage = uiImage{
             GeometryReader{ reader in
                 ZStack{
                     Color.white

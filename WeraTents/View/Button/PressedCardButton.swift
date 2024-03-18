@@ -9,8 +9,10 @@ import SwiftUI
 
 struct PressedCardButton:View {
     @Binding var cardIsTappedScale:CGFloat
-    @State var cardHasHadTap:Bool = false
+    let scaleFactor:CGFloat
+    let imageLabel:String
     let action:() -> Void
+    @State var cardHasHadTap:Bool = false
     let maxDistanceToMove:CGFloat = 20
     var body: some View {
         content
@@ -18,7 +20,7 @@ struct PressedCardButton:View {
  
     var content:some View{
         ZStack{
-            Image(systemName: "arrow.up.left.and.arrow.down.right")
+            Image(systemName: imageLabel)
             .foregroundStyle(Color.black.opacity(0.7))
             .font(.title3)
             .bold()
@@ -42,25 +44,28 @@ extension PressedCardButton{
             if (-maxDistanceToMove < w && w < maxDistanceToMove) &&
                 (-maxDistanceToMove < h && h < maxDistanceToMove){
                 if !cardHasHadTap{
-                    withAnimation{
-                        cardIsTappedScale = 0.8
-                    }
+                    animateScaleFactorWith(value:scaleFactor)
                     cardHasHadTap = true
                 }
             }
             else{
-                withAnimation{
-                    cardIsTappedScale = 1.0
-                }
+                animateScaleFactorWith(value:1.0)
             }
          }
         .onEnded { value in
-            if cardIsTappedScale == 0.8{
-                DispatchQueue.main.asyncAfter(wallDeadline: .now() + 0.2){
+            if cardIsTappedScale == scaleFactor{
+                animateScaleFactorWith(value:1.0)
+                DispatchQueue.main.asyncAfter(deadline:.now() + 0.3){
                     action()
                 }
             }
             cardHasHadTap = false
          }
+    }
+    
+    func animateScaleFactorWith(value toAnimate:CGFloat){
+        withAnimation{
+            cardIsTappedScale = toAnimate
+        }
     }
 }

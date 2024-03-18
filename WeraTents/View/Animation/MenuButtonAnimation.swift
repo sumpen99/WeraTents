@@ -34,6 +34,11 @@ struct MenuButtonAnimation:View {
         }
         .padding(.horizontal)
         .vBottom()
+        .overlay{
+            if openMenuSwitch{
+                LayOverView(closeView: $openMenuSwitch)
+            }
+        }
     }
     
     var content:some View{

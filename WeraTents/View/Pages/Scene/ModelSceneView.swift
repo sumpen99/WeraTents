@@ -215,7 +215,7 @@ extension ModelSceneView{
                           indicatorColor:Color.black.opacity(0.3)){
                     helper.presentSheet.toggle()
                 }
-                //selectedTentLabel
+                selectedTentLabel
             }
             .background{
                 Color.lightBrown
@@ -233,7 +233,7 @@ extension ModelSceneView{
     var selectedTentLabel:some View{
         Text(selectedTent.name)
         .frame(height: TIP_OF_SHEET)
-        .foregroundStyle(Color.materialDark)
+        .foregroundStyle(Color.lightGreen)
         .font(.title3)
         .bold()
         .padding([.top,.bottom])

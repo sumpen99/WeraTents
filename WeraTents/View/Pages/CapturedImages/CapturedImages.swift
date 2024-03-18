@@ -104,9 +104,7 @@ struct CapturedImages:View {
 //MARK: - MAIN CONTENT
 extension CapturedImages{
     var background:some View{
-        ZStack{
-            Color.background
-         }
+        Color.background
         .vCenter()
         .hCenter()
         
@@ -116,7 +114,7 @@ extension CapturedImages{
         VStack{
             topButtons
             itemsLoadedPage
-       }
+        }
         .overlay{
             selectedCard.padding()
         }

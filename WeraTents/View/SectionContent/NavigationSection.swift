@@ -11,6 +11,7 @@ struct NavigationSection<Content:View>:View {
     let labelText:String
     let action:() -> Void
     let content:Content
+    let backgroundColor:Color
     
     var body: some View {
         mainContent
@@ -21,5 +22,8 @@ struct NavigationSection<Content:View>:View {
             NavigationSectionBar(labelText: labelText,action: action)
             content
          }
+        .background{
+            backgroundColor
+        }
     }
 }

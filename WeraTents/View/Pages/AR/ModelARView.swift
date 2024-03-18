@@ -18,7 +18,7 @@ enum ArAnimationState:Int,CaseIterable{
 
 struct ArHelper{
     var animationState:[Bool] = Array(repeating: false, count: ArAnimationState.allCases.count)
-    var lastImageData:Data?
+    var lastUIImage:UIImage?
     func stateOf(animation state:ArAnimationState) -> Bool{
         return animationState[state.rawValue]
     }
@@ -59,11 +59,11 @@ struct ModelARView: View {
         .overlay{
             if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
                 ScreenShotAnimation(arAnimationState:$helper.animationState,
-                                    imageData: helper.lastImageData)
+                                    uiImage: helper.lastUIImage)
             }
             else if helper.stateOf(animation: .SHOW_TAKEN_PICTURE){
                 SwipableCard(isShown:$helper.animationState[ArAnimationState.SHOW_TAKEN_PICTURE.rawValue],
-                             data: helper.lastImageData,
+                             uiImage: helper.lastUIImage,
                              action:actionAfterCapturedImage)
              }
         }
@@ -222,9 +222,9 @@ extension ModelARView{
     func captureImage(){
         helper.setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
                           values: [true,true,true])
-        arViewCoordinator.captureSnapshot(){ data in
-            if let data = data{
-                helper.lastImageData = data
+        arViewCoordinator.captureSnapshot(){ uiImage in
+            if let uiImage = uiImage{
+                helper.lastUIImage = uiImage
                 helper.setStateOf(animation: .SEND_CARD, value: true)
             }
             else{
@@ -236,31 +236,94 @@ extension ModelARView{
     }
     
     func actionAfterCapturedImage(didSave:Bool) -> Void{
-        if didSave{
+        if didSave , #available(iOS 15.0, *){
             saveCapturedImage()
         }
-        helper.lastImageData = nil
-        helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
-    }
-    
-    func saveCapturedImage(){
-        if let data = helper.lastImageData{
-            let managedObjectContext = PersistenceController.shared.container.viewContext
-            let model = ScreenshotModel(context:managedObjectContext)
-            model.buildWithName(arViewCoordinator.selectedTentMeta)
-            let image = ScreenshotImage(context:managedObjectContext)
-            image.id = model.id
-            image.data = data
-            model.image = image
-            do{
-                try PersistenceController.saveContext()
-                appStateViewModel.activateToast(.BASE,"Sparat!")
-            }
-            catch{
-                appStateViewModel.activateToast(.FAIL,"Misslyckades med att spara!")
-            }
+        else{
+            resetAndNotifyUserWithToastState(.FAIL,"Kräver version >= IOS 15")
         }
     }
+    
+    
+    func saveCapturedImage(){
+        DispatchQueue.global(qos: .background).async {
+            if let imageData = scaledImageWith(compressionQuality: 1.0,
+                                               ofSize: CGSize(width: 2040.0,
+                                                              height: HOME_CAPTURED_HEIGHT),
+                                               trimmed: true){
+                    let managedObjectContext = PersistenceController.shared.container.viewContext
+                    let model = ScreenshotModel(context:managedObjectContext)
+                    model.buildWithName(arViewCoordinator.selectedTentMeta)
+                 
+                    let image = ScreenshotImage(context:managedObjectContext)
+                    image.id = model.id
+                    image.data = imageData
+                    model.image = image
+                    do{
+                        try PersistenceController.saveContext()
+                        resetAndNotifyUserWithToastState(.SUCCESS,"Sparat!")
+                    }
+                    catch{
+                        resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+                    }
+             }
+             else{
+                 resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+             }
+        }
+    }
+    
+    func resetAndNotifyUserWithToastState(_ state:ToastState,_ message:String){
+        appStateViewModel.activateToast(state,message)
+        helper.lastUIImage = nil
+        helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+    }
+   
+  
+}
+
+//MARK: - SCALE CAPTURED IMAGE
+extension ModelARView{
+    
+    func scaledImageWith(compressionQuality toStore:CGFloat,
+                         ofSize maxSize:CGSize,
+                         trimmed trimImage:Bool) -> Data?{
+        if let uiImage = helper.lastUIImage,
+           let scaleFactor = calculateScaleFactor(ofSize:maxSize,
+                                                  imageWidth:uiImage.size.width,
+                                                  imageHeight: uiImage.size.height,
+                                                  trimImage:trimImage),
+           let thumb = uiImage.preparingThumbnail(of: scaleFactor){
+           return thumb.jpegData(compressionQuality: toStore)
+        }
+        return nil
+    }
+    
+    func calculateScaleFactor(ofSize maxSize:CGSize,
+                              imageWidth origWidth:Double,
+                              imageHeight origHeight:Double,
+                              trimImage:Bool) -> CGSize?{
+        let maxWidth = maxSize.width,maxHeight = maxSize.height
+        var newWidth = origWidth,newHeight = origHeight
+        var trimWidth = 0.0, trimHeight = 0.0
+
+        if origWidth > maxWidth || origHeight > maxHeight{
+            if trimImage{
+                let factor:Double = max(maxWidth / origWidth,maxHeight / origHeight)
+                newHeight =  ceil(origHeight * factor)
+                trimWidth = newWidth - maxWidth
+                trimHeight = newHeight - maxHeight
+            }
+            else{
+                let factor = min(maxWidth / origWidth,maxHeight / origHeight)
+                newWidth = ceil(origWidth * factor)
+                newHeight = ceil(origHeight * factor)
+            }
+        }
+        
+        return CGSize(width: newWidth - trimWidth, height: newHeight - trimHeight)
+    }
+
 }
 
 //MARK: - FUNCTIONS ARVIEW-COORDINATOR

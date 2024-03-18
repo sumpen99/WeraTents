@@ -12,7 +12,7 @@ enum SearchCategorie : String{
     case ALL = "ALL"
 }
 
-//MARK: COREDATA-FETCHER
+//MARK: - COREDATA-FETCHER
 class CoreDataFetcher{
     let CORE_DATA_FETCH_LIMIT = 12
     
@@ -25,7 +25,7 @@ class CoreDataFetcher{
     var hasDataToFetch:Bool{ currentPage < totalPages && totalItems > 0 }
 }
 
-//MARK: COREDATA-FETCHER REQUEST ITEMS
+//MARK: - COREDATA-FETCHER REQUEST ITEMS
 extension CoreDataFetcher{
     
     func requestItemsByPage(_ page:Int,onResult: @escaping ((totalItems:Int,items:[ScreenshotModel])) -> Void) {
@@ -56,7 +56,7 @@ extension CoreDataFetcher{
     }
 }
 
-//MARK: COREDATA-FETCHER FETCH ITEMS
+//MARK: - COREDATA-FETCHER FETCH ITEMS
 extension CoreDataFetcher{
     func fetchedUniqueValueRequest<T>(_ column:String,value:T.Type) -> [T]{
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "ScreenshotModel")
@@ -107,7 +107,23 @@ extension CoreDataFetcher{
      }
 }
 
-//MARK: COREDATA-FETCHER PREDICATE
+//MARK: - STATIC COREDATA-FETCHER
+extension CoreDataFetcher{
+    static func fetchedRequestWithLimit(limit fetchLimit:Int,sortedOn sortValue:String) -> [ScreenshotModel]{
+        let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
+        let sortDescriptors = [NSSortDescriptor(key: sortValue, ascending: false)]
+        fetchRequest.fetchLimit = fetchLimit
+        fetchRequest.sortDescriptors = sortDescriptors
+        fetchRequest.includesSubentities = true
+        do {
+            return try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
+        } catch {
+            return []
+        }
+     }
+}
+
+//MARK: - COREDATA-FETCHER PREDICATE
 extension CoreDataFetcher{
     func getPredicateBySearchCategorie(_ categorie:SearchCategorie,searchText:String) -> NSPredicate?{
         //predicate = NSPredicate(format: "%K =[c] %@", argumentArray: [#keyPath(TubeModel.message), searchValue])//caseinsensitive
@@ -119,7 +135,7 @@ extension CoreDataFetcher{
     }
 }
 
-//MARK: COREDATA-FETCHER HELPER
+//MARK: - COREDATA-FETCHER HELPER
 extension CoreDataFetcher{
     func reset(){
         totalItems = 0
@@ -138,9 +154,7 @@ extension CoreDataFetcher{
     }
 }
 
-/*  ######################################################################################################## */
-
-//MARK: COREDATA-VIEWMODEL
+//MARK: - COREDATA-VIEWMODEL
 class CoreDataViewModel:ObservableObject{
     
     private let itemsFromEndThreshold = 3

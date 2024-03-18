@@ -7,22 +7,22 @@
 
 import SwiftUI
 
-struct CarouselIndicators<T:CarouselItem>{
+struct CarouselIndicators{
     var snappedItem = 0.0
     var draggingItem = 0.0
     var activeIndex: Int = 0
     var closest: CGFloat = 0.0
-    var selectedItem:T? = nil
+    var selectedItem:TentItem? = nil
     var selectedIndex:Int = -1
     var brandList:[String] = ["Adventure","Bohus","Vivaldi"]
 }
 
-struct Carousel<T:CarouselItem>:View {
+struct Carousel:View {
     @Binding var isOpen:Bool
-    @Binding var data:[T]
+    @Binding var data:[TentItem]
     let size:CGFloat
     var onSelected:((TentMeta) -> Void)? = nil
-    @State private var ind:CarouselIndicators<T> = CarouselIndicators<T>()
+    @State private var ind:CarouselIndicators = CarouselIndicators()
     
     // MARK: - GESTURES
     var carouselDragGesture: some Gesture {
@@ -54,10 +54,10 @@ struct Carousel<T:CarouselItem>:View {
     var carouselTapGesture: some Gesture {
         TapGesture()
         .onEnded{
+            let tent = data[ind.activeIndex]
+            let meta = tent.toTentMeta()
+            onSelected?(meta)
             withAnimation{
-                let tent = data[ind.activeIndex]
-                let meta = TentMeta(title: tent.name)
-                onSelected?(meta)
                 isOpen.toggle()
             }
         }
@@ -127,7 +127,7 @@ extension Carousel{
         .gesture(dragIsActive ? carouselDragGesture : nil)
     }
     
-    func card(_ item:T)-> some View{
+    func card(_ item:TentItem)-> some View{
         ZStack {
             RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
             .fill(ind.selectedIndex == item.index ? Color.lightBrown : Color.white)
