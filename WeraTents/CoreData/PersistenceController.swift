@@ -57,13 +57,11 @@ final class PersistenceController {
     static func deleteScreenshotModel(_ meta: ScreenshotModel?){
         guard let meta = meta else { return }
         shared.container.viewContext.delete(meta)
-        saveChanges()
     }
     
     static func deleteScreenshotImage(_ image: ScreenshotImage?){
         guard let image = image else { return }
         shared.container.viewContext.delete(image)
-        saveChanges()
     }
     
     static func fetchAndSortYearOfScreenshots(startDate:NSDate,endDate:NSDate) -> FETCH_RECORD{

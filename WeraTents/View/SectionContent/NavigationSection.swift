@@ -22,6 +22,7 @@ struct NavigationSection<Content:View>:View {
             NavigationSectionBar(labelText: labelText,action: action)
             content
          }
+        .padding(.vertical)
         .background{
             backgroundColor
         }

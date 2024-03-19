@@ -63,7 +63,7 @@ extension TentsView{
         SectionFoldableHeavy(header: headerBrandText,
                              content: headerBrandContent,
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
                              offLabelText: "Visa",
                              showContent: true)
@@ -95,7 +95,7 @@ extension TentsView{
         SectionFoldableHeavy(header: headerModelText,
                              content: headerModelContent,
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
                              offLabelText: "Visa",
                              showContent: true)
@@ -144,11 +144,11 @@ extension TentsView{
     
     func cardButton(_ index:Int) -> some View{
         Button(action: { navigateTo(index) }, label: {
-            Image(systemName: "square.split.diagonal.2x2.fill")
-                .font(.title3)
+            Image(systemName: "hand.point.right")
+                .font(.title2)
                 .bold()
         })
-        .foregroundStyle(Color.darkGreen)
+        .foregroundStyle(Color.lightGold)
         .padding([.bottom,.trailing],4.0)
         .hTrailing()
     }
@@ -193,7 +193,7 @@ extension TentsView{
         SectionFoldableHeavy(header: Text(headerText).bold(),
                              content: Text(contentText).hLeading(),
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
                              offLabelText: "Visa")
     }

@@ -15,6 +15,7 @@ struct FlippedCard:View {
     let descriptionText:String
     let dateText:String
     let height:CGFloat
+    let ignoreTapGesture: Bool
     let action:(String?,String?) -> Void
     @State var width:CGFloat = 0.0
     @State var angle: CGFloat = 0
@@ -38,7 +39,7 @@ extension FlippedCard{
     var mainContent: some View {
         GeometryReader{ reader in
             sideContent
-            .simultaneousGesture(dragGesture.simultaneously(with: tapGesture))
+                .simultaneousGesture(dragGesture.simultaneously(with:ignoreTapGesture ? nil : tapGesture))
             .rotation3DEffect(.degrees(Double(angle)),
                                   axis: (x:0,y:1,z:0))
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
@@ -61,6 +62,7 @@ extension FlippedCard{
         }
    
     }
+    
 }
 
 //MARK: - CARD
@@ -146,7 +148,6 @@ extension FlippedCard{
         TapGesture()
         .onEnded({
             animateScale()
-            debugLog(object: "tap elli tap")
         })
       
     }

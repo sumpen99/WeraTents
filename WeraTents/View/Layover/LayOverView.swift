@@ -20,7 +20,7 @@ struct LayOverView:View {
     
     var content: some View{
         ZStack{
-            Color.white.opacity(0.5)
+            Color.white.opacity(0.1)
         }
         .ignoresSafeArea(.all)
         .vTop()

@@ -21,7 +21,7 @@ struct PressedCardButton:View {
     var content:some View{
         ZStack{
             Image(systemName: imageLabel)
-            .foregroundStyle(Color.black.opacity(0.7))
+            .foregroundStyle(Color.lightGold)
             .font(.title3)
             .bold()
             .hLeading()
