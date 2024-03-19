@@ -10,8 +10,7 @@ struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var openMenuSwitch:Bool = false
-    @State var brandModel:BrandModel?
-  
+   
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
@@ -81,7 +80,6 @@ extension HomeView{
     
     func carousel(_ width:CGFloat) ->some View{
         HomeCarousel(
-                brandModel:$brandModel,
                 cardWidth: width*0.75,
                 brandWidth: width,
                 edge: .trailing)
@@ -107,6 +105,7 @@ extension HomeView{
         }
         .padding(.horizontal)
         .padding(.bottom,MENU_HEIGHT)
+        
     }
     
     @ViewBuilder
@@ -114,18 +113,17 @@ extension HomeView{
         if let image = item.image,
            let imageData = image.data,
            let uiImage = UIImage(data: imageData){
-            PressedCard(image: Image(uiImage: uiImage),
+            FlippedCard(image: Image(uiImage: uiImage),
+                        label: item.label,
+                        modelId: item.modelId,
                         labelText: item.name ?? "",
-                        descriptionText: item.date?.toISO8601String() ?? "",
-                        scaleFactor: 0.95,
+                        descriptionText: item.shortDesc ?? "",
+                        dateText: item.date?.toISO8601String() ?? "",
                         height: HOME_CAPTURED_HEIGHT,
-                        imageLabel: "square.split.diagonal.2x2.fill"){
-                self.brandModel = BrandModel(brand: item.label,
-                                             modelId: item.modelId)
-              
-            }
+                        action: navigateToTentById)
        }
     }
+    
 }
 
 //MARK: - TOP-LABEL
@@ -161,6 +159,15 @@ extension HomeView{
     
     func navigateToTents(){
         navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
+    }
+    
+    func navigateToTentById(_ label:String?,modelId:String?) -> Void{
+        if let index = firestoreViewModel.secureTentItemIndex(brand: label,
+                                                              modelId: modelId),
+           let tentItem = firestoreViewModel.secureTentItem(index){
+            navigationViewModel.appendToPathWith(tentItem)
+        }
+        
     }
     
     func navigateToCapturedImages(){

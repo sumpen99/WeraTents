@@ -23,7 +23,6 @@ struct CarouselHelper{
 struct HomeCarousel:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
-    @Binding var brandModel:BrandModel?
     let cardWidth:CGFloat
     let brandWidth:CGFloat
     let edge:Edge
@@ -50,13 +49,6 @@ struct HomeCarousel:View {
         VStack{
             carousel
             brandContent
-        }
-        .onChange(of: brandModel, initial: false){
-            if let brand = brandModel?.brand,
-               let modelId = brandModel?.modelId,
-               let index = firestoreViewModel.secureTentItemIndex(brand: brand, modelId: modelId){
-                setNewIndex(index)
-            }
         }
         .onAppear{
             ind.resetTap()
