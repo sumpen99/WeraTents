@@ -70,11 +70,6 @@ struct PdfResourcesItem:Hashable{
     }
 }
 
-struct BrandModel:Equatable{
-    let brand:String?
-    let modelId:String?
-}
-
 struct TentDimensions{
     let width:Float
     let height:Float
