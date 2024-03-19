@@ -233,7 +233,6 @@ extension ModelSceneView{
     var selectedTentLabel:some View{
         Text(selectedTent.name)
         .frame(height: TIP_OF_SHEET)
-        .foregroundStyle(Color.lightGreen)
         .font(.title3)
         .bold()
         .padding([.top,.bottom])
@@ -313,7 +312,7 @@ extension ModelSceneView{
         SectionFoldableHeavy(header: selectedTentLabel,
                              content:headerSection,
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
                              offLabelText: "Visa")
     }
@@ -322,7 +321,7 @@ extension ModelSceneView{
         SectionFoldableHeavy(header: Text(headerText).bold(),
                              content: HeaderContent(content:Text(contentText).hLeading()),
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
                              offLabelText: "Visa")
     }

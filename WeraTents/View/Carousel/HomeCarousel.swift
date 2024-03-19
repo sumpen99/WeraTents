@@ -77,7 +77,7 @@ extension HomeCarousel{
                     cardText(name: item.name, shortDesc: item.shortDescription)
                     PressedCardButton(cardIsTappedScale: $ind.cardIsTappedScale,
                                       scaleFactor: 0.8,
-                                      imageLabel: "square.split.diagonal.2x2.fill",
+                                      imageLabel: "hand.point.up.left",
                                       action: navigate)
                 }
                 .padding(.top)

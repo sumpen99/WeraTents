@@ -94,8 +94,8 @@ extension HomeView{
 //MARK: - CAPTURED-IMAGES-SECTION
 extension HomeView{
     var userLatestContent:some View{
-        LazyVGrid(columns: [GridItem(),GridItem()]
-                  ,alignment: .center,
+        LazyVGrid(columns: [GridItem(),GridItem()],
+                  alignment: .center,
                   spacing: V_GRID_SPACING,
                   pinnedViews: .sectionHeaders){
             ForEach(CoreDataFetcher.fetchedRequestWithLimit(limit: 300,
@@ -120,6 +120,7 @@ extension HomeView{
                         descriptionText: item.shortDesc ?? "",
                         dateText: item.date?.toISO8601String() ?? "",
                         height: HOME_CAPTURED_HEIGHT,
+                        ignoreTapGesture: false,
                         action: navigateToTentById)
        }
     }

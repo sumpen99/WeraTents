@@ -14,7 +14,7 @@ enum SearchCategorie : String{
 
 //MARK: - COREDATA-FETCHER
 class CoreDataFetcher{
-    let CORE_DATA_FETCH_LIMIT = 12
+    let CORE_DATA_FETCH_LIMIT = 50
     
     var totalItems:Int = 0
     var totalPages:Int = 0

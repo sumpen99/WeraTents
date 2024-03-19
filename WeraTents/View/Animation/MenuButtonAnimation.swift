@@ -34,7 +34,7 @@ struct MenuButtonAnimation:View {
         }
         .padding(.horizontal)
         .vBottom()
-        .overlay{
+        .background{
             if openMenuSwitch{
                 LayOverView(closeView: $openMenuSwitch)
             }
@@ -84,7 +84,7 @@ struct MenuButtonAnimation:View {
             .vBottom()
             .padding([.bottom])
             .padding(.trailing,(ICON_WIDTH-ICON_OPEN_WIDTH)/2.0)
-            .transition(.scale.combined(with: .opacity))
+            .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
     

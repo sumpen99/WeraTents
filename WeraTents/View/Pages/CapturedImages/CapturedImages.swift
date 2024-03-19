@@ -142,19 +142,6 @@ extension CapturedImages{
     var savedScreenshotList:some View{
         ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
             screenShotCard(screenShot as? ScreenshotModel)
-            .onTapGesture {
-                withAnimation{
-                    if let screenShotModel = screenShot as? ScreenshotModel,
-                       let id = screenShotModel.id{
-                        if library.state == .BASE{
-                            library.selectedScreenShotModel = screenShotModel
-                        }
-                        else{
-                            library.toggleListId(id)
-                        }
-                    }
-                 }
-            }
         }
     }
       
@@ -162,36 +149,46 @@ extension CapturedImages{
 
 //MARK: - COREDATA-CARD
 extension CapturedImages{
-  
-    @ViewBuilder
-    func cardIsSelected(_ id:String?) -> some View{
-        if library.onListContainsId(id){
-            ZStack{
-                Color.white.opacity(0.5)
-                checkmarkCircle()
-       
-            }
-            .vCenter()
-            .hCenter()
-       }
-    }
     
     @ViewBuilder
     func screenShotCard(_ item:ScreenshotModel?) -> some View{
-        ZStack{
-            if let item = item,
-               let image = item.image,
-               let data = image.data,
-               let uiImage = UIImage(data: data){
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
+        if let item = item,
+           let image = item.image,
+           let imageData = image.data,
+           let uiImage = UIImage(data: imageData){
+            FlippedCard(image: Image(uiImage: uiImage),
+                        label: item.label,
+                        modelId: item.modelId,
+                        labelText: item.name ?? "",
+                        descriptionText: item.shortDesc ?? "",
+                        dateText: item.date?.toISO8601String() ?? "",
+                        height: HOME_CAPTURED_HEIGHT,
+                        ignoreTapGesture: true,
+                        action: { label,modelId in})
+            .onTapGesture {
+                if library.state == .BASE{
+                    withAnimation{
+                        library.selectedScreenShotModel = item
+                    }
+                }
+                else{
+                    library.toggleListId(item.id)
+                }
             }
-        }
-        .overlay{
-            cardIsSelected(item?.id)
-        }
+            .overlay{
+                cardIsSelected(item.id)
+            }
+       }
+        
      }
+    
+    @ViewBuilder
+    func cardIsSelected(_ id:String?) -> some View{
+        if library.onListContainsId(id){
+            checkmarkCircle()
+       }
+    }
+    
 }
 
 //MARK: - COREDATA SELECTED CARD
@@ -200,16 +197,19 @@ extension CapturedImages{
     var selectedCard:some View{
         if library.selectedScreenShotModel != nil{
             ZStack{
+                Color.lightBrown
                 if let item = library.selectedScreenShotModel,
                    let image = item.image,
                    let data = image.data,
                    let uiImage = UIImage(data: data){
                     Image(uiImage: uiImage)
                         .resizable()
-                        .scaledToFill()
+                        .scaledToFit()
                 }
             }
-            .transition(.opacity.combined(with: .scale))
+            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+            .shadow(color:Color.lightGold,radius: 2.0)
+            .transition(.scale)
             .onTapGesture {
                 withAnimation{
                     library.clearSelectedItem()
@@ -218,23 +218,7 @@ extension CapturedImages{
         }
         
     }
-    
-}
-
-//MARK: - SCROLL-LABEL-LIST
-extension CapturedImages{
-  
-    var settingsItemMenuList:some View{
-        
-        ScrollviewLabelHeader(namespace: namespace,
-                              namespaceName: "CURRENT_SELECTED_BRAND",
-                              thickness: 5.0,
-                              bindingList: library.labelHeaderList,
-                              selectedAnimation: .UNDERLINE,
-                              menuHeight: MENU_HEIGHT_HEADER,
-                              bindingLabel: $library.labelHeader)
-    }
-  
+   
 }
 
 //MARK: - BUTTONS
@@ -309,8 +293,7 @@ extension CapturedImages{
                 editButton
             }
             SplitLine()
-            settingsItemMenuList
-        }
+       }
         
     }
     
@@ -338,7 +321,6 @@ extension CapturedImages{
             }
             .padding([.leading,.top])
             .opacity(library.emptyDeleteList ? 0.5 : 1.0)
-            
         }
         .padding(.top)
     }
@@ -363,9 +345,6 @@ extension CapturedImages{
     
     var topButtons:some View{
         currentTopBarButtons()
-        .animation(.linear(duration: 0.5),value: library.state)
-        .transition(.opacity.combined(with: .scale))
-        .matchedGeometryEffect(id: "CURRENT_TOP_MENU", in: namespace)
         .padding()
     }
 }
@@ -390,8 +369,9 @@ extension CapturedImages{
                     PersistenceController.deleteScreenshotImage(model.image)
                     PersistenceController.deleteScreenshotModel(model)
                 }
-            }
-            resetListOfSavedTubes()
+           }
+           PersistenceController.saveChanges()
+           resetListOfSavedTubes()
         }
      }
     
