@@ -95,6 +95,7 @@ extension FirestoreViewModel{
                 let wera = data.toWera()
                 DispatchQueue.main.async {
                     strongSelf.weraAsset = wera
+                    strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
                 }
             }
         }
@@ -102,7 +103,7 @@ extension FirestoreViewModel{
     
     private func loadWeraAssetsFromServer(){
         let coll = repo.weraCollection()
-        let task = coll.getDocuments(){ [weak self] snapshot,error in
+        coll.getDocuments(){ [weak self] snapshot,error in
         guard let strongSelf = self,
               let snapshot = snapshot,
               let document = snapshot.documents.first else { return }
@@ -110,6 +111,7 @@ extension FirestoreViewModel{
             if let weraDb = try? document.data(as : WeraDb.self){
                 let wera = weraDb.toWera()
                 strongSelf.weraAsset = wera
+                strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
             }
         }
     }
@@ -310,6 +312,29 @@ extension FirestoreViewModel{
            return catalogeItem
         }
         return nil
+    }
+    
+    func everyTentItem(onResult:@escaping ([Tent]) -> Void){
+        DispatchQueue.global(qos: .background).async {
+            var tentItems:[Tent] = []
+            if let weraAsset = self.weraAsset,
+               let cataloge = weraAsset.cataloge{
+                for catalogeItem in cataloge.keys{
+                    if let brands = cataloge[catalogeItem]?.brands{
+                        for brandItem in brands.keys{
+                            if let tents = brands[brandItem]?.tents{
+                                tentItems.append(contentsOf: tents.values)
+                             }
+                        }
+                    }
+                    
+                }
+            }
+            DispatchQueue.main.async {
+                onResult(tentItems)
+            }
+        }
+        
     }
     
 }

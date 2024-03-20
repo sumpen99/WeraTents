@@ -83,6 +83,11 @@ extension HomeView{
        }
         .hCenter()
         .frame(height: HOME_BRAND_HEIGHT)
+        .overlay{
+            if firestoreViewModel.loadingState(.TENT_ASSETS){
+                SpinnerAnimation()
+            }
+        }
     }
     
     func brandButtons(_ maxWidth:CGFloat)-> some View{
@@ -110,6 +115,7 @@ extension HomeView{
             ForEach(CoreDataFetcher.fetchedRequestWithLimit(limit: 300,
                                                             sortedOn: "date"),id:\.self){ item in
                 screenshotCard(item)
+                .padding(.vertical)
              }
         }
         .padding(.horizontal)
@@ -149,8 +155,8 @@ extension HomeView{
     
     var labelText:some View{
         VStack{
-            Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
-            Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
+            Text("Wera.").font(.title).bold().foregroundStyle(Color.lightGold.opacity(0.5)).hLeading()
+            Text("Sedan 1995.").font(.headline).foregroundStyle(Color.lightGold).hLeading()
         }.hLeading()
     }
     

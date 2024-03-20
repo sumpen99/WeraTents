@@ -45,7 +45,7 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                .fill(Color.materialDark)
+                    .fill(Color.black.opacity(0.95) )
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
@@ -53,7 +53,7 @@ struct MenuButtonAnimation:View {
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
                 helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
-            .shadow(color:Color.materialDarkest,radius: 2.0)
+            .shadow(color:Color.lightGold,radius: 1.0)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
@@ -183,7 +183,7 @@ extension MenuButtonAnimation{
     
     func imageBase(_ name:String) -> some View{
         Image(systemName: name)
-        .font(.title3)
+        .font(.title2)
         .bold()
         .foregroundStyle(Color.materialDark)
         .padding()
@@ -221,7 +221,7 @@ extension MenuButtonAnimation{
     
     var startARButton: some View{
         Image(systemName: "camera.metering.center.weighted")
-        .font(.title3)
+        .font(.title)
         .foregroundStyle(Color.white)
         .frame(width: ICON_WIDTH)
         .opacity(helper.pressedSection == .ICON_LEFT ? 0.5 : 1.0)
@@ -229,7 +229,7 @@ extension MenuButtonAnimation{
     
     var expandMenuButton: some View{
         Image(systemName: openMenuSwitch ? "camera.metering.center.weighted" : "chevron.up")
-        .font(.title3)
+        .font(.title)
         .foregroundStyle(Color.white)
         .frame(width: ICON_WIDTH)
         .opacity(helper.pressedSection == .ICON_RIGHT ? 0.5 : 1.0)

@@ -29,6 +29,10 @@ class ServiceManager{
         return Bundle.main.url(forResource: "\(fileName)", withExtension: "pdf")
     }
     
+    static func localImageUrl(fileName:String) -> URL?{
+        return Bundle.main.url(forResource: "\(fileName)", withExtension: "png")
+    }
+    
     static func temporaryFileURL(fileName: String,ext: String) -> URL? {
         return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
                 .appendingPathComponent(fileName)

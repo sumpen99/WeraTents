@@ -68,7 +68,7 @@ struct ModelARView: View {
              }
         }
         .overlay{
-            carouselContent
+            pickerContent
         }
     }
     
@@ -102,20 +102,10 @@ extension ModelARView{
 //MARK: - CAROUSEL
 extension ModelARView{
     @ViewBuilder
-    var carouselContent:some View{
+    var pickerContent:some View{
         if helper.stateOf(animation: .SHOW_CAROUSEL){
-            ZStack{
-                GeometryReader{ reader in
-                    Carousel(isOpen:$helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue],
-                             data: $firestoreViewModel.tentAssets,
-                             size: min(reader.size.width,reader.size.height)/3,
-                             onSelected:onSelectedItem)
-                }
-            }
-            .animation(.linear(duration: 0.25),
-                       value: helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue])
-            .transition(.move(edge: .trailing))
-        }
+            ARTentPicker(isOpen:$helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue])
+         }
     }
 }
 
