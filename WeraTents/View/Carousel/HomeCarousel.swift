@@ -124,9 +124,10 @@ extension HomeCarousel{
     }
     
     var brandButtons: some View{
-        ForEach(firestoreViewModel.brandAsset.keys,id:\.self){ brand in
+        EmptyView()
+        /*ForEach(firestoreViewModel.brandAsset.keys,id:\.self){ brand in
             DropShadowButton(buttonText: brand,frameWidth: calculatedWidth, action: {navigateToBrand(brand)})
-        }
+        }*/
     }
 }
 
@@ -134,7 +135,7 @@ extension HomeCarousel{
 extension HomeCarousel{
     
     var dataCount:Int{
-        firestoreViewModel.assetCount
+        0
     }
     
     var validIndex: Int?{

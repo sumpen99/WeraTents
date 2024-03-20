@@ -68,8 +68,8 @@ struct ModelSceneView: View {
     @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @Namespace var animation
     @State var helper:ModelHelper = ModelHelper()
-    let selectedTent:TentItem
-    init(selectedTent:TentItem) {
+    let selectedTent:Tent
+    init(selectedTent:Tent) {
         self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
         self.selectedTent = selectedTent
     }

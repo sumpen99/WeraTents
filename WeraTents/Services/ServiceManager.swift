@@ -109,9 +109,10 @@ extension ServiceManager{
     
     static func readJsonFromBundleFile<T:Decodable>(_ file:String,
                                                     value:T.Type,
-                                                    completion: @escaping ([T]?) -> Void){
+                                                    completion: @escaping (T?) -> Void){
         DispatchQueue.global(qos: .background).async {
-            let tentItems = Bundle.main.decode([T].self, from: "data.json")
+            let tentItems = Bundle.main.decode(T.self, from: file)
+            //let tentItems = Bundle.main.decode(any.self, from: file)
             completion(tentItems)
         }
     }

@@ -16,7 +16,6 @@ struct FlippedCard:View {
     let dateText:String
     let height:CGFloat
     let ignoreTapGesture: Bool
-    let action:(String?,String?) -> Void
     @State var width:CGFloat = 0.0
     @State var angle: CGFloat = 0
     @State var lastAngle: CGFloat = 0
@@ -26,9 +25,6 @@ struct FlippedCard:View {
         ZStack{
             mainContent
             .frame(height: height)
-            .offset(x:cardIsTapped ? 0.0 : 0,
-                    y:cardIsTapped ? -50.0 : 0)
-            cardButton
         }
    }
     
@@ -103,21 +99,6 @@ extension FlippedCard{
        .padding()
     }
     
-    @ViewBuilder
-    var cardButton:some View{
-        if cardIsTapped{
-            Button(action: {
-                action(label,modelId)
-            }, label: {
-                Text("Visa modell")
-                .bold()
-                .foregroundStyle(Color.white)
-            })
-            .frame(height: 35.0)
-            .hCenter()
-            .vBottom()
-     }
-    }
 }
 //MARK: - GESTURE
 extension FlippedCard{

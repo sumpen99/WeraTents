@@ -18,10 +18,13 @@ struct HomeView:View {
                 labelContainer
             }
             .modifier(NavigationViewModifier())
-            .navigationDestination(for: TentItem.self){  tent in
+            .navigationDestination(for: Tent.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
-            .navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
+            .navigationDestination(for: TentsNavigator.self){  navigator in
+                TentsView(navigator:navigator)
+            }
+             .navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
                 YoutubeView(videoResourcesItem: videoResourcesItem)
             }
             .navigationDestination(for: PdfResourcesItem.self){  pdfResourcesItem in
@@ -54,9 +57,9 @@ extension HomeView{
     var scrollContainer:some View{
         ScrollView{
             LazyVStack(spacing:V_GRID_SPACING){
-                NavigationSection(labelText: "Våra tält",
+                NavigationSection(labelText: "Katalog",
                                   action: navigateToTents,
-                                  content: carouselContent,
+                                  content: brandContent,
                                   backgroundColor: Color.white.opacity(0.03))
                 NavigationSection(labelText: "För dig",
                                   action: navigateToCapturedImages,
@@ -68,27 +71,33 @@ extension HomeView{
     }
 }
 
-//MARK: - CAROUSEL-SECTION
+//MARK: - BRAND-SECTION
 extension HomeView{
-    var carouselContent:some View{
+    var brandContent:some View{
         GeometryReader{ reader in
-            carousel(reader.size.width)
-            .hCenter()
-        }
-        .frame(height: HOME_CAROUSEL_HEIGHT+HOME_BRAND_HEIGHT)
+            ScrollView(.horizontal){
+                HStack(spacing: V_SPACING_REG){
+                    brandButtons(reader.size.width)
+                }
+            }
+       }
+        .hCenter()
+        .frame(height: HOME_BRAND_HEIGHT)
     }
     
-    func carousel(_ width:CGFloat) ->some View{
-        HomeCarousel(
-                cardWidth: width*0.75,
-                brandWidth: width,
-                edge: .trailing)
-        .overlay{
-            if firestoreViewModel.loadingState(.TENT_ASSETS){
-                SpinnerAnimation(size:width/4.0)
+    func brandButtons(_ maxWidth:CGFloat)-> some View{
+        ForEach(firestoreViewModel.weraAsset?.brands ?? [],id:\.self){ brand in
+            let category_brand = brand.split(separator: "-")
+            if let brand = category_brand.first{
+                DropShadowButton(buttonText: String(brand),
+                                 frameWidth: maxWidth,
+                                 action:{
+                    navigateToTentsBy(category_brand: category_brand)
+                })
             }
         }
-    }
+     }
+  
 }
 
 //MARK: - CAPTURED-IMAGES-SECTION
@@ -120,8 +129,7 @@ extension HomeView{
                         descriptionText: item.shortDesc ?? "",
                         dateText: item.date?.toISO8601String() ?? "",
                         height: HOME_CAPTURED_HEIGHT,
-                        ignoreTapGesture: false,
-                        action: navigateToTentById)
+                        ignoreTapGesture: true)
        }
     }
     
@@ -162,23 +170,21 @@ extension HomeView{
         navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
     }
     
-    func navigateToTentById(_ label:String?,modelId:String?) -> Void{
-        if let index = firestoreViewModel.secureTentItemIndex(brand: label,
-                                                              modelId: modelId),
-           let tentItem = firestoreViewModel.secureTentItem(index){
-            navigationViewModel.appendToPathWith(tentItem)
+    func navigateToTentsBy(category_brand:[String.SubSequence]){
+        if category_brand.count == 2{
+            if let brand = category_brand.first,
+               let cataloge = category_brand.last{
+               let tentsHelper = TentsNavigator(cataloge: String(cataloge),
+                                                brand: String(brand))
+                 navigationViewModel.appendToPathWith(tentsHelper)
+            }
+            
         }
-        
     }
     
     func navigateToCapturedImages(){
         navigationViewModel.appendToPathWith(ModelRoute.ROUTE_CAPTURED_IMAGES)
     }
     
-    func calculatedWidth(maxWidth:CGFloat) -> CGFloat{
-        let itemCount = 3.0
-        let padding = CGFloat(itemCount-1)*V_SPACING_REG
-        let width = (maxWidth-padding)/(itemCount+1)
-        return width < 0 ? 0 : width
-    }
+    
 }

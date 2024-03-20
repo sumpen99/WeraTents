@@ -167,7 +167,6 @@ extension ModelARView{
     
     var showCarouselButton:some View{
         Button(action: {
-            if !firestoreViewModel.hasTents{ return }
             withAnimation{
                 helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue].toggle()
             }
