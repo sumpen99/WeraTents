@@ -25,9 +25,14 @@ struct DropShadowButton:View {
             .bold()
             .shadow(color: Color.materialDarkest, radius: 5, x: 0, y: 5)
         }
-        .frame(width: frameWidth)
+        .frame(width: calculatedWidth())
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_BRAND))
         .shadow(color:Color.lightGold,radius: CORNER_RADIUS_BRAND)
         .padding()
+    }
+    
+    func calculatedWidth() -> CGFloat{
+        let width = (frameWidth-V_SPACING_REG)/4
+        return width < 0 ? 0 : width
     }
 }

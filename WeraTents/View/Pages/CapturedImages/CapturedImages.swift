@@ -163,8 +163,7 @@ extension CapturedImages{
                         descriptionText: item.shortDesc ?? "",
                         dateText: item.date?.toISO8601String() ?? "",
                         height: HOME_CAPTURED_HEIGHT,
-                        ignoreTapGesture: true,
-                        action: { label,modelId in})
+                        ignoreTapGesture: true)
             .onTapGesture {
                 if library.state == .BASE{
                     withAnimation{

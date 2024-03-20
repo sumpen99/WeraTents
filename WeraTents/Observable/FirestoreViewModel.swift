@@ -10,6 +10,7 @@ import FirebaseFirestore
 import FirebaseStorage
 import OrderedCollections
 enum DbPath:String{
+    case WERA           = "Wera"
     case WERA_TENTS     = "Wera_Tents"
     case TENT_ICONS     = "Icons"
     case TENT_MODELS    = "Models"
@@ -30,6 +31,16 @@ class FirestoreRepository{
     
     func shutDown(){
         dB.terminate()
+    }
+    
+    func weraCollection() -> CollectionReference{
+        let base = DbPath.WERA.rawValue
+        return dB.collection(base)
+    }
+    
+    func weraDocument() -> DocumentReference{
+        let base = DbPath.WERA.rawValue
+        return dB.collection(base).document(base)
     }
     
     func tentCollection() -> CollectionReference{
@@ -61,88 +72,47 @@ class FirestoreRepository{
     }
 }
 
-struct BrandIndexes{
-    typealias MODEL_ID = String
-    var startIndex:Int
-    var endIndex:Int
-    var count:Int = 1
-    var modelIds:OrderedDictionary<MODEL_ID,Int>
-    
-    init(startIndex: Int, endIndex: Int,modelId:String) {
-        self.startIndex = startIndex
-        self.endIndex = endIndex
-        self.modelIds = [modelId:startIndex]
-    }
-}
-
 //MARK: - FIRESTORE VIEWMODEL
 class FirestoreViewModel:ObservableObject{
-    typealias  BRAND = String
     @Published var isLoadingData:[Bool] = Array.init(repeating: false, 
                                                      count: LoadingState.allCases.count)
     @Published var tentAssets:[TentItem] = []
-    @Published var brandAsset:OrderedDictionary<BRAND,BrandIndexes> = [:]
+    @Published var weraAsset:Wera?
     let repo = FirestoreRepository()
-    
 }
 
-//MARK: - LOAD TENT ASSETS DATA
+//MARK: - LOAD WERA ASSETS DATA
 extension FirestoreViewModel{
-    
-    func loadTentAssets(){
-        if FETCH_LOCALLY{ loadTentAssetsFromLocal() }
-        else{ loadTentAssetsFromServer() }
+    func loadWeraAssets(){
+        if FETCH_LOCALLY{ loadWeraAssetsFromLocal() }
+        else{ loadWeraAssetsFromServer() }
     }
     
-    private func loadTentAssetsFromLocal(){
-        ServiceManager.readJsonFromBundleFile("data.json",value: TentDb.self){ [weak self] data in
+    private func loadWeraAssetsFromLocal(){
+        ServiceManager.readJsonFromBundleFile("mainData.json",value: WeraDb.self){ [weak self] data in
             if let strongSelf = self,
-               let data = data{
-                for tent in data.sorted(by: <){
-                    ServiceManager.loadImagesFromBundle("Tent",
-                                                       imageNames: [tent.iconStorageIds?[0] ?? ""]){ uiImages in
-                        if let uiImage = uiImages.first{
-                            let count = strongSelf.tentAssets.count
-                            strongSelf.updateBrandAssetsIndexes(with: tent.label,
-                                                                index: count,
-                                                                modelId:tent.modelId)
-                            strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
-                            strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
-                        }
-                     }
+                let data = data{
+                let wera = data.toWera()
+                DispatchQueue.main.async {
+                    strongSelf.weraAsset = wera
                 }
             }
         }
     }
-     
-    private func loadTentAssetsFromServer(){
-        let coll = repo.tentCollection()
-        coll.order(by: "label",descending: true)
-            .order(by: "modelId", descending: true)
-            .getDocuments(){ [weak self] snapshot,error in
-            guard let strongSelf = self,
-                  let snapshot = snapshot else { return }
-            for doc in snapshot.documents{
-                guard let tent = try? doc.data(as : TentDb.self),
-                      let iconUrl = tent.iconStorageIds?[0]
-                else{ continue }
-                strongSelf.downloadTentIconImageFromStorage(fileName: iconUrl){ error,uiImage in
-                    if let uiImage = uiImage{
-                        let count = strongSelf.tentAssets.count
-                        strongSelf.updateBrandAssetsIndexes(with: tent.label,
-                                                            index: count,
-                                                            modelId:tent.modelId)
-                        strongSelf.tentAssets.append(tent.toTentItem(index: count, image: Image(uiImage: uiImage)))
-                        strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
-                    }
-                    else if let error = error{
-                        debugLog(object: error.localizedDescription)
-                    }
-                }
+    
+    private func loadWeraAssetsFromServer(){
+        let coll = repo.weraCollection()
+        let task = coll.getDocuments(){ [weak self] snapshot,error in
+        guard let strongSelf = self,
+              let snapshot = snapshot,
+              let document = snapshot.documents.first else { return }
+            
+            if let weraDb = try? document.data(as : WeraDb.self){
+                let wera = weraDb.toWera()
+                strongSelf.weraAsset = wera
             }
         }
     }
-        
 }
 
 //MARK: - LOAD TENT MODEL DATA
@@ -184,6 +154,21 @@ extension FirestoreViewModel{
 
 //MARK: - LOAD IMAGES
 extension FirestoreViewModel{
+    func currentIconImage(_ iconImageUrl:String,
+                          completion: @escaping (UIImage?) -> Void){
+        if FETCH_LOCALLY{
+            loadTentImagesFromLocal([iconImageUrl]){ images in
+                completion(images.first)
+            }
+        }
+        else{
+            downloadTentIconImageFromStorage(fileName: iconImageUrl){ error,uiImage in
+                completion(uiImage)
+            }
+        }
+    }
+    
+    
     func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
         ServiceManager.loadImagesFromBundle("Tent",
                                             imageNames: imageNames){ images in
@@ -215,29 +200,9 @@ extension FirestoreViewModel{
             else{
                 onResult?(nil,UIImage(systemName: "photo"))
             }
-            /*else if let error = error{
-                onResult?(PresentedError.FAILED_TO_DOWNLOAD_IMAGE(message:error.localizedDescription),nil)
-            }
-            else{
-                onResult?(PresentedError.FAILED_TO_DOWNLOAD_IMAGE(),nil)
-            }*/
        }
     }
-     /*
-    func downloadTentModelFromStorage(fileName:String,
-                                      onResult:((Error?,Data?) -> Void)? = nil){
-        let ref = repo.tentModelReference(fileName: fileName)
-        ref.getData(maxSize: (MAX_STORAGE_USDZ_SIZE)){ (data, error) in
-            if let data = data { onResult?(nil,data) }
-            else if let error = error{
-                onResult?(PresentedError.FAILED_TO_DOWNLOAD_MODEL(message:error.localizedDescription),nil)
-            }
-            else{
-                onResult?(PresentedError.FAILED_TO_DOWNLOAD_MODEL(),nil)
-            }
-       }
-    }*/
-    
+   
     func downloadTentModelFromStorage(_ fileName:String,completion: @escaping (URL?) -> Void){
         if let localUrl = ServiceManager.create(file: fileName,folder: .USDZ,ext: TempFolder.USDZ.rawValue){
             let ref = repo.tentModelReference(fileName: fileName)
@@ -259,27 +224,6 @@ extension FirestoreViewModel{
     }
 }
 
-//MARK: - UPLOAD DATA
-extension FirestoreViewModel{
-    func uploadTentAssetsFromJson(){
-        ServiceManager.readJsonFromBundleFile("data.json",value: TentDb.self){ [weak self] data in
-            if let strongSelf = self,
-               let data = data{
-                for obj in data{
-                    guard let tentId = obj.id else { continue }
-                    let doc = strongSelf.repo.tentDocument(tentId: tentId)
-                    do{
-                        try doc.setData(from:obj){ err in
-                            if let err = err{ debugLog(object: err.localizedDescription) }
-                        }
-                    }
-                    catch{ debugLog(object: error.localizedDescription) }
-                }
-            }
-        }
-    }
-}
-
 //MARK: - COLLECTION COUNT
 extension FirestoreViewModel{
     func tentCollectionCount(_ tentId:String){
@@ -296,84 +240,82 @@ extension FirestoreViewModel{
     }
 }
 
-//MARK: - SPLIT TENT INTO PARTS
+//MARK: ORDERED-DICTIONARY
 extension FirestoreViewModel{
-    func brandRange(_ label:String?) ->Range<Int>{
-        if let label = label,
-           let brandAsset = brandAsset[label]{
-            return (brandAsset.startIndex..<brandAsset.endIndex+1)
+    func catalogeList() -> [String]{
+        if let weraAsset = weraAsset,
+           let cataloge = weraAsset.cataloge{
+            return cataloge.keys.elements
         }
-        return (0..<0)
+        return []
     }
+    
+    func currentBrandsOfCataloge(cataloge label:String?) -> [String]{
+        if let weraAsset = weraAsset,
+           let cataloge = weraAsset.cataloge,
+           let label = label,
+           let brands = cataloge[label]?.brands{
+            return brands.keys.elements
+        }
+        return []
+    }
+    
+    func currentModelsOfBrand(cataloge label:String?,
+                              brand:String?) -> [String]{
+        if let weraAsset = weraAsset,
+           let cataloge = weraAsset.cataloge,
+           let label = label,
+           let brand = brand,
+           let brands = cataloge[label]?.brands,
+           let tents = brands[brand]?.tents{
+            return tents.keys.elements
+        }
+        return []
+    }
+    
+    func currentTentItem(cataloge label:String?,
+                         brand:String?,
+                         modelId:String?) -> Tent?{
+        if let weraAsset = weraAsset,
+           let cataloge = weraAsset.cataloge,
+           let label = label,
+           let brand = brand,
+           let modelId = modelId,
+           let brands = cataloge[label]?.brands,
+           let tents = brands[brand]?.tents,
+           let tent = tents[modelId]{
+           return tent
+        }
+        return nil
+    }
+    
+    func currentBrandItem(cataloge label:String?,
+                         brand:String?) -> Brand?{
+        if let weraAsset = weraAsset,
+           let cataloge = weraAsset.cataloge,
+           let label = label,
+           let brand = brand,
+           let brands = cataloge[label]?.brands,
+           let brand = brands[brand]{
+           return brand
+        }
+        return nil
+    }
+    
+    func currentCatalogeItem(cataloge label:String?) -> Cataloge?{
+        if let weraAsset = weraAsset,
+           let cataloge = weraAsset.cataloge,
+           let label = label,
+           let catalogeItem = cataloge[label]{
+           return catalogeItem
+        }
+        return nil
+    }
+    
 }
 
 //MARK: - HELPER FUNCTIONS
 extension FirestoreViewModel{
-    
-    var firstBrand:String?{
-        tentAssets.first?.label
-    }
-    
-    var hasTents:Bool{
-        tentAssets.count > 0
-    }
-    
-    var assetCount:Int{
-        tentAssets.count
-    }
-     
-    func secureTentItem(brand:String?,modelId:String?) -> TentItem?{
-        if let brand = brand,
-           let modelId = modelId,
-           let index = brandAsset[brand]?.modelIds[modelId]{
-           return secureTentItem(index)
-        }
-        return nil
-    }
-    
-    func secureTentItemIndex(brand:String?,modelId:String?) -> Int?{
-        if let brand = brand,
-           let modelId = modelId,
-           let index = brandAsset[brand]?.modelIds[modelId]{
-           return index
-        }
-        return nil
-    }
-    
-    func secureTentItem(_ index:Int) -> TentItem?{
-        if 0 <= index && index < assetCount{
-            return tentAssets[index]
-        }
-        return nil
-    }
-    
-    func secureModelList(_ brand:String?) -> [String]{
-        guard let brand = brand,
-              let asset = brandAsset[brand] else{ return [] }
-        return asset.modelIds.keys.elements
-    }
-    
-    func initializeFirstModelOfBrand(_ brand:String?) -> String?{
-        if let brand = brand,
-           let asset = brandAsset[brand]{
-            return asset.modelIds.keys.first
-        }
-        return nil
-    }
-    
-    func updateBrandAssetsIndexes(with brand:String?,index:Int,modelId:String?){
-        if let brand = brand,
-           let modelId=modelId{
-            if let _ = brandAsset[brand]{
-                brandAsset[brand]?.endIndex = index
-                brandAsset[brand]?.modelIds[modelId] = index
-            }
-            else{
-                brandAsset[brand] = BrandIndexes(startIndex: index,endIndex: index,modelId:modelId)
-            }
-            
-        }
-    }
     
     func loadingState(_ state:LoadingState) -> Bool{
         return self.isLoadingData[state.rawValue]
@@ -382,5 +324,23 @@ extension FirestoreViewModel{
     func updateLoadingStateWith(state:LoadingState,value:Bool){
         if self.isLoadingData[state.rawValue] == value { return }
         self.isLoadingData[state.rawValue] = value
+    }
+}
+
+//MARK: - UPLOAD DATA
+extension FirestoreViewModel{
+    func uploadTentAssetsFromJson(){
+        ServiceManager.readJsonFromBundleFile("mainData.json",value: WeraDb.self){ [weak self] data in
+            if let strongSelf = self,
+               let data = data{
+                let doc = strongSelf.repo.weraDocument()
+                do{
+                    try doc.setData(from:data){ err in
+                        if let err = err{ debugLog(object: err.localizedDescription) }
+                    }
+                }
+                catch{ debugLog(object: error.localizedDescription) }
+            }
+        }
     }
 }
