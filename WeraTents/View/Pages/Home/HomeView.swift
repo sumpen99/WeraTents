@@ -91,13 +91,13 @@ extension HomeView{
     }
     
     func brandButtons(_ maxWidth:CGFloat)-> some View{
-        ForEach(firestoreViewModel.weraAsset?.brands ?? [],id:\.self){ brand in
-            let category_brand = brand.split(separator: "-")
-            if let brand = category_brand.first{
+        ForEach(firestoreViewModel.weraAsset?.brands ?? [],id:\.self){ brand_category in
+            let brand_category_values = brand_category.split(separator: "-")
+            if let brand = brand_category_values.first{
                 DropShadowButton(buttonText: String(brand),
                                  frameWidth: maxWidth,
                                  action:{
-                    navigateToTentsBy(category_brand: category_brand)
+                    navigateToTentsBy(brand_category: brand_category_values)
                 })
             }
         }
@@ -155,8 +155,8 @@ extension HomeView{
     
     var labelText:some View{
         VStack{
-            Text("Wera.").font(.title).bold().foregroundStyle(Color.lightGold.opacity(0.5)).hLeading()
-            Text("Sedan 1995.").font(.headline).foregroundStyle(Color.lightGold).hLeading()
+            Text("Wera.").font(.title).bold().foregroundStyle(Color.white).hLeading()
+            Text("Sedan 1995.").font(.headline).foregroundStyle(Color.white).hLeading()
         }.hLeading()
     }
     
@@ -176,10 +176,10 @@ extension HomeView{
         navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
     }
     
-    func navigateToTentsBy(category_brand:[String.SubSequence]){
-        if category_brand.count == 2{
-            if let brand = category_brand.first,
-               let cataloge = category_brand.last{
+    func navigateToTentsBy(brand_category:[String.SubSequence]){
+        if brand_category.count == 2{
+            if let brand = brand_category.first,
+               let cataloge = brand_category.last{
                let tentsHelper = TentsNavigator(cataloge: String(cataloge),
                                                 brand: String(brand))
                  navigationViewModel.appendToPathWith(tentsHelper)

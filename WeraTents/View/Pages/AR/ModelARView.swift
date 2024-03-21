@@ -14,11 +14,14 @@ enum ArAnimationState:Int,CaseIterable{
     case SAVING_SCREEN_SHOT
     case DELAY_CAPTURE_BUTTON
     case SHOW_TAKEN_PICTURE
+    case SHOW_SELECTED_TENT_IMAGE
+    case SEND_PICKED_IMAGE
 }
 
 struct ArHelper{
     var animationState:[Bool] = Array(repeating: false, count: ArAnimationState.allCases.count)
     var lastUIImage:UIImage?
+    var selectedTent:Tent?
     func stateOf(animation state:ArAnimationState) -> Bool{
         return animationState[state.rawValue]
     }
@@ -48,13 +51,16 @@ struct ModelARView: View {
             
     var body: some View{
         mainContent
+        .onChange(of: helper.selectedTent,initial: false){ oldValue,newValue in
+            arViewCoordinator.newSelectedTent(newValue)
+        }
         .ignoresSafeArea()
         .safeAreaInset(edge: .bottom){
             bottomButtons
         }
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
-            backButton
+            topBar
         }
         .overlay{
             if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
@@ -91,21 +97,49 @@ extension ModelARView{
              arViewCoordinator.run()
          }
     }
-    var backButton:some View{
-        BackButtonAction(action: navigateBack)
-        .hLeading()
-        .padding()
-    }
-    
+   
 }
 
-//MARK: - CAROUSEL
+//MARK: - TOP-BAR
+extension ModelARView{
+    var topBar:some View{
+        ZStack{
+            BackButtonAction(action: navigateBack)
+            .hLeading()
+            .vTop()
+            selectedtentImage
+            .hCenter()
+            .vTop()
+        }
+        .hLeading()
+        .padding(.vertical)
+   }
+}
+
+//MARK: - PICKER
 extension ModelARView{
     @ViewBuilder
     var pickerContent:some View{
         if helper.stateOf(animation: .SHOW_CAROUSEL){
-            ARTentPicker(isOpen:$helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue])
+            ARTentPicker(animationState:$helper.animationState,
+                         selectedTent: $helper.selectedTent)
          }
+    }
+}
+
+//MARK: - FLYING-IMAGE
+extension ModelARView{
+    @ViewBuilder
+    var selectedtentImage:some View{
+        if let tent = helper.selectedTent{
+            ZStack{
+                FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
+                               isPicker: true)
+            }
+            //.opacity(helper.stateOf(animation: .SHOW_SELECTED_TENT_IMAGE) ? 1.0 : 0.0)
+            .frame(width:AR_SELECTED_IMAGE,height: AR_SELECTED_IMAGE)
+            .offset(y:-AR_SELECTED_IMAGE/4.0)
+        }
     }
 }
 
@@ -156,12 +190,7 @@ extension ModelARView{
     }
     
     var showCarouselButton:some View{
-        Button(action: {
-            withAnimation{
-                helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue].toggle()
-            }
-            
-        },label:{
+        Button(action: resetCarousel,label:{
             roundedImage("tent",
                          font:.title,
                          scale:.medium,
@@ -228,8 +257,11 @@ extension ModelARView{
         if didSave , #available(iOS 15.0, *){
             saveCapturedImage()
         }
-        else{
+        else if didSave{
             resetAndNotifyUserWithToastState(.FAIL,"Kräver version >= IOS 15")
+        }
+        else{
+            resetWithoutNotifyUserWithToastState()
         }
     }
     
@@ -242,7 +274,7 @@ extension ModelARView{
                                                trimmed: true){
                     let managedObjectContext = PersistenceController.shared.container.viewContext
                     let model = ScreenshotModel(context:managedObjectContext)
-                    model.buildWithName(arViewCoordinator.selectedTentMeta)
+                    model.buildWithName(arViewCoordinator.selectedTent)
                  
                     let image = ScreenshotImage(context:managedObjectContext)
                     image.id = model.id
@@ -266,6 +298,17 @@ extension ModelARView{
         appStateViewModel.activateToast(state,message)
         helper.lastUIImage = nil
         helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+    }
+    
+    func resetWithoutNotifyUserWithToastState(){
+       helper.lastUIImage = nil
+        helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+    }
+    
+    func resetCarousel(){
+        withAnimation{
+            helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue].toggle()
+        }
     }
    
   
@@ -339,10 +382,6 @@ extension ModelARView{
                 }
             }
         }
-    }
-    
-    func onSelectedItem(tent:TentMeta) ->Void{
-        arViewCoordinator.newSelectedTent(tent)
     }
     
 }

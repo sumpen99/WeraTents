@@ -76,7 +76,6 @@ class FirestoreRepository{
 class FirestoreViewModel:ObservableObject{
     @Published var isLoadingData:[Bool] = Array.init(repeating: false, 
                                                      count: LoadingState.allCases.count)
-    @Published var tentAssets:[TentItem] = []
     @Published var weraAsset:Wera?
     let repo = FirestoreRepository()
 }
@@ -313,9 +312,49 @@ extension FirestoreViewModel{
         }
         return nil
     }
+
+    func tentItemByCategoryAndBrand(brand_category toSplit:String?) -> [Tent]{
+        var tentItems:[Tent] = []
+        guard let toSplit = toSplit else{ return [] }
+        let sub_sequence = toSplit.split(separator: "-")
+        if sub_sequence.count == 2{
+            if let weraAsset = weraAsset,
+               let catalogeItems = weraAsset.cataloge,
+               let brand = sub_sequence.first,
+               let label = sub_sequence.last,
+               let brands = catalogeItems[String(label)]?.brands,
+               let tents = brands[String(brand)]?.tents{
+                tentItems.append(contentsOf: tents.values)
+            }
+        }
+        
+        return tentItems
+    }
     
     func everyTentItem(onResult:@escaping ([Tent]) -> Void){
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            var tentItems:[Tent] = []
+            if let weraAsset = self?.weraAsset,
+               let cataloge = weraAsset.cataloge,
+               let brands = weraAsset.brands{
+                for brand_category in brands{
+                    let brand_category_values = brand_category.split(separator: "-")
+                    if brand_category_values.count == 2{
+                        if let brand = brand_category_values.first,
+                           let category = brand_category_values.last,
+                           let brands = cataloge[String(category)]?.brands,
+                           let tents = brands[String(brand)]?.tents{
+                            tentItems.append(contentsOf: tents.values)
+                        }
+                    }
+                }
+            }
+            DispatchQueue.main.async {
+                onResult(tentItems)
+            }
+        }
+        
+        /*DispatchQueue.global(qos: .background).async {
             var tentItems:[Tent] = []
             if let weraAsset = self.weraAsset,
                let cataloge = weraAsset.cataloge{
@@ -333,7 +372,7 @@ extension FirestoreViewModel{
             DispatchQueue.main.async {
                 onResult(tentItems)
             }
-        }
+        }*/
         
     }
     

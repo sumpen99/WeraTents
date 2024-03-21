@@ -14,7 +14,7 @@ enum SplitDirection{
 
 struct SplitLine:View {
     var direction:SplitDirection = .HORIZONTAL
-    var color:Color = Color.white
+    var color:Color = Color.lightGold
     var thickness:CGFloat = 1.0
     
     var body: some View {

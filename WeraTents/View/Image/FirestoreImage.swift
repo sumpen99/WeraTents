@@ -10,6 +10,8 @@ import SwiftUI
 struct FirestoreImage:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     let iconImageUrl:String?
+    var isPicker:Bool = false
+    var ignoreSpinner:Bool = false
     @State var uIImage:UIImage?
     
     var body: some View {
@@ -23,17 +25,30 @@ struct FirestoreImage:View {
             
         }
      }
-    
+     
+}
+
+//MARK: - CONTENT
+extension FirestoreImage{
     @ViewBuilder
     var content:some View{
         ZStack{
             if let uIImage = uIImage{
-                Image(uiImage: uIImage)
-                .resizable()
-                .scaledToFit()
-                .vTop()
+                if isPicker{
+                    Image(uiImage: uIImage)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(Circle())
+                    .padding(5.0)
+                    .background(Circle().fill(Color.materialDark))
+                }
+                else{
+                    Image(uiImage: uIImage)
+                    .resizable()
+                    .scaledToFit()
+                }
             }
-            else{
+            else if !ignoreSpinner{
                 SpinnerAnimation()
             }
         }

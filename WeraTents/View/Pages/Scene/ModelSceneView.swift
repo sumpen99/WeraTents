@@ -119,12 +119,19 @@ extension ModelSceneView{
 //MARK: - TOPCONTAINER
 extension ModelSceneView{
     var topContainer:some View{
-        HStack{
-            BackButtonAction(action: navigateBack)
-            toggleGridButtons.hCenter()
-            openInformationButton
+        VStack{
+            HStack{
+                BackButtonAction(action: navigateBack).hLeading()
+                Text("Model")
+                .font(.headline)
+                .hCenter()
+                .bold()
+                .foregroundStyle(Color.white)
+                openInformationButton.hTrailing()
+            }
+            SplitLine()
         }
-        .padding([.top,.horizontal])
+        .padding(.vertical)
    }
     
     var toggleGridButtons:some View{

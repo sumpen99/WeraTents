@@ -51,10 +51,10 @@ extension PdfView{
     
     var mainContent:some View{
         VStack{
-            BaseTopBar(label: "Instruktionsmanual", onNavigateBackAction: navigateBack)
+            BaseTopBar(label: "Manual",onNavigateBackAction: navigateBack)
             pdfContainer
+            .padding(.horizontal)
         }
-        .padding([.top,.horizontal])
     }
     
     var pdfContainer:some View{

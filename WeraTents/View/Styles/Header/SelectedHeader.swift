@@ -21,6 +21,7 @@ struct SelectedHeader:View {
     let thickness:CGFloat
     @Binding var bindingLabel:String?
     var selectedAnimation:SelectedAnimation = .UNDERLINE
+    let splittedLabel:Bool
     @State var scaleAmount:CGFloat = 1.0
     
     
@@ -58,8 +59,21 @@ struct SelectedHeader:View {
 
 //MARK: - BASE TEXT
 extension SelectedHeader{
+    @ViewBuilder
     var contentlabel:some View{
-        Text(label)
+        if splittedLabel{
+            if let first = label.split(separator: "-").first{
+                baseTextLabel(String(first))
+            }
+        }
+        else{
+            baseTextLabel(label)
+        }
+        
+    }
+    
+    func baseTextLabel(_ toShowLabel:String) -> some View{
+        Text(toShowLabel)
             .scaleEffect(scaleAmount)
             .font(.headline)
             .bold()

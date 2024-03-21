@@ -45,7 +45,7 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                    .fill(Color.black.opacity(0.95) )
+                    .fill(Color.darkGold.opacity(0.80) )
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
@@ -53,7 +53,7 @@ struct MenuButtonAnimation:View {
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
                 helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
-            .shadow(color:Color.lightGold,radius: 1.0)
+            .shadow(color:Color.darkGold,radius: 2.0)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
