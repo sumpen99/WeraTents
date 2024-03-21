@@ -20,6 +20,7 @@ struct NavigationSection<Content:View>:View {
     var mainContent:some View{
         VStack{
             NavigationSectionBar(labelText: labelText,action: action)
+            SplitLine(color:Color.lightGold)
             content
          }
         .padding(.vertical)

@@ -242,7 +242,6 @@ extension CapturedImages{
             .foregroundStyle(Color.lightBlue)
             .font(.headline)
             .bold()
-            .hTrailing()
         }
         .opacity(library.emptyLabelsList ? 0 : 1)
         .disabled(library.emptyLabelsList)
@@ -287,7 +286,7 @@ extension CapturedImages{
     var baseTopBar:some View{
         VStack{
             HStack{
-                BackButtonAction(action: navigateBack).hLeading()
+                BackButtonAction(action: navigateBack)
                 libraryLabel
                 editButton
             }

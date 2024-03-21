@@ -36,6 +36,9 @@ struct SpinnerAnimation: View {
             if !stateIsActive(.BREAK){
                 animatedtContent
             }
+            else{
+                
+            }
         }
         .onDisappear{
             closeTimer()

@@ -28,7 +28,7 @@ let ICON_WIDTH                      = 50.0
 let ICON_OPEN_WIDTH                 = 40.0
 let MENU_HEIGHT                     = 75.0
 let MENU_HEIGHT_HEADER              = 40.0
-let ANIMATED_MENU_HEIGHT            = 55.0
+let ANIMATED_MENU_HEIGHT            = 75.0
 let SHEET_MENU_HEIGHT               = 55.0
 let HOME_CAROUSEL_HEIGHT            = 150.0
 let HOME_CAPTURED_HEIGHT            = 250.0
@@ -38,4 +38,5 @@ let V_GRID_SPACING                  = 20.0
 let V_HOME_SPACING                  = 25.0
 let TIP_OF_SHEET                    = 40.0
 let CHILD_VIEW_HEIGHT:CGFloat       = 250.0
-let DUMMY_DESCRIPTION = "Helt enkelt framtidens tält för den professionella camparen. Ett fristående tält som står uppe hela året och som skapar fantastiska förutsättningar för umgänge med familj och vänner. Inget mer upp och ner inför sommar och vinter. Helt enkelt mer tid för avkoppling. Inte ens om du vill åka iväg med husvagnen behöver du ta ner tältet."
+let AR_SELECTED_IMAGE:CGFloat       = 100.0
+

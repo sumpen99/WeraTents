@@ -71,22 +71,10 @@ struct PdfResourcesItem:Hashable{
     }
 }
 
-struct TentDimensions{
+struct Meta{
     let width:Float
     let height:Float
     let depth:Float
-}
-
-struct TentMeta{
-    let name:String
-    let modelId:String
-    let shortDesc:String
-    let label:String
-    var dimensions:TentDimensions?
-    
-    mutating func setDimension(_ dimensions:TentDimensions?){
-        self.dimensions = dimensions
-    }
 }
 
 struct TentItemDimensions:Codable{
@@ -130,46 +118,6 @@ struct TentItemDimensions:Codable{
         return "[höjd] cm"
     }
 }
-
-struct TentItem:CarouselItem{
-    var id:String
-    var index:Int
-    var name:String
-    var img:Image
-    var label:String
-    var modelId:String
-    var shortDescription:String
-    var price:String
-    var productWeight:String?
-    var longDescription:String?
-    var category:String?
-    var webpage:String?
-    var dimensions:TentItemDimensions?
-    var equipment:[String]?
-    var bareInMind:[String]?
-    var articleNumber:String?
-    var manufacturer:String?
-    var iconStorageIds:[String]?
-    var modelStorageIds:[String]?
-    var instructionVideoUrls:[String]?
-    var instructionPdfIds:[String]?
-    
-    func hash(into hasher: inout Hasher) {
-        return hasher.combine(id)
-    }
-        
-    static func == (lhs: TentItem, rhs: TentItem) -> Bool {
-        return lhs.id == rhs.id
-    }
-    
-    func toTentMeta() -> TentMeta{
-        return TentMeta(name: self.name,
-                        modelId: self.modelId,
-                        shortDesc: self.shortDescription,
-                        label: self.label)
-    }
-}
-
 
 struct Wera{
     let brands:[String]?
@@ -308,7 +256,6 @@ struct Tent:Identifiable,Hashable{
     var modelId:String
     var shortDescription:String
     var price:String
-    var img:Image?
     var productWeight:String?
     var longDescription:String?
     var category:String?
@@ -322,6 +269,7 @@ struct Tent:Identifiable,Hashable{
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     var instructionPdfIds:[String]?
+    var meta:Meta?
     
     func hash(into hasher: inout Hasher) {
         return hasher.combine(id)
@@ -331,13 +279,6 @@ struct Tent:Identifiable,Hashable{
         return lhs.id == rhs.id
     }
     
-    
-    func toTentMeta() -> TentMeta{
-        return TentMeta(name: self.name,
-                        modelId: self.modelId,
-                        shortDesc: self.shortDescription,
-                        label: self.label)
-    }
 }
 
 struct TentDb:Codable,Comparable{
@@ -361,31 +302,7 @@ struct TentDb:Codable,Comparable{
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     var instructionPdfIds:[String]?
-   
-    func toTentItem(index:Int,image:Image) -> TentItem{
-        return TentItem(id: self.id ?? shortId(),
-                        index: index,
-                        name: self.name ?? "",
-                        img: image,
-                        label:self.label ?? "",
-                        modelId: self.modelId ?? "",
-                        shortDescription:self.shortDescription ?? "",
-                        price: self.price ?? "",
-                        productWeight:self.productWeight,
-                        longDescription:self.longDescription,
-                        category:self.category,
-                        webpage:self.webpage,
-                        dimensions: self.dimensions,
-                        equipment:self.equipment,
-                        bareInMind:self.bareInMind,
-                        articleNumber:self.articleNumber,
-                        manufacturer:self.manufacturer,
-                        iconStorageIds:self.iconStorageIds,
-                        modelStorageIds:self.modelStorageIds,
-                        instructionVideoUrls:self.instructionVideoUrls,
-                        instructionPdfIds: self.instructionPdfIds)
-    }
-    
+       
     func toTent() -> Tent{
         return Tent(id: self.id ?? "",
                         name: self.name ?? "",
@@ -393,7 +310,6 @@ struct TentDb:Codable,Comparable{
                         modelId: self.modelId ?? "",
                         shortDescription:self.shortDescription ?? "",
                         price: self.price ?? "",
-                        img: nil,
                         productWeight:self.productWeight,
                         longDescription:self.longDescription,
                         category:self.category,

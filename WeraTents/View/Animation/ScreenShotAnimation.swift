@@ -85,7 +85,6 @@ extension ScreenShotAnimation{
                     .resizable()
                     .scaledToFill()
                     .clipShape(RoundedRectangle(cornerRadius: 5.0))
-                  
                     .rotation3DEffect(.degrees(self.flag ? 360.0 : 0.0), 
                                       axis: (x:1.0,y:1.0,z:0.0))
                     .frame(width: self.flag ? 0 : 150.0,

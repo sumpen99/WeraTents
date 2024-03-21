@@ -15,6 +15,7 @@ struct ScrollviewLabelHeader:View {
     let selectedAnimation:SelectedAnimation
     let menuHeight:CGFloat
     @Binding var bindingLabel:String?
+    var splittedLabel:Bool = false
     
     var body: some View {
         content
@@ -31,7 +32,8 @@ struct ScrollviewLabelHeader:View {
                                    label: label,
                                    thickness: thickness,
                                    bindingLabel: $bindingLabel,
-                                   selectedAnimation: selectedAnimation)
+                                   selectedAnimation: selectedAnimation,
+                                   splittedLabel:splittedLabel)
                }
             }
             .padding()

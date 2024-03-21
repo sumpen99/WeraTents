@@ -93,6 +93,7 @@ extension TentsView{
             ScrollView{
                 VStack{
                     brandHeaderList
+                    SplitLine(color: Color.lightGold)
                     modelHeaderList
                     SplitLine(color: Color.lightGold)
                     currentDescriptionText
@@ -198,7 +199,7 @@ extension TentsView{
     var headerBrandContent:some View{
         ScrollviewLabelHeader(namespace: namespace,
                               namespaceName: "CURRENT_SELECTED_BRAND",
-                              thickness: 3.0,
+                              thickness: 2.0,
                               bindingList: firestoreViewModel.currentBrandsOfCataloge(cataloge:helper.selectedCataloge),
                               selectedAnimation: .UNDERLINE,
                               menuHeight: MENU_HEIGHT_HEADER,
@@ -230,7 +231,7 @@ extension TentsView{
     var headerModelContent:some View{
         ScrollviewLabelHeader(namespace: namespace,
                              namespaceName: "CURRENT_SELECTED_MODEL",
-                             thickness: 3.0,
+                             thickness: 2.0,
                               bindingList: firestoreViewModel.currentModelsOfBrand(cataloge:helper.selectedCataloge,brand: helper.selectedBrand),
                              selectedAnimation: .UNDERLINE,
                              menuHeight: MENU_HEIGHT_HEADER,
