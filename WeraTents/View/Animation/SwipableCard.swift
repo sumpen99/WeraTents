@@ -53,7 +53,6 @@ struct SafeAreaBounds{
 
 struct SwipableCard: View {
     @Binding var isShown:Bool
-    let uiImage:UIImage?
     let action:(Bool) -> Void
     @GestureState private var startLocation: CGPoint? = nil
     @State var location = CGPoint()
@@ -68,7 +67,11 @@ struct SwipableCard: View {
     
     @ViewBuilder
     var content:some View{
-        if let uiImage = uiImage{
+        if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
+                                                    fileName: TEMP_SCREENSHOT_NAME,
+                                                     ext: "png"),
+           let data = try? Data(contentsOf: url),
+           let uiImage = UIImage(data: data){
             GeometryReader{ reader in
                 ZStack{
                     Color.white
@@ -92,14 +95,14 @@ struct SwipableCard: View {
 
 //MARK: - IMAGES
 extension SwipableCard{
-    
+  
     func capturedImage(_ uiImage:UIImage) -> some View{
         Image(uiImage: uiImage)
         .resizable()
         .scaledToFit()
         .padding()
         .zIndex(0.5)
-    }
+   }
     
     @ViewBuilder
     func swipeActionImage(_ size:CGFloat) -> some View{

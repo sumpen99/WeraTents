@@ -48,7 +48,7 @@ extension FlyingCard{
         GeometryReader { reader in
             ZStack(alignment:.topLeading) {
                 FirestoreImage(iconImageUrl: flyingCardValues.selectedImageUrl,
-                               isPicker: true,
+                               imageType: .PICKER,
                                ignoreSpinner: true)
                 .rotation3DEffect(.degrees(flag ? 360.0 : 0.0),
                                   axis: (x:1.0,y:1.0,z:0.0))

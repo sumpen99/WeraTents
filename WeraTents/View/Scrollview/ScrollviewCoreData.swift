@@ -40,7 +40,7 @@ struct ScrollViewCoreData<Content: View>: View {
                 .scrollIndicators(.hidden)
                 .overlay {
                     if coreDataViewModel.dataIsLoading {
-                        SpinnerAnimation(size:reader.min()/2.0)
+                        SpinnerAnimation(imageSize:reader.min()/2.0)
                     }
                 }
             }

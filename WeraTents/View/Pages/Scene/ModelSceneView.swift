@@ -47,19 +47,12 @@ struct ModelHelper{
     var header:ModelDimensionHeader = .GRID_ON
     var toggleDimensionBox:Bool = true
     var presentSheet:Bool = false
-    var iconImages:[UIImage] = []
-    var selectedImageIndex:Int = 0
     var selectedButtonIndex:Int = 0
     var showTentLabel:Bool = true
     var showBottomContainer:Bool = false
     var hasNotFetchedData:Bool = true
+    var selectedIconImageUrl:String?
     
-    func currentSelectedImage() -> UIImage?{
-        if 0 < iconImages.count && selectedImageIndex < iconImages.count{
-            return iconImages[selectedImageIndex]
-        }
-        return nil
-    }
 }
 
 struct ModelSceneView: View {
@@ -97,9 +90,9 @@ extension ModelSceneView{
         .task{
             if helper.hasNotFetchedData{
                 firestoreViewModel.updateLoadingStateWith(state:.USDZ_MODEL,value: true)
-                loadImages()
                 loadUSDZModel(){ firestoreViewModel.updateLoadingStateWith(state:.USDZ_MODEL,value: false) }
                 helper.hasNotFetchedData = false
+                helper.selectedIconImageUrl = selectedTent.iconStorageIds?.first
             }
             animateBottenContainerWith(value:true)
         }
@@ -178,6 +171,7 @@ extension ModelSceneView{
         },label: {
             buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
         })
+        .padding(.horizontal)
       }
     
     
@@ -262,7 +256,9 @@ extension ModelSceneView{
         if size != 0{
             ScrollView{
                VStack{
-                   ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
+                   FirestoreImage(iconImageUrl:helper.selectedIconImageUrl,
+                                  imageType: .RESIZABLE_ONLY)
+                   .frame(height: size)
                    optionalImages(width: size, size: 60.0)
                    VStack{
                        tentFoldableSection
@@ -279,30 +275,29 @@ extension ModelSceneView{
    
     @ViewBuilder
     func optionalImages(width:CGFloat,size:CGFloat) -> some View{
-        if helper.iconImages.count > 0{
-            LazyVGrid(columns:numberOfColumns(maxWidth: width, size: size),
-                       spacing: V_SPACING_REG,
-                       pinnedViews: [.sectionHeaders]){
-                ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
-                    Image(uiImage: uiImage)
-                    .resizable()
-                    .frame(width:size,height: size)
-                    .padding(2)
-                    .background{
-                        Rectangle().fill(helper.selectedImageIndex == index ? Color.lightGold : Color.white)
-                    }
-                   .onTapGesture {
-                        withAnimation{
-                            helper.selectedImageIndex = index
+        LazyVGrid(columns:numberOfColumns(maxWidth: width, size: size),
+                   spacing: V_SPACING_REG,
+                   pinnedViews: [.sectionHeaders]){
+                    if let iconStorageImages = selectedTent.iconStorageIds{
+                        ForEach(iconStorageImages, id: \.self){ iconImageUrl in
+                            FirestoreImage(iconImageUrl:iconImageUrl,
+                                           imageType: .RESIZABLE_ONLY)
+                            .frame(width:size,height: size)
+                            .padding(2)
+                            .background{
+                                Rectangle().fill(helper.selectedIconImageUrl == iconImageUrl ? Color.lightGold : Color.white)
+                            }
+                           .onTapGesture {
+                                withAnimation{
+                                    helper.selectedIconImageUrl = iconImageUrl
+                                }
+                            }
                         }
-                    }
-                }
-             }
+                     }
+            }
             .padding(.horizontal)
-        }
-        
     }
-     
+        
     @ViewBuilder
     var tentFoldableSection:some View{
         VStack(spacing:V_SPACING_REG){
@@ -472,25 +467,10 @@ extension ModelSceneView{
     }
     
     func numberOfColumns(maxWidth:CGFloat,size:CGFloat) -> [GridItem]{
-        let itemCount = helper.iconImages.count + 1
+        let itemCount = selectedTent.iconStorageIds?.count ?? 0 + 1
         let padding = CGFloat(itemCount)*V_SPACING_REG
         let count = max(0.0,floor((maxWidth-padding)/size))
         return Array.init(repeating: GridItem(), count: Int(count))
-    }
-    
-    func loadImages(){
-        if let iconStorageIds = selectedTent.iconStorageIds{
-            if FETCH_LOCALLY{
-                firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
-                    helper.iconImages = uiImages
-                }
-            }
-            else{
-                firestoreViewModel.loadTentImagesFromServer(iconStorageIds){ uiImage in
-                    helper.iconImages.append(uiImage)
-                }
-            }
-        }
     }
     
     func loadUSDZModel(onCompletion: @escaping () -> Void){

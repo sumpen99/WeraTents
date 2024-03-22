@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseFirestore
 import FirebaseStorage
 import OrderedCollections
+
 enum DbPath:String{
     case WERA           = "Wera"
     case WERA_TENTS     = "Wera_Tents"
@@ -87,7 +88,7 @@ extension FirestoreViewModel{
         else{ loadWeraAssetsFromServer() }
     }
     
-    private func loadWeraAssetsFromLocal(){
+    func loadWeraAssetsFromLocal(){
         ServiceManager.readJsonFromBundleFile("mainData.json",value: WeraDb.self){ [weak self] data in
             if let strongSelf = self,
                 let data = data{
@@ -100,7 +101,7 @@ extension FirestoreViewModel{
         }
     }
     
-    private func loadWeraAssetsFromServer(){
+    func loadWeraAssetsFromServer(){
         let coll = repo.weraCollection()
         coll.getDocuments(){ [weak self] snapshot,error in
         guard let strongSelf = self,
@@ -120,8 +121,24 @@ extension FirestoreViewModel{
 extension FirestoreViewModel{
     func loadTentModelData(_ fileName:String,completion: @escaping (URL?) -> Void){
         if  FETCH_LOCALLY{
-            let url = ServiceManager.localUSDZUrl(fileName: fileName)
-            completion(url)
+            if let foundUrl = ServiceManager.fileExistInside(folder: .USDZ,
+                                                             fileName: fileName,
+                                                             ext: TempFolder.USDZ.rawValue){
+                completion(foundUrl)
+            }
+            else{
+                if let bundleUrl = ServiceManager.localUSDZUrl(fileName: fileName),
+                   let data = try? Data(contentsOf: bundleUrl){
+                    ServiceManager.writeDataToCache(fileName: fileName,
+                                                    data: data,
+                                                    folder: .USDZ,
+                                                    ext: "usdz",
+                                                    completion: completion)
+                }
+                else{
+                    completion(nil)
+                }
+            }
         }
         else{
             if let url = ServiceManager.fileExistInside(folder: .USDZ,
@@ -163,43 +180,31 @@ extension FirestoreViewModel{
             }
         }
         else{
-            downloadTentIconImageFromStorage(fileName: iconImageUrl){ error,uiImage in
-                completion(uiImage)
-            }
+            downloadTentIconImageFromStorage(fileName: iconImageUrl,completion: completion)
         }
     }
     
     
     func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
-        ServiceManager.loadImagesFromBundle("Tent",
-                                            imageNames: imageNames){ images in
+        ServiceManager.loadImagesFromBundle("Tent",imageNames: imageNames){ images in
             DispatchQueue.main.async { completion(images) }
         }
     }
   
-    func loadTentImagesFromServer(_ imageNames:[String],completion: @escaping (UIImage) -> Void){
-        for imageName in imageNames{
-            downloadTentIconImageFromStorage(fileName: imageName){ error,uiImage in
-                if let uiImage = uiImage{
-                    completion(uiImage)
-                }
-            }
-        }
-     }
 }
 
 //MARK: - DOWNLOAD DATA
 extension FirestoreViewModel{
     func downloadTentIconImageFromStorage(fileName:String,
-                                          onResult:((Error?,UIImage?) -> Void)? = nil){
+                                          completion: @escaping (UIImage?) -> Void){
         let ref = repo.tentIconReference(fileName: fileName)
         ref.getData(maxSize: (MAX_STORAGE_PNG_SIZE)){ (data, error) in
             if let data = data,
                let uiImage = UIImage(data: data){
-               onResult?(nil,uiImage)
+                completion(uiImage)
             }
             else{
-                onResult?(nil,UIImage(systemName: "photo"))
+                completion(nil)
             }
        }
     }
@@ -353,29 +358,7 @@ extension FirestoreViewModel{
                 onResult(tentItems)
             }
         }
-        
-        /*DispatchQueue.global(qos: .background).async {
-            var tentItems:[Tent] = []
-            if let weraAsset = self.weraAsset,
-               let cataloge = weraAsset.cataloge{
-                for catalogeItem in cataloge.keys{
-                    if let brands = cataloge[catalogeItem]?.brands{
-                        for brandItem in brands.keys{
-                            if let tents = brands[brandItem]?.tents{
-                                tentItems.append(contentsOf: tents.values)
-                             }
-                        }
-                    }
-                    
-                }
-            }
-            DispatchQueue.main.async {
-                onResult(tentItems)
-            }
-        }*/
-        
-    }
-    
+     }
 }
 
 //MARK: - HELPER FUNCTIONS

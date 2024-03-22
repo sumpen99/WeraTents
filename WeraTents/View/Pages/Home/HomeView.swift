@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+
 struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var openMenuSwitch:Bool = false
+    @State var screenShots:[ScreenshotModel]?
    
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
@@ -66,6 +68,7 @@ extension HomeView{
                                   content: userLatestContent,
                                   backgroundColor: Color.white.opacity(0.03))
              }
+            
         }
         .scrollIndicators(.hidden)
     }
@@ -112,11 +115,16 @@ extension HomeView{
                   alignment: .center,
                   spacing: V_GRID_SPACING,
                   pinnedViews: .sectionHeaders){
-            ForEach(CoreDataFetcher.fetchedRequestWithLimit(limit: 300,
-                                                            sortedOn: "date"),id:\.self){ item in
+            ForEach(screenShots ?? [],id:\.self){ item in
                 screenshotCard(item)
                 .padding(.vertical)
              }
+                                                            
+        }
+        .task{
+           CoreDataFetcher.loadDataWith(limit: 3,sortedOn: "date"){ screenShotsItems in
+               screenShots = screenShotsItems
+           }
         }
         .padding(.horizontal)
         .padding(.bottom,MENU_HEIGHT)

@@ -22,6 +22,7 @@ struct SelectedHeader:View {
     @Binding var bindingLabel:String?
     var selectedAnimation:SelectedAnimation = .UNDERLINE
     let splittedLabel:Bool
+    let unselectedlabelColor:Color
     @State var scaleAmount:CGFloat = 1.0
     
     
@@ -78,7 +79,7 @@ extension SelectedHeader{
             .font(.headline)
             .bold()
             .frame(height: 33)
-            .foregroundStyle(label == bindingLabel ? Color.white : Color.gray )
+            .foregroundStyle(label == bindingLabel ? Color.white : unselectedlabelColor )
             .padding([.vertical],5)
             .padding([.horizontal],10)
             .onChange(of: bindingLabel,initial: true){ oldValue,newValue in

@@ -45,15 +45,16 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                    .fill(Color.darkGold.opacity(0.80) )
+                .fill(Color.lightGold )
                 buttonContainer
+                .shadow(color: Color.materialDarkest, radius: 5, x: 0, y: 5)
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
                 helper.menuBarWidth = newSize * 0.85
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
                 helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
-            .shadow(color:Color.darkGold,radius: 2.0)
+            .shadow(color:Color.lightGold,radius: CORNER_RADIUS_BRAND)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
@@ -95,7 +96,7 @@ struct MenuButtonAnimation:View {
                 HStack(spacing:0){
                     startARButton
                     textLabel
-                    SplitLine(direction: .VERTICAL,color: Color.white.opacity(0.3),thickness: 2.0)
+                    SplitLine(direction: .VERTICAL,color: Color.white,thickness: 2.0)
                 }
             }
             expandMenuButton
@@ -139,8 +140,7 @@ extension MenuButtonAnimation{
 
 //MARK: - BUTTON AND TEXT
 extension MenuButtonAnimation{
-    
-    
+  
     var settingsButton:some View{
         Button(action: { debugLog(object: "Settings button ")}, label: {
             HStack{
@@ -185,17 +185,17 @@ extension MenuButtonAnimation{
         Image(systemName: name)
         .font(.title2)
         .bold()
-        .foregroundStyle(Color.materialDark)
+        .foregroundStyle(Color.white)
         .padding()
-        .background(Color.white)
+        .background(Color.lightGold)
         .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
         .clipShape(Circle())
-        .shadow(color:Color.white,radius: 2.0)
+        .shadow(color:Color.lightGold,radius: 2.0)
     }
     
     func textLabelBase(_ text:String) -> some View{
         Text(text)
-        .foregroundStyle(Color.white)
+            .foregroundStyle(openMenuSwitch ? Color.white : Color.white)
         .bold()
         .font(.headline)
     }

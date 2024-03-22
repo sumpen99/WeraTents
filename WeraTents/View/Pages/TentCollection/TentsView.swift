@@ -16,6 +16,23 @@ struct TentsHelper{
         self.selectedCataloge = navigator.cataloge
         self.selectedBrand = navigator.brand
     }
+    
+    var noCurrentSelection: Bool{
+        selectedCataloge == nil &&
+        selectedBrand == nil &&
+        selectedModel == nil
+    }
+    
+    var onlyCataloge:Bool{
+        selectedCataloge != nil &&
+        selectedBrand == nil &&
+        selectedModel == nil
+    }
+    
+    var catalogeAndBrand:Bool{
+        selectedBrand != nil &&
+        selectedModel == nil
+    }
 }
 
 struct TentsNavigator:Identifiable,Hashable{
@@ -67,14 +84,17 @@ extension TentsView{
         .hCenter()
     }
     
+    @ViewBuilder
     var labelImage:some View{
-        GeometryReader{ reader in
-            Image("weratent-logo-horn")
-             .resizable()
-             .scaledToFit()
-             .frame(width: reader.min()/3.0,height: reader.min()/3.0)
-             .vCenter()
-             .hCenter()
+        if helper.noCurrentSelection{
+            GeometryReader{ reader in
+                Image("weratent-logo-horn")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: reader.min()/3.0,height: reader.min()/3.0)
+                    .vCenter()
+                    .hCenter()
+            }
         }
     }
     
@@ -83,7 +103,6 @@ extension TentsView{
             BaseTopBar(label: "Kollektion", onNavigateBackAction: navigateBack)
             catalogeContent
             scrollContent
-            
        }
     }
     
@@ -114,14 +133,12 @@ extension TentsView{
 extension TentsView{
     @ViewBuilder
     var currentDescriptionText:some View{
-        if helper.selectedCataloge != nil &&
-            helper.selectedBrand == nil &&
-            helper.selectedModel == nil{
+        if helper.onlyCataloge{
             if let cataloge = firestoreViewModel.currentCatalogeItem(cataloge:helper.selectedCataloge){
                 baseDescriptionText(cataloge.header ?? "")
             }
         }
-        else if helper.selectedBrand != nil && helper.selectedModel == nil{
+        else if helper.catalogeAndBrand{
             if let brand = firestoreViewModel.currentBrandItem(cataloge:helper.selectedCataloge,
                                                                brand: helper.selectedBrand){
                 baseDescriptionText(brand.header ?? "")
@@ -268,7 +285,7 @@ extension TentsView{
     func cardButton(_ tentItem:Tent) -> some View{
         Button(action: { navigateToTent(tentItem) }, label: {
             Image(systemName: "hand.point.right")
-                .font(.title2)
+                .font(.title)
                 .bold()
         })
         .foregroundStyle(Color.lightGold)

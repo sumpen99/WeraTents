@@ -20,6 +20,7 @@ struct FlippedCard:View {
     @State var angle: CGFloat = 0
     @State var lastAngle: CGFloat = 0
     @State var cardIsTapped:Bool = false
+    @State var textInput:String = ""
     
     var body: some View {
         ZStack{
@@ -35,7 +36,7 @@ extension FlippedCard{
     var mainContent: some View {
         GeometryReader{ reader in
             sideContent
-                .simultaneousGesture(dragGesture.simultaneously(with:ignoreTapGesture ? nil : tapGesture))
+            .simultaneousGesture(dragGesture.simultaneously(with:ignoreTapGesture ? nil : tapGesture))
             .rotation3DEffect(.degrees(Double(angle)),
                                   axis: (x:0,y:1,z:0))
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
@@ -87,16 +88,20 @@ extension FlippedCard{
             .font(.caption)
             .foregroundStyle(Color.materialDark)
             .bold()
-            Text(descriptionText)
+            TextEditorWithPlaceholder(text: $textInput)
+            //.font(.custom("HelveticaNeue", size: 13))
+            //.lineSpacing(5)
+            /*Text(descriptionText)
             .font(.caption2)
             .italic()
             .foregroundStyle(Color.materialDark)
-            .vTop()
+            .vTop()*/
             Text(dateText)
             .font(.caption2)
             .foregroundStyle(Color.materialDark)
        }
-       .padding()
+        .padding(.vertical)
+        .padding(.horizontal,5.0)
     }
     
 }
@@ -142,5 +147,36 @@ extension FlippedCard{
         withAnimation{
             cardIsTapped.toggle()
         }
+    }
+}
+
+
+struct TextEditorWithPlaceholder: View {
+    @Binding var text: String
+    
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Color(uiColor: .tertiaryLabel).opacity(0.2)
+            if text.isEmpty {
+               VStack {
+                    Text("Lägg till kommentar...")
+                        .padding(.top, 10)
+                        .padding(.leading, 6)
+                        .opacity(0.6)
+                        .font(.caption)
+                    Spacer()
+                }
+            }
+            
+            VStack {
+                TextEditor(text: $text)
+                    .frame(minHeight: 150, maxHeight: 300)
+                    .opacity(text.isEmpty ? 0.85 : 1)
+                    .font(.caption)
+                    .scrollContentBackground(.hidden)
+                Spacer()
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_BRAND))
     }
 }

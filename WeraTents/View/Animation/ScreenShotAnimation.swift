@@ -10,7 +10,6 @@ import SwiftUI
 struct ScreenShotAnimation:View {
     @State private var flag = false
     @Binding var arAnimationState:[Bool]
-    let uiImage:UIImage?
     
     var body: some View {
         if arAnimationState[ArAnimationState.FLASH_SCREEN.rawValue]{
@@ -78,7 +77,11 @@ extension ScreenShotAnimation{
     
     @ViewBuilder
     var flyingCard:some View{
-        if let uiImage = uiImage{
+        if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
+                                                    fileName: TEMP_SCREENSHOT_NAME,
+                                                    ext: "png"),
+           let data = try? Data(contentsOf: url),
+           let uiImage = UIImage(data: data){
             GeometryReader { reader in
                 ZStack(alignment:.topLeading) {
                     Image(uiImage: uiImage)

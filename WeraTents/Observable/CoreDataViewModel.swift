@@ -109,18 +109,23 @@ extension CoreDataFetcher{
 
 //MARK: - STATIC COREDATA-FETCHER
 extension CoreDataFetcher{
-    static func fetchedRequestWithLimit(limit fetchLimit:Int,sortedOn sortValue:String) -> [ScreenshotModel]{
+    static func loadDataWith(limit fetchLimit:Int,
+                            sortedOn sortValue:String,
+                            onResult:@escaping([ScreenshotModel]) -> Void){
+        var screenShots:[ScreenshotModel] = []
         let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
         let sortDescriptors = [NSSortDescriptor(key: sortValue, ascending: false)]
         fetchRequest.fetchLimit = fetchLimit
         fetchRequest.sortDescriptors = sortDescriptors
         fetchRequest.includesSubentities = true
         do {
-            return try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
+            screenShots =  try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
         } catch {
-            return []
+            debugLog(object: error.localizedDescription)
         }
+        onResult(screenShots)
      }
+    
 }
 
 //MARK: - COREDATA-FETCHER PREDICATE
@@ -253,28 +258,6 @@ extension CoreDataViewModel{
         return false
     }
     
-    var itemIdOnTop: String?{
-        if let itemCount = items?.count,
-            let spacing = spacing,
-            let childViewHeight = childViewHeight,
-            let lastScrollOffset = lastScrollOffset,
-            let scrollViewHeight = scrollViewHeight{
-            let scroll = (lastScrollOffset.y * -1)
-            
-            let childrenPossiblOnScreen = Int(round(scrollViewHeight/(childViewHeight+spacing)))
-            
-            let childAtBottomIndex = Int(round(scroll/(childViewHeight+spacing))) + childrenPossiblOnScreen
-            
-            let newIndex = childAtBottomIndex - childrenPossiblOnScreen
-            
-            
-            if 0 <= newIndex && newIndex < itemCount{
-                return items?[newIndex].id
-            }
-        }
-        return nil
-    }
-    
     private func thresholdMeet(_ itemsLoadedCount: Int, _ index: Int) -> Bool {
         return (itemsLoadedCount - index) == itemsFromEndThreshold
     }
@@ -282,14 +265,7 @@ extension CoreDataViewModel{
     private func moreItemsRemaining(_ itemsLoadedCount: Int, _ totalItemsAvailable: Int) -> Bool {
         return itemsLoadedCount < totalItemsAvailable
     }
-    
-    func getModelById(_ modelId:String) -> ScreenshotModel?{
-        if let index = items?.firstIndex(where: {$0.id == modelId}){
-            return items?[index]
-        }
-        return nil
-    }
-    
+        
     func setScrollViewDimensions(_ spacing:CGFloat,scrollViewHeight:CGFloat){
         self.spacing = spacing
         self.scrollViewHeight = scrollViewHeight
