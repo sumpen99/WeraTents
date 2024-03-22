@@ -13,6 +13,7 @@ struct TentPickerHelper{
     var offset:CGSize = CGSize()
     var flyAway:Bool = false
     var flyingCardValues:FlyingCardValues?
+    
 }
 
 struct ARTentPicker:View {
@@ -62,10 +63,13 @@ extension ARTentPicker{
                 SplitLine(color: Color.lightGold)
                 pickerContent(reader.size)
             }
+            .background{
+                Color.materialDarkest
+            }
             .onAppear{
                 helper.offset = reader.center()
             }
-            .frame(width:reader.size.width,height: reader.size.height/2.0+MENU_HEIGHT_HEADER)
+            .frame(width:reader.size.width,height: reader.size.height/1.5+MENU_HEIGHT_HEADER)
             .vCenter()
             .hCenter()
             .padding()
@@ -84,7 +88,8 @@ extension ARTentPicker{
                               selectedAnimation: .UNDERLINE,
                               menuHeight: MENU_HEIGHT_HEADER,
                               bindingLabel: $helper.selectedBrandCategory,
-                              splittedLabel: true)
+                              splittedLabel: true,
+                              unselectedlabelColor: Color.gray)
         .onAppear{
             helper.selectedBrandCategory = firestoreViewModel.weraAsset?.brands?.first
         }
@@ -99,8 +104,20 @@ extension ARTentPicker{
                       spacing: V_GRID_SPACING,
                       pinnedViews: .sectionHeaders){
                 ForEach(firestoreViewModel.tentItemByCategoryAndBrand(brand_category: helper.selectedBrandCategory),id:\.self){ tent in
-                    FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
-                                   isPicker: true)
+                    ZStack{
+                        FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
+                                       imageType: .PICKER)
+                        Text(tent.modelId)
+                        .font(.footnote)
+                        .bold()
+                        .padding(5.0)
+                        .background{
+                            Rectangle().stroke(lineWidth:2.0)
+                        }
+                        .hCenter()
+                        .vCenter()
+                   }
+                    .foregroundStyle(Color.white)
                     .onTapGesture(coordinateSpace: .global) { location in
                         if let selectedImageUrl = tent.iconStorageIds?.first{
                             helper.flyingCardValues = FlyingCardValues(
@@ -114,11 +131,10 @@ extension ARTentPicker{
                     
                 }
             }
+            .padding(.vertical)
         }
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 5.0))
         .scrollIndicators(.hidden)
-        .frame(width:size.width,height: size.height/2.0)
+        .frame(width:size.width,height: size.height/1.5)
         .vTop()
     }
 }

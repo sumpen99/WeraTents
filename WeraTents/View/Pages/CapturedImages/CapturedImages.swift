@@ -6,87 +6,19 @@
 //
 
 import SwiftUI
-
+import CoreData
 enum LibraryState{
     case BASE
     case EDIT
 }
 
-struct LibraryHelper{
-    var state:LibraryState = .BASE
-    var deleteModelsId:[String] = []
-    var labelHeaderList:[String] = []
-    var selectedScreenShotModel:ScreenshotModel? = nil
-    var labelHeader:String?
-        
-    var emptyDeleteList:Bool{
-        deleteModelsId.count == 0
-    }
-    
-    var emptyLabelsList:Bool{
-        labelHeaderList.count == 0
-    }
-    
-    var listCount:Int{
-        deleteModelsId.count
-    }
-    
-    func onListContainsId(_ id:String?) ->Bool{
-        if let id = id,
-           let _ = deleteModelsId.firstIndex(of: id){
-            return true
-        }
-        return false
-    }
-    
-    mutating func updateState(){
-        state = emptyLabelsList ? .BASE : state
-    }
-    
-    mutating func updateLabelsList(_ labels:[String]){
-        labelHeaderList = labels
-    }
-    
-    mutating func toggleListId(_ id:String?){
-        if let id = id{
-            if let index = deleteModelsId.firstIndex(of: id){
-                deleteModelsId.remove(at: index)
-            }
-            else{
-                deleteModelsId.append(id)
-            }
-        }
-    }
-    
-    mutating func reset(){
-        state = .BASE
-        deleteModelsId.removeAll()
-    }
-    
-    mutating func clearListOfIds(){
-        deleteModelsId.removeAll()
-    }
-    
-    mutating func clearListOfLabels(){
-        labelHeaderList.removeAll()
-    }
-    
-    mutating func clearSelectedItem(){
-        selectedScreenShotModel = nil
-    }
-    
-    mutating func clearAllData(){
-        labelHeaderList.removeAll()
-        deleteModelsId.removeAll()
-    }
-}
-
 struct CapturedImages:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @StateObject var coreDataViewModel:CoreDataViewModel
-    @State var library:LibraryHelper = LibraryHelper()
-    @Namespace var namespace
-   
+    @State var state:LibraryState = .BASE
+    @State var deleteModelsId:[NSManagedObjectID] = []
+        
+    
     init() {
         self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
     }
@@ -115,11 +47,7 @@ extension CapturedImages{
             topButtons
             itemsLoadedPage
         }
-        .overlay{
-            selectedCard.padding()
-        }
      }
-     
 }
 
 //MARK: - COREDATA-LIST
@@ -131,11 +59,10 @@ extension CapturedImages{
         .task{
             coreDataViewModel.setChildViewDimension(CHILD_VIEW_HEIGHT)
             coreDataViewModel.requestInitialSetOfItems()
-            setCurrentLabels()
         }
         .onDisappear{
             coreDataViewModel.clearAllData()
-            library.clearAllData()
+            clearAllData()
         }
     }
     
@@ -165,59 +92,25 @@ extension CapturedImages{
                         height: HOME_CAPTURED_HEIGHT,
                         ignoreTapGesture: true)
             .onTapGesture {
-                if library.state == .BASE{
-                    withAnimation{
-                        library.selectedScreenShotModel = item
-                    }
+                if state == .BASE{
+                    return
                 }
-                else{
-                    library.toggleListId(item.id)
-                }
+                toggleListId(item.objectID)
+                toggleListId(image.objectID)
             }
             .overlay{
-                cardIsSelected(item.id)
+                cardIsSelected(item.objectID)
             }
        }
         
      }
     
     @ViewBuilder
-    func cardIsSelected(_ id:String?) -> some View{
-        if library.onListContainsId(id){
+    func cardIsSelected(_ id:NSManagedObjectID?) -> some View{
+        if onListContainsId(id){
             checkmarkCircle()
        }
     }
-    
-}
-
-//MARK: - COREDATA SELECTED CARD
-extension CapturedImages{
-    @ViewBuilder
-    var selectedCard:some View{
-        if library.selectedScreenShotModel != nil{
-            ZStack{
-                Color.lightBrown
-                if let item = library.selectedScreenShotModel,
-                   let image = item.image,
-                   let data = image.data,
-                   let uiImage = UIImage(data: data){
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-            .shadow(color:Color.lightGold,radius: 2.0)
-            .transition(.scale)
-            .onTapGesture {
-                withAnimation{
-                    library.clearSelectedItem()
-                }
-            }
-        }
-        
-    }
-   
 }
 
 //MARK: - BUTTONS
@@ -235,7 +128,7 @@ extension CapturedImages{
     var editButton:some View{
         Button(action: {
             withAnimation{
-                library.state = .EDIT
+                state = .EDIT
             }
         }){
             Text("Redigera")
@@ -243,14 +136,15 @@ extension CapturedImages{
             .font(.headline)
             .bold()
         }
-        .opacity(library.emptyLabelsList ? 0 : 1)
-        .disabled(library.emptyLabelsList)
+        .disabled(!coreDataViewModel.hasItemsLoaded)
+        .opacity(coreDataViewModel.hasItemsLoaded ? 1.0 : 0.0)
+        .padding(.horizontal)
     }
     
     var cancelButton:some View{
         Button(action: {
             withAnimation{
-                library.reset()
+                reset()
             }
         }){
             Text("Avbryt")
@@ -279,7 +173,7 @@ extension CapturedImages{
             .bold()
             .hLeading()
         }
-        .disabled(library.emptyDeleteList)
+        .disabled(emptyDeleteList)
     }
     
     
@@ -300,6 +194,7 @@ extension CapturedImages{
             selectAllButton
             cancelButton
         }
+        .padding(.horizontal)
     }
     
     var editTopBarSection:some View{
@@ -310,7 +205,7 @@ extension CapturedImages{
                 .bold()
                 .hLeading()
             VStack(spacing:V_SPACING_REG){
-                Text("\(library.listCount) valda")
+                Text("\(listCount) valda")
                     .font(.title2)
                     .foregroundStyle(Color.white)
                     .bold()
@@ -318,9 +213,9 @@ extension CapturedImages{
                 removeButton
             }
             .padding([.leading,.top])
-            .opacity(library.emptyDeleteList ? 0.5 : 1.0)
+            .opacity(emptyDeleteList ? 0.5 : 1.0)
         }
-        .padding(.top)
+        .padding()
     }
     
     var editTopBar:some View{
@@ -333,7 +228,7 @@ extension CapturedImages{
     
     @ViewBuilder
     func currentTopBarButtons() -> some View{
-        switch library.state{
+        switch state{
         case .BASE:
             baseTopBar
         case .EDIT:
@@ -343,54 +238,83 @@ extension CapturedImages{
     
     var topButtons:some View{
         currentTopBarButtons()
-        .padding()
+            .padding(.vertical)
     }
 }
 
 //MARK: - FUNCTIONS
 extension CapturedImages{
+    
+    var emptyDeleteList:Bool{
+        deleteModelsId.count == 0
+    }
+    
+    var listCount:Int{
+        deleteModelsId.count
+    }
+    
     func navigateBack(){
         navigationViewModel.popPath()
     }
     
     func selectAllItems(){
-        if let items = coreDataViewModel.items?.compactMap({$0.id ?? ""}){
-            library.deleteModelsId.removeAll()
-            library.deleteModelsId.append(contentsOf: items)
+        if let items = coreDataViewModel.items?.compactMap({$0.objectID}){
+            deleteModelsId.removeAll()
+            deleteModelsId.append(contentsOf: items)
         }
     }
      
     func deleteSelectedItems(){
         DispatchQueue.global().async {
-            for modelId in library.deleteModelsId{
-                if let model = coreDataViewModel.getModelById(modelId){
-                    PersistenceController.deleteScreenshotImage(model.image)
-                    PersistenceController.deleteScreenshotModel(model)
-                }
-           }
-           PersistenceController.saveChanges()
+           PersistenceController.deleteMultipleItems(modelIds: deleteModelsId)
            resetListOfSavedTubes()
         }
      }
     
     func resetListOfSavedTubes(){
         DispatchQueue.main.async{
-            library.clearListOfIds()
-            library.clearListOfLabels()
+            clearListOfIds()
             coreDataViewModel.requestInitialSetOfItems()
-            setCurrentLabels()
+            updateState()
         }
     }
     
-    func setCurrentLabels(){
-        coreDataViewModel.requestAllUniqueLabels(){ labels in
-            library.updateLabelsList(labels)
-            withAnimation{
-                library.updateState()
+    func onListContainsId(_ id:NSManagedObjectID?) ->Bool{
+        if let id = id,
+           let _ = deleteModelsId.firstIndex(of: id){
+            return true
+        }
+        return false
+    }
+    
+    func toggleListId(_ id:NSManagedObjectID?){
+        if let id = id{
+            if let index = deleteModelsId.firstIndex(of: id){
+                deleteModelsId.remove(at: index)
+            }
+            else{
+                deleteModelsId.append(id)
             }
         }
     }
+    
+    func reset(){
+        state = .BASE
+        deleteModelsId.removeAll()
+    }
+    
+    func clearListOfIds(){
+        deleteModelsId.removeAll()
+    }
      
+    func clearAllData(){
+        deleteModelsId.removeAll()
+    }
+    
+    func updateState(){
+        state = emptyDeleteList ? .BASE : state
+    }
+    
 }
 
 

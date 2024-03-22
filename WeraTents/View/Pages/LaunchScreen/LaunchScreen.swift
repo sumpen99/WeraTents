@@ -47,6 +47,7 @@ struct LaunchScreen:View {
     var body: some View {
         animatedContent
         .onDisappear{
+            debugLog(object: "dissapeared launch screen")
             animationTimer.upstream.connect().cancel()
         }
         

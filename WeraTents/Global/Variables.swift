@@ -39,4 +39,5 @@ let V_HOME_SPACING                  = 25.0
 let TIP_OF_SHEET                    = 40.0
 let CHILD_VIEW_HEIGHT:CGFloat       = 250.0
 let AR_SELECTED_IMAGE:CGFloat       = 100.0
+let TEMP_SCREENSHOT_NAME            = "temporary_screenshot"
 

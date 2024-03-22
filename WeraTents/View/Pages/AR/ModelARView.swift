@@ -16,12 +16,14 @@ enum ArAnimationState:Int,CaseIterable{
     case SHOW_TAKEN_PICTURE
     case SHOW_SELECTED_TENT_IMAGE
     case SEND_PICKED_IMAGE
+    case LOADING_USDZ_MODEL
+    case SHOW_SHORT_DESCRIPTION
 }
 
 struct ArHelper{
     var animationState:[Bool] = Array(repeating: false, count: ArAnimationState.allCases.count)
-    var lastUIImage:UIImage?
     var selectedTent:Tent?
+    var dontShowInfoTextAgain:Bool = false
     func stateOf(animation state:ArAnimationState) -> Bool{
         return animationState[state.rawValue]
     }
@@ -41,22 +43,26 @@ struct ModelARView: View {
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
     @StateObject private var sceneViewCoordinator: SceneViewCoordinator
+    @StateObject private var cameraManager: CameraManger
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var appStateViewModel: AppStateViewModel
     @State var helper:ArHelper = ArHelper()
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
         self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
+        self._cameraManager = StateObject(wrappedValue: CameraManger())
     }
             
     var body: some View{
         mainContent
         .onChange(of: helper.selectedTent,initial: false){ oldValue,newValue in
-            arViewCoordinator.newSelectedTent(newValue)
+            resetArCoordinatorWith(newTent: newValue)
         }
         .ignoresSafeArea()
         .safeAreaInset(edge: .bottom){
-            bottomButtons
+            if cameraManager.permission.isAuthorized{
+                bottomButtons
+            }
         }
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
@@ -64,17 +70,21 @@ struct ModelARView: View {
         }
         .overlay{
             if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
-                ScreenShotAnimation(arAnimationState:$helper.animationState,
-                                    uiImage: helper.lastUIImage)
+                ScreenShotAnimation(arAnimationState:$helper.animationState)
             }
             else if helper.stateOf(animation: .SHOW_TAKEN_PICTURE){
                 SwipableCard(isShown:$helper.animationState[ArAnimationState.SHOW_TAKEN_PICTURE.rawValue],
-                             uiImage: helper.lastUIImage,
                              action:actionAfterCapturedImage)
-             }
-        }
-        .overlay{
-            pickerContent
+            }
+            else if helper.stateOf(animation: .SHOW_CAROUSEL){
+                pickerContent
+            }
+            else if helper.stateOf(animation: .LOADING_USDZ_MODEL){
+                spinnerContent
+            }
+            else if helper.stateOf(animation: .SHOW_SHORT_DESCRIPTION){
+                shortInfoOnHowToDo
+            }
         }
     }
     
@@ -92,12 +102,135 @@ extension ModelARView{
     }
     
     var arContent:some View{
-         ARViewContainer(arViewCoordinator: arViewCoordinator)
-         .task {
-             arViewCoordinator.run()
+        ZStack{
+            if cameraManager.permission.isAuthorized{
+                ARViewContainer(arViewCoordinator: arViewCoordinator)
+                .task{
+                    arViewCoordinator.run()
+                }
+            }
+            else if cameraManager.permission.status != .notDetermined && ServiceManager.canOpenSettingsUrl(){
+                missingPermissionView
+            }
          }
+        .task{
+            await cameraManager.setUpCaptureSession()
+        }
     }
+    
+    var missingPermissionView:some View{
+        VStack(spacing:V_SPACING_REG){
+            Text("Saknade rättigheter.").bold()
+            Text("Augmented reality behöver tillgång till kameran. Nuvarande status ger oss ej möjlighet till det.Om ni vill ändra på det kan ni nu, eller senare, göra så direkt i system inställningarna.")
+            Button("Inställningar", action: {
+                ServiceManager.openPrivacySettings()
+            })
+            .background{
+                Color.white
+            }
+            .buttonStyle(.bordered)
+            .foregroundStyle(Color.materialDarkest)
+            .padding()
+            
+        }
+        .padding()
+        .background{
+            Color.white.opacity(0.03)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+        .vCenter()
+        .hCenter()
+        .foregroundStyle(Color.white)
+        .padding()
+    }
+    
+    
    
+}
+
+//MARK: - LOADING SPINNER
+extension ModelARView{
+    var spinnerContent:some View{
+        GeometryReader{ reader in
+            ZStack{
+                Color.materialDarkest
+                SpinnerAnimation(timer:SpinnerTimer.noDelayedStartTime(),
+                                 frameSize:CGSize(width:reader.size.width*0.5,
+                                                  height: reader.size.height*0.25),
+                                 text:"Laddar 3d-model...",
+                                 textColor:Color.white)
+            }
+            .frame(width: reader.size.width*0.75,height:reader.size.height/4.0)
+            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+            .animation(.easeIn(duration: 0.25),
+                       value: helper.animationState[ArAnimationState.LOADING_USDZ_MODEL.rawValue])
+            .transition(.scale.combined(with: .opacity))
+            .ignoresSafeArea(.all)
+            .vCenter()
+            .hCenter()
+        }
+    }
+}
+
+//MARK: - SHORT INFO
+extension ModelARView{
+    var shortInfoOnHowToDo:some View{
+        GeometryReader{ reader in
+            ZStack{
+                Color.materialDarkest
+                shortInfoContent(reader.size.width)
+             }
+            .frame(height:reader.size.height/4.0)
+            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+            .animation(.easeIn(duration: 1.25),
+                       value: helper.animationState[ArAnimationState.SHOW_SHORT_DESCRIPTION.rawValue])
+            .transition(.scale.combined(with: .opacity))
+            .ignoresSafeArea(.all)
+            .vCenter()
+            .hCenter()
+            .padding(.horizontal)
+        }
+    }
+    
+    func shortInfoContent(_ size:CGFloat) -> some View{
+        VStack{
+            shortInfotext
+            shortInfoButtons
+        }
+        .padding()
+        .vCenter()
+        .hCenter()
+    }
+    
+    var shortInfotext:some View{
+        Text("När fokusrutan i mitten av skärmen hittar ett horisontalt plan går det att placera ut modellen. Ibland behöver telefonen ta in miljön från lite olika vinklar. Använd sedan fingrarna för att rotera och flytta runt. Tältet kommer röra sig på planet så om det hamnar fel är det bättre att ta bort och placera ut igen.")
+        .foregroundStyle(Color.white)
+        .font(.footnote)
+        .bold()
+        .vCenter()
+    }
+    
+    var shortInfoButtons: some View{
+        HStack{
+            Toggle(isOn: $helper.dontShowInfoTextAgain) {
+                Text("Visa inte igen")
+            }
+            .toggleStyle(CheckboxStyle(alignLabelLeft: true,
+                                       labelColor: Color.white,
+                                       checkBoxColor: Color.lightGold))
+            .hLeading()
+            Button(action: { animateStateOf(.SHOW_SHORT_DESCRIPTION, with: false)}, label: {
+                Text("Ok, jag förstår")
+                    .font(.headline)
+                    .bold()
+                    .foregroundStyle(Color.white)
+            })
+            .background{
+                Color.lightGold
+            }
+            .buttonStyle(.bordered)
+       }
+   }
 }
 
 //MARK: - TOP-BAR
@@ -132,11 +265,8 @@ extension ModelARView{
     @ViewBuilder
     var selectedtentImage:some View{
         if let tent = helper.selectedTent{
-            ZStack{
-                FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
-                               isPicker: true)
-            }
-            //.opacity(helper.stateOf(animation: .SHOW_SELECTED_TENT_IMAGE) ? 1.0 : 0.0)
+            FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
+                           imageType: .PICKER)
             .frame(width:AR_SELECTED_IMAGE,height: AR_SELECTED_IMAGE)
             .offset(y:-AR_SELECTED_IMAGE/4.0)
         }
@@ -153,11 +283,13 @@ extension ModelARView{
                 .hCenter()
             }
             else{
-                roundedImage("camera.metering.center.weighted.average",font:.largeTitle,
+                roundedImage("camera.metering.center.weighted.average",
+                             font:.largeTitle,
                              scale:.large,
-                             radius: 70.0,
-                             foreground: Color.darkGreen,
-                             background: Color.white,
+                             radius: 90.0,
+                             foreground: Color.lightGold,
+                             background: Color.materialDarkest,
+                             outerBackground: Color.lightGold,
                              thicknes:2.0)
             }
         })
@@ -167,11 +299,13 @@ extension ModelARView{
     var placeModelButton:some View{
         Button(action:placeModel,
                label:{
-            roundedImage("plus",font:.largeTitle,
+            roundedImage("plus",
+                         font:.largeTitle,
                          scale:.large,
-                         radius: 70.0,
+                         radius: 90.0,
                          foreground: Color.darkGreen,
-                         background: Color.white,
+                         background: Color.materialDarkest,
+                         outerBackground: Color.darkGreen,
                          thicknes:2.0)
         })
     }
@@ -182,9 +316,10 @@ extension ModelARView{
             roundedImage("minus",
                          font:.title,
                          scale:.medium,
-                         radius: 40.0,
+                         radius: 80.0,
                          foreground: Color.red,
-                         background: Color.white,
+                         background: Color.materialDarkest,
+                         outerBackground: Color.red,
                          thicknes:2.0)
         })
     }
@@ -194,9 +329,10 @@ extension ModelARView{
             roundedImage("tent",
                          font:.title,
                          scale:.medium,
-                         radius: 60.0,
-                         foreground: Color.darkGreen,
-                         background: Color.white,
+                         radius: 80.0,
+                         foreground: Color.lightGold,
+                         background: Color.materialDarkest,
+                         outerBackground: Color.lightGold,
                          thicknes:2.0)
         })
         .frame(alignment: .trailing)
@@ -226,7 +362,7 @@ extension ModelARView{
             centerButton.hCenter()
             showCarouselButton.hTrailing()
         }
-        .frame(height: 70.0)
+        .frame(height: 90.0)
     }
     
     var bottomButtons:some View{
@@ -242,8 +378,11 @@ extension ModelARView{
                           values: [true,true,true])
         arViewCoordinator.captureSnapshot(){ uiImage in
             if let uiImage = uiImage{
-                helper.lastUIImage = uiImage
-                helper.setStateOf(animation: .SEND_CARD, value: true)
+                ServiceManager.writeImageToCache(fileName: TEMP_SCREENSHOT_NAME,
+                                                 uiImage: uiImage,
+                                                 folder: .SCREEN_SHOT){ result in
+                    helper.setStateOf(animation: .SEND_CARD, value: true)
+                }
             }
             else{
                 appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
@@ -267,42 +406,45 @@ extension ModelARView{
     
     
     func saveCapturedImage(){
-        DispatchQueue.global(qos: .background).async {
-            if let imageData = scaledImageWith(compressionQuality: 1.0,
-                                               ofSize: CGSize(width: 2040.0,
-                                                              height: HOME_CAPTURED_HEIGHT),
-                                               trimmed: true){
-                    let managedObjectContext = PersistenceController.shared.container.viewContext
-                    let model = ScreenshotModel(context:managedObjectContext)
-                    model.buildWithName(arViewCoordinator.selectedTent)
-                 
-                    let image = ScreenshotImage(context:managedObjectContext)
-                    image.id = model.id
-                    image.data = imageData
-                    model.image = image
-                    do{
-                        try PersistenceController.saveContext()
-                        resetAndNotifyUserWithToastState(.SUCCESS,"Sparat!")
-                    }
-                    catch{
-                        resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
-                    }
-             }
-             else{
-                 resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
-             }
-        }
+        if let imageData = scaledImageWith(compressionQuality: 0.3,
+                                           ofSize: CGSize(width: 2040.0,
+                                                          height: HOME_CAPTURED_HEIGHT),
+                                           trimmed: false){
+                let managedObjectContext = PersistenceController.shared.container.viewContext
+                let model = ScreenshotModel(context:managedObjectContext)
+                model.buildWithName(arViewCoordinator.selectedTent)
+             
+                let image = ScreenshotImage(context:managedObjectContext)
+                image.data = imageData
+                model.image = image
+                do{
+                    try PersistenceController.saveContext()
+                    resetAndNotifyUserWithToastState(.SUCCESS,"Sparat!")
+                }
+                catch{
+                    resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+                }
+         }
+         else{
+             resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+         }
     }
     
     func resetAndNotifyUserWithToastState(_ state:ToastState,_ message:String){
         appStateViewModel.activateToast(state,message)
-        helper.lastUIImage = nil
+        clearTempFromImage()
         helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
     }
     
     func resetWithoutNotifyUserWithToastState(){
-       helper.lastUIImage = nil
+        clearTempFromImage()
         helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+    }
+    
+    func clearTempFromImage(){
+        ServiceManager.removefileFromFolder(folder: .SCREEN_SHOT,
+                                            fileName: TEMP_SCREENSHOT_NAME,
+                                            ext: "png")
     }
     
     func resetCarousel(){
@@ -311,7 +453,12 @@ extension ModelARView{
         }
     }
    
-  
+    func animateStateOf(_ state:ArAnimationState,with value:Bool){
+        withAnimation{
+            helper.animationState[state.rawValue] = value
+        }
+    }
+    
 }
 
 //MARK: - SCALE CAPTURED IMAGE
@@ -320,7 +467,11 @@ extension ModelARView{
     func scaledImageWith(compressionQuality toStore:CGFloat,
                          ofSize maxSize:CGSize,
                          trimmed trimImage:Bool) -> Data?{
-        if let uiImage = helper.lastUIImage,
+        if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
+                                                    fileName: TEMP_SCREENSHOT_NAME,
+                                                     ext: "png"),
+           let data = try? Data(contentsOf: url),
+           let uiImage = UIImage(data: data),
            let scaleFactor = calculateScaleFactor(ofSize:maxSize,
                                                   imageWidth:uiImage.size.width,
                                                   imageHeight: uiImage.size.height,
@@ -383,5 +534,28 @@ extension ModelARView{
             }
         }
     }
+    
+    func resetArCoordinatorWith(newTent:Tent?){
+        arViewCoordinator.removeSelectedTent()
+        if let newTent = newTent,
+           let fileName = newTent.modelStorageIds?.first{
+            
+            animateStateOf(.LOADING_USDZ_MODEL, with: true)
+            firestoreViewModel.loadTentModelData(fileName){ [weak arViewCoordinator] url in
+                if let url = url{
+                    arViewCoordinator?.newSelectedTent(newTent, modelURL: url)
+                    animateStateOf(.LOADING_USDZ_MODEL, with: false)
+                    animateStateOf(.SHOW_SHORT_DESCRIPTION, with: true)
+                }
+                else{
+                    appStateViewModel.activateToast(.FAIL,"Modellen kunde inte laddas korrekt.")
+                    animateStateOf(.LOADING_USDZ_MODEL, with: false)
+                }
+                
+            }
+            
+        }
+    }
+    
     
 }
