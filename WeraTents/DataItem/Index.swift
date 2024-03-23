@@ -282,25 +282,25 @@ struct TentDb:Codable,Comparable{
     var meta:Meta?
        
     func toTent() -> Tent{
-        return Tent(id: self.id ?? "",
-                        name: self.name ?? "",
-                        label:self.label ?? "",
-                        modelId: self.modelId ?? "",
-                        shortDescription:self.shortDescription ?? "",
-                        price: self.price ?? "",
-                        productWeight:self.productWeight,
-                        longDescription:self.longDescription,
-                        category:self.category,
-                        webpage:self.webpage,
-                        dimensions: self.dimensions,
-                        equipment:self.equipment,
-                        bareInMind:self.bareInMind,
-                        articleNumber:self.articleNumber,
-                        manufacturer:self.manufacturer,
-                        iconStorageIds:self.iconStorageIds,
-                        modelStorageIds:self.modelStorageIds,
-                        instructionVideoUrls:self.instructionVideoUrls,
-                        instructionPdfIds: self.instructionPdfIds)
+        return Tent(id: shortId(),
+                    name: self.name ?? "",
+                    label:self.label ?? "",
+                    modelId: self.modelId ?? "",
+                    shortDescription:self.shortDescription ?? "",
+                    price: self.price ?? "",
+                    productWeight:self.productWeight,
+                    longDescription:self.longDescription,
+                    category:self.category,
+                    webpage:self.webpage,
+                    dimensions: self.dimensions,
+                    equipment:self.equipment,
+                    bareInMind:self.bareInMind,
+                    articleNumber:self.articleNumber,
+                    manufacturer:self.manufacturer,
+                    iconStorageIds:self.iconStorageIds,
+                    modelStorageIds:self.modelStorageIds,
+                    instructionVideoUrls:self.instructionVideoUrls,
+                    instructionPdfIds: self.instructionPdfIds)
     }
     
     static func < (lhs: TentDb, rhs: TentDb) -> Bool{

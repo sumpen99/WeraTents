@@ -112,12 +112,16 @@ extension FirestoreViewModel{
         guard let strongSelf = self,
               let snapshot = snapshot,
               let document = snapshot.documents.first else { return }
-            
-            if let weraDb = try? document.data(as : WeraDb.self){
-                let wera = weraDb.toWera()
-                strongSelf.weraAsset = wera
-                strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
+            DispatchQueue.global(qos: .background).async{
+                if let weraDb = try? document.data(as : WeraDb.self){
+                    let wera = weraDb.toWera()
+                    DispatchQueue.main.async {
+                        strongSelf.weraAsset = wera
+                        strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
+                    }
+                }
             }
+            
         }
     }
 }

@@ -27,7 +27,7 @@ struct DropShadowButton:View {
         }
         .frame(width: calculatedWidth())
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_BRAND))
-        .shadow(color:Color.lightGold,radius: CORNER_RADIUS_BRAND)
+        .shadow(color:Color.lightGold,radius: 2.0)
         .padding()
     }
     

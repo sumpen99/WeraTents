@@ -69,10 +69,6 @@ extension CatalogeSection{
             }
             .frame(height: HOME_BRAND_HEIGHT)
             .hCenter()
-            .background{
-                RoundedRectangle(cornerRadius: 5.0)
-                    .fill(Color.materialDark)
-            }
             SplitLine(color: Color.lightGold)
         }
         .hCenter()
