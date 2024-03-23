@@ -14,8 +14,12 @@ struct BackButtonAction:View{
     
     var body: some View{
         Button(action:{ action?() }){
-            buttonImage(imgLabel, font: TOP_BAR_FONT, foreground: color)
+            Image(systemName: imgLabel)
+            .font(TOP_BAR_FONT)
+            .bold()
+            .foregroundStyle(color)
+            .padding(.horizontal)
         }
-     }
+    }
       
 }

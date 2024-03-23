@@ -24,7 +24,7 @@ struct WeraTentsApp: App {
             }
             .environmentObject(appStateViewModel)
             .preferredWindowColor(Color.background)
-            .onChange(of: phase,initial: true) { newPhase,initial in
+            /*.onChange(of: phase,initial: true) { newPhase,initial in
                 try? persistenceController.saveContext()
                 /*switch newPhase {
                 case .active:
@@ -36,19 +36,8 @@ struct WeraTentsApp: App {
                 @unknown default:
                     debugLog(object:"Unknown Future Options")
               }*/
-            }
+            }*/
         }
     }
 }
 
-/*
-//MARK: - TBB Global TLS count is not == 1, instead it is: 2 När vi laddar in usdz filen
-@main
-struct WeraTentsApp: App {
-    var body: some Scene {
-        WindowGroup{
-             ModelSceneTestView()
-        }
-    }
-}
-*/

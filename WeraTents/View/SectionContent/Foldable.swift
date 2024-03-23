@@ -29,23 +29,27 @@ struct SectionFoldable<Content: View>: View{
 }
 
 
-struct SectionFoldableHeavy<Header:View,Content: View>: View{
+struct SectionFoldableHeavy<Header:View,Content: View,T:Comparable>: View{
     let header:Header
     let content:Content
     let splitColor:Color
     let toggleColor:Color
     let onLabelText:String
     let offLabelText:String
+    @Binding var automaticFold:T?
     @State var showContent:Bool = false
+    var addedSplitLine:Bool = false
     
     var body: some View {
         Section {
             ZStack{
-                if showContent{ content }
-                else{ SplitLine(color:splitColor).hCenter() }
+                if showContent && automaticFold != nil{
+                    content
+                }
+                else if addedSplitLine{
+                    SplitLine(color:splitColor).hCenter()
+                }
             }
-            
-            
         } header: {
             ToggleSectionButtonHeavy(
                       header: header,
@@ -55,5 +59,18 @@ struct SectionFoldableHeavy<Header:View,Content: View>: View{
                       color: toggleColor
             )
         } footer: {}
+            /*.onChange(of: automaticFold,initial: true){ oldValue,newValue in
+                if newValue == nil{
+                    withAnimation{
+                        showContent = false
+                    }
+                }
+                else{
+                    withAnimation{
+                        showContent = true
+                    }
+                }
+                
+            }*/
     }
 }

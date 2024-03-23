@@ -11,6 +11,7 @@ struct NavigationSection<Content:View>:View {
     let labelText:String
     let action:() -> Void
     let content:Content
+    let backgroundColor:Color
     
     var body: some View {
         mainContent
@@ -19,7 +20,12 @@ struct NavigationSection<Content:View>:View {
     var mainContent:some View{
         VStack{
             NavigationSectionBar(labelText: labelText,action: action)
+            SplitLine(color:Color.lightGold)
             content
          }
+        .padding(.vertical)
+        .background{
+            backgroundColor
+        }
     }
 }

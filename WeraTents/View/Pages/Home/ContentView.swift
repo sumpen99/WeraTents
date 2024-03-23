@@ -26,8 +26,9 @@ struct ContentView:View{
             }
         }
         .task{
+            //firestoreViewModel.uploadTentAssetsFromJson()
             firestoreViewModel.updateLoadingStateWith(state: .TENT_ASSETS, value: true)
-            firestoreViewModel.loadTentAssets()
+            firestoreViewModel.loadWeraAssets()
             appStateViewModel.start()
         }
     }

@@ -34,13 +34,19 @@ struct MenuButtonAnimation:View {
         }
         .padding(.horizontal)
         .vBottom()
+        .background{
+            if openMenuSwitch{
+                LayOverView(closeView: $openMenuSwitch)
+            }
+        }
     }
     
     var content:some View{
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                .fill(Color.materialDark)
+                .fill(Color.materialDark )
+                .shadow(color:Color.white,radius: 2.0)
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
@@ -48,7 +54,6 @@ struct MenuButtonAnimation:View {
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
                 helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
-            .shadow(color:Color.materialDarkest,radius: 2.0)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
@@ -70,16 +75,14 @@ struct MenuButtonAnimation:View {
     var openButtonList:some View{
         if openMenuSwitch{
             VStack{
-                helpButton
-                accountButton
-                contactButton
-                settingsButton
+                youtubeButton
+                pdfButton
             }
             .hTrailing()
             .vBottom()
             .padding([.bottom])
             .padding(.trailing,(ICON_WIDTH-ICON_OPEN_WIDTH)/2.0)
-            .transition(.scale.combined(with: .opacity))
+            .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
     
@@ -90,11 +93,12 @@ struct MenuButtonAnimation:View {
                 HStack(spacing:0){
                     startARButton
                     textLabel
-                    SplitLine(direction: .VERTICAL,color: Color.white.opacity(0.3),thickness: 2.0)
+                    SplitLine(direction: .VERTICAL,color: Color.white,thickness: 2.0)
                 }
             }
             expandMenuButton
         }
+        
       }
 }
 
@@ -134,63 +138,42 @@ extension MenuButtonAnimation{
 
 //MARK: - BUTTON AND TEXT
 extension MenuButtonAnimation{
-    
-    
-    var settingsButton:some View{
-        Button(action: { debugLog(object: "Settings button ")}, label: {
+  
+    var pdfButton:some View{
+        Button(action: { navigateTo(ModelRoute.ROUTE_PDF) }, label: {
             HStack{
-                textLabelBase("Inställningar")
-                imageBase("gear")
+                textLabelBase("Manualer")
+                imageBase("book.pages")
             }
         })
         .hTrailing()
     }
     
-    var accountButton:some View{
-        Button(action: { debugLog(object: "Account button ")}, label: {
-            HStack{
-                textLabelBase("Konto")
-                imageBase("person")
-            }
-        })
-        .hTrailing()
-    }
-    
-    var contactButton:some View{
+    var youtubeButton:some View{
         Button(action: { debugLog(object: "Contact button ")}, label: {
             HStack{
-                textLabelBase("Kontakt")
-                imageBase("person.crop.artframe")
+                textLabelBase("Filmer")
+                imageBase("play.tv")
             }
         })
         .hTrailing()
     }
     
-    var helpButton:some View{
-        Button(action: { debugLog(object: "Help button ")}, label: {
-            HStack{
-                textLabelBase("Hjälp")
-                imageBase("questionmark")
-            }
-        })
-        .hTrailing()
-    }
     
     func imageBase(_ name:String) -> some View{
         Image(systemName: name)
         .font(.title3)
         .bold()
-        .foregroundStyle(Color.materialDark)
+        .foregroundStyle(Color.white)
         .padding()
-        .background(Color.white)
+        .background(Color.materialDark)
         .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
         .clipShape(Circle())
-        .shadow(color:Color.white,radius: 2.0)
     }
     
     func textLabelBase(_ text:String) -> some View{
         Text(text)
-        .foregroundStyle(Color.white)
+            .foregroundStyle(openMenuSwitch ? Color.black : Color.white)
         .bold()
         .font(.headline)
     }
@@ -204,7 +187,7 @@ extension MenuButtonAnimation{
     @ViewBuilder
     var arButtonOpen: some View{
         if openMenuSwitch{
-            Button(action: navigate, label: {
+            Button(action: { navigateTo(ModelRoute.ROUTE_AR)}, label: {
                 textLabelBase("AR-upplevelse")
             })
             .hTrailing()
@@ -216,7 +199,7 @@ extension MenuButtonAnimation{
     
     var startARButton: some View{
         Image(systemName: "camera.metering.center.weighted")
-        .font(.title3)
+        .font(.title)
         .foregroundStyle(Color.white)
         .frame(width: ICON_WIDTH)
         .opacity(helper.pressedSection == .ICON_LEFT ? 0.5 : 1.0)
@@ -224,7 +207,7 @@ extension MenuButtonAnimation{
     
     var expandMenuButton: some View{
         Image(systemName: openMenuSwitch ? "camera.metering.center.weighted" : "chevron.up")
-        .font(.title3)
+        .font(.title)
         .foregroundStyle(Color.white)
         .frame(width: ICON_WIDTH)
         .opacity(helper.pressedSection == .ICON_RIGHT ? 0.5 : 1.0)
@@ -238,7 +221,7 @@ extension MenuButtonAnimation{
         case .ICON_LEFT:
             fallthrough
         case .TEXT_CENTER:
-            navigate()
+            navigateTo(ModelRoute.ROUTE_AR)
         case .ICON_RIGHT:
             toggleMenu()
         case nil: break
@@ -246,8 +229,11 @@ extension MenuButtonAnimation{
         resetPressedState()
     }
     
-    func navigate(){
-        navigationViewModel.switchPathToRoute(ModelRoute.ROUTE_AR)
+    func navigateTo(_ route:ModelRoute){
+        if openMenuSwitch{
+            toggleMenu()
+        }
+        navigationViewModel.switchPathToRoute(route)
     }
     
     func toggleMenu(){

@@ -22,7 +22,9 @@ struct ScrollViewCoreData<Content: View>: View {
         if let items = coreDataViewModel.items?.enumerated().map({ $0 }) {
             GeometryReader{ reader in
                 ScrollView {
-                    LazyVGrid(columns:layout,spacing: V_GRID_SPACING,pinnedViews: [.sectionHeaders]){
+                    LazyVGrid(columns:layout,
+                              spacing: V_GRID_SPACING,
+                              pinnedViews: [.sectionHeaders]){
                         ForEach(items,id:\.element.id){ index, model in
                             content(model)
                             .id(model.id)
@@ -35,9 +37,10 @@ struct ScrollViewCoreData<Content: View>: View {
                         }
                     }
                 }
+                .scrollIndicators(.hidden)
                 .overlay {
                     if coreDataViewModel.dataIsLoading {
-                        SpinnerAnimation(size:reader.min()/2.0)
+                        SpinnerAnimation(imageSize:reader.min()/2.0)
                     }
                 }
             }

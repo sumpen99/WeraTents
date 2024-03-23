@@ -8,15 +8,7 @@
 import SwiftUI
 // FOR THE LOVE OF GOD DONT REMOVE IMPORT
 import FirebaseFirestoreSwift
-protocol CarouselItem:Identifiable,Hashable{
-    var id:String { get }
-    var index:Int { get }
-    var img:Image { get }
-    var name:String { get }
-    var label:String { get }
-    var shortDescription:String { get }
-    var price:String{ get }
-}
+import OrderedCollections
 
 struct VideoItem:Identifiable,Hashable{
     let id:String
@@ -28,20 +20,6 @@ struct VideoItem:Identifiable,Hashable{
     }
         
     static func == (lhs: VideoItem, rhs: VideoItem) -> Bool {
-        return lhs.id == rhs.id
-    }
-}
-
-struct PdfItem:Identifiable,Hashable{
-    let id:String
-    let pdfId:String
-    let title:String
-    
-    func hash(into hasher: inout Hasher) {
-        return hasher.combine(id)
-    }
-        
-    static func == (lhs: PdfItem, rhs: PdfItem) -> Bool {
         return lhs.id == rhs.id
     }
 }
@@ -58,31 +36,22 @@ struct VideoResourcesItem:Hashable{
     }
 }
 
-struct PdfResourcesItem:Hashable{
+struct PdfResourceItem:Hashable{
     let id:String
-    let listOfPdfItems:[PdfItem]
+    let pdfUrl:URL
     func hash(into hasher: inout Hasher) {
         return hasher.combine(id)
     }
         
-    static func == (lhs: PdfResourcesItem, rhs: PdfResourcesItem) -> Bool {
+    static func == (lhs: PdfResourceItem, rhs: PdfResourceItem) -> Bool {
         return lhs.id == rhs.id
     }
 }
 
-struct TentDimensions{
+struct Meta:Codable{
     let width:Float
     let height:Float
     let depth:Float
-}
-
-struct TentMeta{
-    var title:String = ""
-    var dimensions:TentDimensions?
-    
-    mutating func setDimension(_ dimensions:TentDimensions?){
-        self.dimensions = dimensions
-    }
 }
 
 struct TentItemDimensions:Codable{
@@ -127,11 +96,139 @@ struct TentItemDimensions:Codable{
     }
 }
 
-struct TentItem:CarouselItem{
+struct Wera{
+    let brands:[String]?
+    let instructionVideoUrls:[String]?
+    let instructionPdfUrls:[String]?
+    let iconIdUrls:[String]?
+    let modelIdUrls:[String]?
+    let webPage:String?
+    var cataloge:OrderedDictionary<String,Cataloge>?
+}
+
+struct WeraDb:Codable{
+    let brands:[String]?
+    let instructionVideoUrls:[String]?
+    let instructionPdfUrls:[String]?
+    let iconIdUrls:[String]?
+    let modelIdUrls:[String]?
+    let webPage:String?
+    var catalogeDb:[CatalogeDb]?
+    
+    func toWera() -> Wera{
+        var newCataloge:OrderedDictionary<String,Cataloge> = [:]
+        if let catalogesDb = catalogeDb{
+            for catalogeDb in catalogesDb{
+                if let type = catalogeDb.type{
+                    newCataloge[type] = catalogeDb.toCataloge()
+                }
+            }
+        }
+        return Wera(brands: self.brands,
+                    instructionVideoUrls: self.instructionVideoUrls,
+                    instructionPdfUrls: self.instructionPdfUrls,
+                    iconIdUrls: self.iconIdUrls, 
+                    modelIdUrls: self.modelIdUrls,
+                    webPage: self.webPage,
+                    cataloge: newCataloge)
+    }
+}
+
+struct Cataloge{
+    let id:String
+    let type:String?
+    let header:String?
+    let iconIdUrls:[String]?
+    let modelIdUrls:[String]?
+    let instructionPdfUrls:[String]?
+    let instructionVideoUrls:[String]?
+    var brands:OrderedDictionary<String,Brand>?
+}
+
+struct CatalogeDb:Codable,Hashable{
+    let id:String
+    let type:String?
+    let header:String?
+    let iconIdUrls:[String]?
+    let modelIdUrls:[String]?
+    let instructionPdfUrls:[String]?
+    let instructionVideoUrls:[String]?
+    var brandsDb:[BrandDb]?
+    
+    static func == (lhs: CatalogeDb, rhs: CatalogeDb) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+    
+    func toCataloge() -> Cataloge{
+        var newBrands:OrderedDictionary<String,Brand> = [:]
+        if let brandsDb = brandsDb{
+            for brandDb in brandsDb{
+                if let label = brandDb.label{
+                    newBrands[label] = brandDb.toBrand()
+                }
+            }
+        }
+        return Cataloge(id: self.id,
+                        type: self.type,
+                        header: self.header,
+                        iconIdUrls: self.iconIdUrls,
+                        modelIdUrls: self.modelIdUrls,
+                        instructionPdfUrls: self.instructionPdfUrls,
+                        instructionVideoUrls: self.instructionVideoUrls,
+                        brands: newBrands)
+    }
+    
+}
+
+struct Brand{
+    let label:String?
+    let header:String?
+    let subHeader:String?
+    let iconIdUrls:[String]?
+    let modelIdUrls:[String]?
+    let instructionPdfUrls:[String]?
+    let instructionVideoUrls:[String]?
+    var tents:OrderedDictionary<String,Tent>?
+}
+
+struct BrandDb:Codable{
+    let label:String?
+    let header:String?
+    let subHeader:String?
+    let iconIdUrls:[String]?
+    let modelIdUrls:[String]?
+    let instructionPdfUrls:[String]?
+    let instructionVideoUrls:[String]?
+    var tentsDb:[TentDb]?
+    
+    func toBrand() -> Brand{
+        var newTents:OrderedDictionary<String,Tent> = [:]
+        if let tentsDb = tentsDb{
+            for tentDb in tentsDb{
+                if let modelId = tentDb.modelId{
+                    newTents[modelId] = tentDb.toTent()
+                }
+            }
+        }
+        return Brand(label: self.label,
+                     header: self.header,
+                     subHeader: self.subHeader,
+                     iconIdUrls: self.iconIdUrls,
+                     modelIdUrls: self.modelIdUrls,
+                     instructionPdfUrls: self.instructionPdfUrls,
+                     instructionVideoUrls: self.instructionVideoUrls,
+                     tents: newTents)
+    }
+    
+}
+                
+struct Tent:Identifiable,Hashable{
     var id:String
-    var index:Int
     var name:String
-    var img:Image
     var label:String
     var modelId:String
     var shortDescription:String
@@ -149,14 +246,16 @@ struct TentItem:CarouselItem{
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     var instructionPdfIds:[String]?
+    var meta:Meta?
     
     func hash(into hasher: inout Hasher) {
         return hasher.combine(id)
     }
         
-    static func == (lhs: TentItem, rhs: TentItem) -> Bool {
+    static func == (lhs: Tent, rhs: Tent) -> Bool {
         return lhs.id == rhs.id
     }
+    
 }
 
 struct TentDb:Codable,Comparable{
@@ -180,29 +279,28 @@ struct TentDb:Codable,Comparable{
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     var instructionPdfIds:[String]?
-   
-    func toTentItem(index:Int,image:Image) -> TentItem{
-        return TentItem(id: self.id ?? "",
-                        index: index,
-                        name: self.name ?? "",
-                        img: image,
-                        label:self.label ?? "",
-                        modelId: self.modelId ?? "",
-                        shortDescription:self.shortDescription ?? "",
-                        price: self.price ?? "",
-                        productWeight:self.productWeight,
-                        longDescription:self.longDescription,
-                        category:self.category,
-                        webpage:self.webpage,
-                        dimensions: self.dimensions,
-                        equipment:self.equipment,
-                        bareInMind:self.bareInMind,
-                        articleNumber:self.articleNumber,
-                        manufacturer:self.manufacturer,
-                        iconStorageIds:self.iconStorageIds,
-                        modelStorageIds:self.modelStorageIds,
-                        instructionVideoUrls:self.instructionVideoUrls,
-                        instructionPdfIds: self.instructionPdfIds)
+    var meta:Meta?
+       
+    func toTent() -> Tent{
+        return Tent(id: shortId(),
+                    name: self.name ?? "",
+                    label:self.label ?? "",
+                    modelId: self.modelId ?? "",
+                    shortDescription:self.shortDescription ?? "",
+                    price: self.price ?? "",
+                    productWeight:self.productWeight,
+                    longDescription:self.longDescription,
+                    category:self.category,
+                    webpage:self.webpage,
+                    dimensions: self.dimensions,
+                    equipment:self.equipment,
+                    bareInMind:self.bareInMind,
+                    articleNumber:self.articleNumber,
+                    manufacturer:self.manufacturer,
+                    iconStorageIds:self.iconStorageIds,
+                    modelStorageIds:self.modelStorageIds,
+                    instructionVideoUrls:self.instructionVideoUrls,
+                    instructionPdfIds: self.instructionPdfIds)
     }
     
     static func < (lhs: TentDb, rhs: TentDb) -> Bool{

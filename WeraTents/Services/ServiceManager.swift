@@ -10,6 +10,8 @@ import AVKit
 enum TempFolder:String{
     case USDZ = "usdz"
     case PDF = "pdf"
+    case PNG = "png"
+    case SCREEN_SHOT = "use_png"
 }
 
 struct Folder{
@@ -29,10 +31,29 @@ class ServiceManager{
         return Bundle.main.url(forResource: "\(fileName)", withExtension: "pdf")
     }
     
+    static func localImageUrl(fileName:String) -> URL?{
+        return Bundle.main.url(forResource: "\(fileName)", withExtension: "png")
+    }
+    
     static func temporaryFileURL(fileName: String,ext: String) -> URL? {
         return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
                 .appendingPathComponent(fileName)
                 .appendingPathExtension(ext)
+    }
+    
+    static func canOpenSettingsUrl() -> Bool{
+        if let url = URL(string: UIApplication.openSettingsURLString){
+            return UIApplication.shared.canOpenURL(url)
+        }
+        return false
+    }
+    
+    static func openPrivacySettings(){
+        guard let url = URL(string: UIApplication.openSettingsURLString),
+                UIApplication.shared.canOpenURL(url) else {
+                    return
+            }
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
        
 }
@@ -109,9 +130,10 @@ extension ServiceManager{
     
     static func readJsonFromBundleFile<T:Decodable>(_ file:String,
                                                     value:T.Type,
-                                                    completion: @escaping ([T]?) -> Void){
+                                                    completion: @escaping (T?) -> Void){
         DispatchQueue.global(qos: .background).async {
-            let tentItems = Bundle.main.decode([T].self, from: "data.json")
+            let tentItems = Bundle.main.decode(T.self, from: file)
+            //let tentItems = Bundle.main.decode(any.self, from: file)
             completion(tentItems)
         }
     }
@@ -145,6 +167,46 @@ extension ServiceManager{
             }
             else{
                 completion(nil)
+            }
+        }
+    }
+    
+    static func writeImageToCache(fileName toWriteTo:String,
+                                  uiImage:UIImage?,
+                                  folder:TempFolder = .PNG,completion:@escaping (Bool) -> Void){
+        DispatchQueue.global(qos: .background).async {
+            if let url = create(file: toWriteTo, folder: folder, ext: TempFolder.PNG.rawValue),
+               let uiImage = uiImage,
+               let data = uiImage.pngData(){
+                do {
+                    try data.write(to: url)
+                    completion(true)
+                } catch {
+                    completion(false)
+                    debugLog(object: error.localizedDescription)
+                }
+           }
+        }
+    }
+    
+    static func writeDataToCache(fileName toWriteTo:String,
+                                  data:Data?,
+                                  folder:TempFolder,
+                                  ext:String,
+                                  completion:@escaping (URL?) -> Void){
+        DispatchQueue.global(qos: .background).async {
+            var writtenUrl:URL?
+            if let url = create(file: toWriteTo, folder: folder, ext: ext),
+               let data = data{
+                do {
+                    try data.write(to: url)
+                    writtenUrl = url
+               } catch {
+                    debugLog(object: error.localizedDescription)
+                }
+            }
+            DispatchQueue.main.async {
+                completion(writtenUrl)
             }
         }
     }
@@ -214,13 +276,16 @@ extension ServiceManager{
     }
     
     static func removefileFromFolder(folder named:TempFolder,fileName:String,ext:String){
-        guard let filePath = getFilePathUrlAt(folder: named, fileName: fileName, ext: ext) else { return }
-        do{
-            try FileManager.default.removeItem(at: filePath)
+        DispatchQueue.global(qos: .background).async {
+            guard let filePath = getFilePathUrlAt(folder: named, fileName: fileName, ext: ext) else { return }
+            do{
+                try FileManager.default.removeItem(at: filePath)
+            }
+            catch{
+                debugLog(object: error.localizedDescription)
+            }
         }
-        catch{
-            debugLog(object: error.localizedDescription)
-        }
+        
     }
     
     static func removeDataFromTemporary(_ url:URL?,completion: ((Bool) -> Void)? = nil){

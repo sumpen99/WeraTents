@@ -8,12 +8,14 @@
 import SwiftUI
 
 extension ScreenshotModel{
-    func buildWithName(_ meta:TentMeta?){
-        if let meta = meta{
-            self.id = shortId(length: 6)
-            self.name = meta.title
+    func buildWithName(_ tent:Tent?){
+        if let tent = tent{
+            self.name = tent.name
+            self.label = tent.label
+            self.shortDesc = tent.shortDescription
+            self.modelId = tent.modelId
             self.date = Date()
-            if let dimensions = meta.dimensions{
+            if let dimensions = tent.meta{
                 self.width = dimensions.width
                 self.height = dimensions.height
                 self.depth = dimensions.depth

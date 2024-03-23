@@ -25,8 +25,6 @@ enum ButtonSelection:String{
 enum ArrayToCheck{
     case EQUIPMENT
     case BARE_IN_MIND
-    case VIDEO_RESOURCE
-    case PDF_RESOURCE
     case USDZ_RESOURCE
 }
 
@@ -47,19 +45,13 @@ struct ModelHelper{
     var header:ModelDimensionHeader = .GRID_ON
     var toggleDimensionBox:Bool = true
     var presentSheet:Bool = false
-    var iconImages:[UIImage] = []
-    var selectedImageIndex:Int = 0
     var selectedButtonIndex:Int = 0
     var showTentLabel:Bool = true
     var showBottomContainer:Bool = false
     var hasNotFetchedData:Bool = true
+    var automaticFold:String? = "No"
+    var selectedIconImageUrl:String?
     
-    func currentSelectedImage() -> UIImage?{
-        if 0 < iconImages.count && selectedImageIndex < iconImages.count{
-            return iconImages[selectedImageIndex]
-        }
-        return nil
-    }
 }
 
 struct ModelSceneView: View {
@@ -68,8 +60,8 @@ struct ModelSceneView: View {
     @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @Namespace var animation
     @State var helper:ModelHelper = ModelHelper()
-    let selectedTent:TentItem
-    init(selectedTent:TentItem) {
+    let selectedTent:Tent
+    init(selectedTent:Tent) {
         self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
         self.selectedTent = selectedTent
     }
@@ -97,9 +89,9 @@ extension ModelSceneView{
         .task{
             if helper.hasNotFetchedData{
                 firestoreViewModel.updateLoadingStateWith(state:.USDZ_MODEL,value: true)
-                loadImages()
                 loadUSDZModel(){ firestoreViewModel.updateLoadingStateWith(state:.USDZ_MODEL,value: false) }
                 helper.hasNotFetchedData = false
+                helper.selectedIconImageUrl = selectedTent.iconStorageIds?.first
             }
             animateBottenContainerWith(value:true)
         }
@@ -119,12 +111,19 @@ extension ModelSceneView{
 //MARK: - TOPCONTAINER
 extension ModelSceneView{
     var topContainer:some View{
-        HStack{
-            BackButtonAction(action: navigateBack)
-            toggleGridButtons.hCenter()
-            openInformationButton
+        VStack{
+            HStack{
+                BackButtonAction(action: navigateBack).hLeading()
+                Text("Model")
+                .font(.headline)
+                .hCenter()
+                .bold()
+                .foregroundStyle(Color.white)
+                openInformationButton.hTrailing()
+            }
+            SplitLine()
         }
-        .padding([.top,.horizontal])
+        .padding(.vertical)
    }
     
     var toggleGridButtons:some View{
@@ -165,12 +164,14 @@ extension ModelSceneView{
     
     var openInformationButton:some View{
         Menu(content:{
-            youtubeButton
-            pdfButton
             webPageButton
         },label: {
-            buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
+            Image(systemName: "ellipsis.circle")
+            .font(TOP_BAR_FONT)
+            .bold()
+            .foregroundStyle(Color.white)
         })
+        .padding(.horizontal)
       }
     
     
@@ -184,21 +185,6 @@ extension ModelSceneView{
                        toVisit: selectedTent.webpage)
     }
     
-    var youtubeButton: some View{
-        Button(action: navigateToMovies ){
-            Label("Instruktionsfilmer", systemImage: "play.tv")
-        }
-        .disabled(disabledVideoButton)
-        .padding()
-    }
-    
-    var pdfButton: some View{
-        Button(action: navigateToPdf ){
-            Label("Instruktionsmanual", systemImage: "book.pages")
-        }
-        .disabled(disabledPdfButton)
-        .padding()
-    }
 }
 
 //MARK: - BOTTOM CONTAINER
@@ -215,7 +201,7 @@ extension ModelSceneView{
                           indicatorColor:Color.black.opacity(0.3)){
                     helper.presentSheet.toggle()
                 }
-                //selectedTentLabel
+                selectedTentLabel
             }
             .background{
                 Color.lightBrown
@@ -233,7 +219,6 @@ extension ModelSceneView{
     var selectedTentLabel:some View{
         Text(selectedTent.name)
         .frame(height: TIP_OF_SHEET)
-        .foregroundStyle(Color.materialDark)
         .font(.title3)
         .bold()
         .padding([.top,.bottom])
@@ -256,7 +241,9 @@ extension ModelSceneView{
         if size != 0{
             ScrollView{
                VStack{
-                   ZoomableImage(uiImage: helper.currentSelectedImage(),size:size)
+                   FirestoreImage(iconImageUrl:helper.selectedIconImageUrl,
+                                  imageType: .RESIZABLE_ONLY)
+                   .frame(height: size)
                    optionalImages(width: size, size: 60.0)
                    VStack{
                        tentFoldableSection
@@ -273,30 +260,29 @@ extension ModelSceneView{
    
     @ViewBuilder
     func optionalImages(width:CGFloat,size:CGFloat) -> some View{
-        if helper.iconImages.count > 0{
-            LazyVGrid(columns:numberOfColumns(maxWidth: width, size: size),
-                       spacing: V_SPACING_REG,
-                       pinnedViews: [.sectionHeaders]){
-                ForEach(Array(zip(helper.iconImages.indices, helper.iconImages)), id: \.0){ (index,uiImage) in
-                    Image(uiImage: uiImage)
-                    .resizable()
-                    .frame(width:size,height: size)
-                    .padding(2)
-                    .background{
-                        Rectangle().fill(helper.selectedImageIndex == index ? Color.lightGold : Color.white)
-                    }
-                   .onTapGesture {
-                        withAnimation{
-                            helper.selectedImageIndex = index
+        LazyVGrid(columns:numberOfColumns(maxWidth: width, size: size),
+                   spacing: V_SPACING_REG,
+                   pinnedViews: [.sectionHeaders]){
+                    if let iconStorageImages = selectedTent.iconStorageIds{
+                        ForEach(iconStorageImages, id: \.self){ iconImageUrl in
+                            FirestoreImage(iconImageUrl:iconImageUrl,
+                                           imageType: .RESIZABLE_ONLY)
+                            .frame(width:size,height: size)
+                            .padding(2)
+                            .background{
+                                Rectangle().fill(helper.selectedIconImageUrl == iconImageUrl ? Color.lightGold : Color.white)
+                            }
+                           .onTapGesture {
+                                withAnimation{
+                                    helper.selectedIconImageUrl = iconImageUrl
+                                }
+                            }
                         }
-                    }
-                }
-             }
+                     }
+            }
             .padding(.horizontal)
-        }
-        
     }
-     
+        
     @ViewBuilder
     var tentFoldableSection:some View{
         VStack(spacing:V_SPACING_REG){
@@ -313,18 +299,24 @@ extension ModelSceneView{
         SectionFoldableHeavy(header: selectedTentLabel,
                              content:headerSection,
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
-                             offLabelText: "Visa")
+                             offLabelText: "Visa",
+                             automaticFold: $helper.automaticFold,
+                             showContent: false,
+                             addedSplitLine: true)
     }
     
     func foldableSection(headerText:String,contentText:String) -> some View{
         SectionFoldableHeavy(header: Text(headerText).bold(),
                              content: HeaderContent(content:Text(contentText).hLeading()),
                              splitColor: Color.lightGold.opacity(0.2),
-                             toggleColor:Color.darkGreen,
+                             toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
-                             offLabelText: "Visa")
+                             offLabelText: "Visa",
+                             automaticFold: $helper.automaticFold,
+                             showContent: false,
+                             addedSplitLine: true)
     }
     
     func buttonSection(_ size:CGFloat) -> some View{
@@ -430,15 +422,7 @@ extension ModelSceneView{
 
 //MARK: - FUNCTIONS
 extension ModelSceneView{
-    
-    var disabledVideoButton:Bool{
-        selectedTent.instructionVideoUrls?.count ?? 0 == 0
-    }
-    
-    var disabledPdfButton:Bool{
-        selectedTent.instructionPdfIds?.count ?? 0 == 0
-    }
-    
+   
     func checkArrayOf(type:ArrayToCheck) ->[String]?{
         switch type {
         case .EQUIPMENT:
@@ -449,42 +433,19 @@ extension ModelSceneView{
             if let bareInMind = selectedTent.bareInMind{
                 return bareInMind.count > 0 ? bareInMind : nil
             }
-        case .VIDEO_RESOURCE:
-            if let instructionVideoUrls = selectedTent.instructionVideoUrls{
-                return instructionVideoUrls.count > 0 ? instructionVideoUrls : nil
-            }
         case .USDZ_RESOURCE:
             if let modelStorageIds = selectedTent.modelStorageIds{
                 return modelStorageIds.count > 0 ? modelStorageIds : nil
-            }
-        case .PDF_RESOURCE:
-            if let instructionPdfIds = selectedTent.instructionPdfIds{
-                return instructionPdfIds.count > 0 ? instructionPdfIds : nil
             }
         }
         return nil
     }
     
     func numberOfColumns(maxWidth:CGFloat,size:CGFloat) -> [GridItem]{
-        let itemCount = helper.iconImages.count + 1
+        let itemCount = selectedTent.iconStorageIds?.count ?? 0 + 1
         let padding = CGFloat(itemCount)*V_SPACING_REG
         let count = max(0.0,floor((maxWidth-padding)/size))
         return Array.init(repeating: GridItem(), count: Int(count))
-    }
-    
-    func loadImages(){
-        if let iconStorageIds = selectedTent.iconStorageIds{
-            if FETCH_LOCALLY{
-                firestoreViewModel.loadTentImagesFromLocal(iconStorageIds){ uiImages in
-                    helper.iconImages = uiImages
-                }
-            }
-            else{
-                firestoreViewModel.loadTentImagesFromServer(iconStorageIds){ uiImage in
-                    helper.iconImages.append(uiImage)
-                }
-            }
-        }
     }
     
     func loadUSDZModel(onCompletion: @escaping () -> Void){
@@ -498,33 +459,7 @@ extension ModelSceneView{
          }
          else{ onCompletion() }
     }
-    
-    func navigateToMovies(){
-        if let instructionVideoUrls = checkArrayOf(type:.VIDEO_RESOURCE){
-            var listOfVideoItems:[VideoItem] = []
-            for videoUrl in instructionVideoUrls{
-                listOfVideoItems.append(VideoItem(id: shortId(),
-                                                  videoUrl: videoUrl,
-                                                  title: ""))
-            }
-            navigationViewModel.appendToPathWith(VideoResourcesItem(id: shortId(),
-                                                                    listOfVideoItems: listOfVideoItems))
-        }
-    }
-    
-    func navigateToPdf(){
-        if let instructionPdfIds = checkArrayOf(type:.PDF_RESOURCE){
-            var listOfPdfItems:[PdfItem] = []
-            for pdfId in instructionPdfIds{
-                listOfPdfItems.append(PdfItem(id: shortId(),
-                                                  pdfId: pdfId,
-                                                  title: ""))
-            }
-            navigationViewModel.appendToPathWith(PdfResourcesItem(id: shortId(),
-                                                                  listOfPdfItems: listOfPdfItems))
-        }
-    }
-    
+     
     func navigateBack(){
         sceneViewCoordinator.destroy()
         navigationViewModel.popPath()

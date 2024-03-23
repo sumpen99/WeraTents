@@ -57,14 +57,21 @@ final class PersistenceController {
     static func deleteScreenshotModel(_ meta: ScreenshotModel?){
         guard let meta = meta else { return }
         shared.container.viewContext.delete(meta)
-        saveChanges()
     }
     
     static func deleteScreenshotImage(_ image: ScreenshotImage?){
         guard let image = image else { return }
         shared.container.viewContext.delete(image)
-        saveChanges()
     }
+    
+    static func deleteMultipleItems(modelIds:[NSManagedObjectID]){
+        let batchDeleteRequest = NSBatchDeleteRequest(objectIDs: modelIds)
+        do {
+            try shared.container.viewContext.executeAndMergeChanges(using: batchDeleteRequest)
+        } catch {
+            debugLog(object: error.localizedDescription)
+        }
+   }
     
     static func fetchAndSortYearOfScreenshots(startDate:NSDate,endDate:NSDate) -> FETCH_RECORD{
         let fetchedScreenshotIds = fetchAllDatesDuringCurrentYear(NSPredicate(format: "date >= %@ AND date < %@",
@@ -158,5 +165,17 @@ final class PersistenceController {
         }
     }
     
+}
+
+//https://stackoverflow.com/questions/14560900/coredata-delete-multiple-objects
+//https://www.avanderlee.com/swift/nsbatchdeleterequest-core-data/
+extension NSManagedObjectContext {
+    
+  public func executeAndMergeChanges(using batchDeleteRequest: NSBatchDeleteRequest) throws {
+        batchDeleteRequest.resultType = .resultTypeObjectIDs
+        let result = try execute(batchDeleteRequest) as? NSBatchDeleteResult
+        let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: result?.result as? [NSManagedObjectID] ?? []]
+        NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [self])
+    }
 }
 

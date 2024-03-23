@@ -56,10 +56,26 @@ struct ARViewContainer: UIViewRepresentable {
 class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     weak var arView: ARView?
     var focusEntity: FocusEntity?
+    var selectedTent:Tent?
+    var currentModelUrl:URL?
     @Published var modelState:ModelState = .HAS_EMPTY
-    @Published var selectedTentMeta:TentMeta?
+  
     func session(_ session: ARSession, didUpdate frame: ARFrame){
-        //debugLog(object: "Session did UPDATE FRAME ")
+        /*if let objectPosition = focusEntity?.position{
+            //let transform = frame.camera.transform.columns.3
+            //let devicePosition = simd_float3(x: transform.x, y: transform.y, z: transform.z)
+            //let objectPosition = node.simdWorldPosition
+            //let distance = distance(devicePosition,objectPosition)
+            //debugLog(object:distance)
+            /*
+             let hitTestResults = sceneView.hitTest(sceneView.center,types:[.existingPlaneUsingGeometry])
+             guard let result = hitTestResults.first else { return nil }
+             let hitCoordinates = simd_float3(x: result.worldTransform.columns.3.x, y: result.worldTransform.columns.3.y, z: result.worldTransform.columns.3.z)
+
+             let distance = distance(cameraCoordinates,hitCoordinates)
+             */
+        }*/
+        
     }
     func session(_ session: ARSession, didAdd anchors: [ARAnchor]){
         //debugLog(object: "Session did ADD ANCHORS")
@@ -79,8 +95,15 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         arView.environment.background = .cameraFeed()
 #endif
         self.focusEntity = FocusEntity(on: arView, style: .classic())
-        self.arView?.setConfiguration()
+        self.setFocusState()
         self.arView?.session.delegate = self
+    }
+    
+    func run(){
+        if let arView = arView{
+            let configuration = arView.setConfiguration()
+            self.arView?.session.run(configuration)
+        }
         
     }
     
@@ -90,40 +113,21 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         self.arView = nil
         self.focusEntity = nil
     }
-    
-    func run(){
-        DispatchQueue.main.async {
-            if let arView = self.arView,
-               let configuration = arView.session.configuration{
-                arView.session.run(configuration)
-                self.setFocusState()
-            }
-         }
-    }
-    
+     
     func pause() {
         self.focusEntity?.isEnabled = false
         self.arView?.pause()
     }
     
-    func setFocusState(){
-        switch self.modelState {
-        case .HAS_EMPTY:
-            self.focusEntity?.isEnabled = false
-        case .HAS_SELECTION:
-            self.focusEntity?.isEnabled = true
-        case .HAS_MODEL:
-            self.focusEntity?.isEnabled = false
-        }
-    }
     
     func action(_ action:Actions,onResult:((Bool) -> Void)? = nil){
         guard let focusEntity = self.focusEntity else { return }
         switch action {
         case .PLACE_3D_MODEL:
-            self.arView?.loadEntityAsync(focusEntity.position){ success,dimensions in
+            self.arView?.loadEntityAsync(focusEntity.position,
+                                         fileUrl: currentModelUrl){ success,meta in
                 self.animateModelState(success ? .HAS_MODEL : .HAS_SELECTION)
-                self.selectedTentMeta?.setDimension(dimensions)
+                self.selectedTent?.meta = meta
                 onResult?(success)
             }
         case .REMOVE_3D_MODEL:
@@ -143,85 +147,93 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
         self.setFocusState()
     }
     
-    /*
-    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
-        self.arView?.snapshot(saveToHDR: false) { (image) in
-            if let image = image,
-               let pngImage = image.pngData(),
-               let compressedImage = UIImage(data: pngImage){
-                callback?(compressedImage)
-                return
-            }
+    func captureSnapshot(_ callback:@escaping (UIImage?) ->Void){
+        if let arView = arView{
+            arView.snapshot(saveToHDR: false,completion: callback) 
         }
-        callback?(nil)
-    }*/
-    
-    func captureSnapshot(_ callback:((Data?) ->Void)? = nil){
-        self.arView?.snapshot(saveToHDR: false) { (image) in
-            if let image = image,
-               let data = image.jpegData(compressionQuality: 1) ?? image.pngData(){
-                callback?(data)
-            }
-            else{
-                callback?(nil)
-            }
-        }
+        else{ callback(nil) }
         
     }
     
-    func newSelectedTent(_ item:TentMeta){
-        self.modelState = selectedTentMeta == nil ? .HAS_SELECTION : self.modelState
-        selectedTentMeta = item
-        self.setFocusState()
-   }
-    
-    func removeSelectedTent(){
-        selectedTentMeta = nil
+    func newSelectedTent(_ tent:Tent,modelURL:URL){
         self.modelState = .HAS_SELECTION
-        setFocusState()
+        self.selectedTent = tent
+        self.currentModelUrl = modelURL
+        self.setFocusState()
     }
     
+    func removeSelectedTent(){
+        selectedTent = nil
+        self.modelState = .HAS_EMPTY
+        self.arView?.removeModel()
+        setFocusState()
+    }
+        
     var activeRemoveButton:Bool{
-        selectedTentMeta != nil && modelState == .HAS_MODEL
+        selectedTent != nil && modelState == .HAS_MODEL
     }
     
     var activeAddButton:Bool{
-        selectedTentMeta != nil && modelState == .HAS_SELECTION
+        selectedTent != nil && modelState == .HAS_SELECTION
     }
     
     var activeCaptureButton:Bool{
         modelState == .HAS_MODEL
     }
     
+    func setFocusState(){
+        switch self.modelState {
+        case .HAS_EMPTY:
+            self.focusEntity?.isEnabled = false
+        case .HAS_SELECTION:
+            self.focusEntity?.isEnabled = true
+        case .HAS_MODEL:
+            self.focusEntity?.isEnabled = false
+        }
+    }
+    
 }
 
 //MARK: -- CONFIGURATION
 extension ARView{
-    func setConfiguration(){
+    func setConfiguration() -> ARWorldTrackingConfiguration{
         let configuration = ARWorldTrackingConfiguration()
-        configuration.planeDetection = [.horizontal]
+        configuration.planeDetection = [.horizontal,.vertical]
         configuration.environmentTexturing = .automatic
         if ARWorldTrackingConfiguration.supportsSceneReconstruction(.meshWithClassification) {
             configuration.sceneReconstruction = .meshWithClassification
         }
+        return configuration
+        
+    }
+    
+    func disablePlaneDetection(){
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = []
+        configuration.environmentTexturing = .automatic
+        if ARWorldTrackingConfiguration.supportsSceneReconstruction(.meshWithClassification) {
+            configuration.sceneReconstruction = .meshWithClassification
+        }
+        self.session.run(configuration)
         
     }
 }
 
 //MARK: -- LOAD MODEL FROM APP
 extension ARView{
-    func loadEntityAsync(_ position:SIMD3<Float>,onResult:((Bool,TentDimensions?) ->Void)? = nil) {
-        let usdzPath = ServiceManager.localUSDZUrl(fileName: "tent-2-man-tent")
-        var cancellable: AnyCancellable? = nil
-        cancellable = ModelEntity.loadModelAsync(contentsOf: usdzPath!)
-        .sink(receiveCompletion: { error in
-            cancellable?.cancel()
-            onResult?(false,nil)
-        }, receiveValue: { modelEntity in
-            self.placeModel(modelEntity: modelEntity, position: position)
-            cancellable?.cancel()
-            onResult?(true,modelEntity.size())
-        })
+    func loadEntityAsync(_ position:SIMD3<Float>,fileUrl:URL?,onResult:((Bool,Meta?) ->Void)? = nil) {
+        if let usdzPath = fileUrl{
+            var cancellable: AnyCancellable? = nil
+            cancellable = ModelEntity.loadModelAsync(contentsOf: usdzPath)
+            .sink(receiveCompletion: { error in
+                cancellable?.cancel()
+                onResult?(false,nil)
+            }, receiveValue: { [weak self] modelEntity in
+                self?.placeModel(modelEntity: modelEntity, position: position)
+                cancellable?.cancel()
+                onResult?(true,modelEntity.size())
+            })
+        }
     }
     
     func placeModel(modelEntity:ModelEntity,position: SIMD3<Float>){
@@ -229,14 +241,15 @@ extension ARView{
         smpl.color.tint = .white
        // smpl.metallic = 0.7
        // smpl.roughness = 0.2
-                
         var pbr = PhysicallyBasedMaterial()
         pbr.baseColor.tint = .green
-        
         modelEntity.model?.materials = [smpl,pbr]
         let anchorEntity = MyEntity()
         anchorEntity.position = position
         anchorEntity.name = "tentAnchor"
+        //let radians = 180.0 * Float.pi / 180.0
+        modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.37835, 0.0)
+        //modelEntity.orientation = simd_quatf(angle: radians, axis: SIMD3(x: 0, y: 1, z: 0))
         anchorEntity.addChild(modelEntity)
         anchorEntity.generateCollisionShapes(recursive: true)
         self.installGestures([.rotation,.translation],for: anchorEntity)
@@ -271,7 +284,7 @@ extension ARView{
 }
 
 extension ModelEntity {
-    func size() -> TentDimensions? {
+    func size() -> Meta? {
         guard let mesh = self.model?.mesh else {
             return nil
         }
@@ -279,6 +292,6 @@ extension ModelEntity {
         let width = mesh.bounds.max.x - mesh.bounds.min.x
         let height = mesh.bounds.max.y - mesh.bounds.min.y
         let depth = mesh.bounds.max.z - mesh.bounds.min.z
-        return TentDimensions(width: width, height: height, depth: depth)
+        return Meta(width: width, height: height, depth: depth)
     }
 }

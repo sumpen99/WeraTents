@@ -18,12 +18,17 @@ struct SpinnerTimer{
     var delayStartTime:Double = 2.0
     var longTimePassed:Double = 10.0
     var toLongTimePassed:Double = 20.0
+    
+    static func noDelayedStartTime() -> SpinnerTimer{
+        return SpinnerTimer(delayStartTime: 0.0,longTimePassed: 1.0)
+    }
 }
 
 struct SpinnerAnimation: View {
     @State var animate:[Bool] = Array.init(repeating: false,count: 3)
     var timer:SpinnerTimer = SpinnerTimer()
-    var size:CGFloat = 60.0
+    var frameSize:CGSize = CGSize(width: 60.0, height: 60.0)
+    var imageSize:CGFloat = 60.0
     var text:String = "Väntar..."
     var textColor:Color = Color.black
     var foregroundStyle:Color = Color.lightGold
@@ -48,13 +53,14 @@ extension SpinnerAnimation{
     
     var animatedtContent:some View{
         ZStack{
-            animatedText
             animatedCircles
+            .frame(width: imageSize,height: imageSize)
+            animatedText
         }
         .onReceive(animationTimer) { timerValue in
             updateAnimation(timerValue.timeIntervalSinceReferenceDate)
         }
-        .frame(width: size,height: size)
+        .frame(width: frameSize.width,height: frameSize.height)
         .hCenter()
         .vCenter()
         .foregroundStyle(foregroundStyle)
@@ -64,12 +70,16 @@ extension SpinnerAnimation{
     @ViewBuilder
     var animatedText:some View{
         if stateIsActive(.SHOW_LONG_TIME_TEXT){
-            Text(text).font(.caption).foregroundStyle(textColor)
+            Text(text)
+            .font(.caption)
+            .foregroundStyle(textColor)
+            .bold()
             .transition(.opacity.combined(with: .scale))
-            .lineLimit(1)
-            /*AnimatedTypingText(text: text,
-                               font: .caption,
-                               foreground: textColor)*/
+            .hCenter()
+            .vCenter()
+            .offset(y:imageSize/2.0)
+            .padding(.top)
+            
         }
     }
     

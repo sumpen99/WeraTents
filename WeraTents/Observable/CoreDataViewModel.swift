@@ -12,9 +12,9 @@ enum SearchCategorie : String{
     case ALL = "ALL"
 }
 
-//MARK: COREDATA-FETCHER
+//MARK: - COREDATA-FETCHER
 class CoreDataFetcher{
-    let CORE_DATA_FETCH_LIMIT = 12
+    let CORE_DATA_FETCH_LIMIT = 50
     
     var totalItems:Int = 0
     var totalPages:Int = 0
@@ -25,7 +25,7 @@ class CoreDataFetcher{
     var hasDataToFetch:Bool{ currentPage < totalPages && totalItems > 0 }
 }
 
-//MARK: COREDATA-FETCHER REQUEST ITEMS
+//MARK: - COREDATA-FETCHER REQUEST ITEMS
 extension CoreDataFetcher{
     
     func requestItemsByPage(_ page:Int,onResult: @escaping ((totalItems:Int,items:[ScreenshotModel])) -> Void) {
@@ -56,7 +56,7 @@ extension CoreDataFetcher{
     }
 }
 
-//MARK: COREDATA-FETCHER FETCH ITEMS
+//MARK: - COREDATA-FETCHER FETCH ITEMS
 extension CoreDataFetcher{
     func fetchedUniqueValueRequest<T>(_ column:String,value:T.Type) -> [T]{
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "ScreenshotModel")
@@ -107,7 +107,28 @@ extension CoreDataFetcher{
      }
 }
 
-//MARK: COREDATA-FETCHER PREDICATE
+//MARK: - STATIC COREDATA-FETCHER
+extension CoreDataFetcher{
+    static func loadDataWith(limit fetchLimit:Int,
+                            sortedOn sortValue:String,
+                            onResult:@escaping([ScreenshotModel]) -> Void){
+        var screenShots:[ScreenshotModel] = []
+        let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
+        let sortDescriptors = [NSSortDescriptor(key: sortValue, ascending: false)]
+        fetchRequest.fetchLimit = fetchLimit
+        fetchRequest.sortDescriptors = sortDescriptors
+        fetchRequest.includesSubentities = true
+        do {
+            screenShots =  try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
+        } catch {
+            debugLog(object: error.localizedDescription)
+        }
+        onResult(screenShots)
+     }
+    
+}
+
+//MARK: - COREDATA-FETCHER PREDICATE
 extension CoreDataFetcher{
     func getPredicateBySearchCategorie(_ categorie:SearchCategorie,searchText:String) -> NSPredicate?{
         //predicate = NSPredicate(format: "%K =[c] %@", argumentArray: [#keyPath(TubeModel.message), searchValue])//caseinsensitive
@@ -119,7 +140,7 @@ extension CoreDataFetcher{
     }
 }
 
-//MARK: COREDATA-FETCHER HELPER
+//MARK: - COREDATA-FETCHER HELPER
 extension CoreDataFetcher{
     func reset(){
         totalItems = 0
@@ -138,9 +159,7 @@ extension CoreDataFetcher{
     }
 }
 
-/*  ######################################################################################################## */
-
-//MARK: COREDATA-VIEWMODEL
+//MARK: - COREDATA-VIEWMODEL
 class CoreDataViewModel:ObservableObject{
     
     private let itemsFromEndThreshold = 3
@@ -239,28 +258,6 @@ extension CoreDataViewModel{
         return false
     }
     
-    var itemIdOnTop: String?{
-        if let itemCount = items?.count,
-            let spacing = spacing,
-            let childViewHeight = childViewHeight,
-            let lastScrollOffset = lastScrollOffset,
-            let scrollViewHeight = scrollViewHeight{
-            let scroll = (lastScrollOffset.y * -1)
-            
-            let childrenPossiblOnScreen = Int(round(scrollViewHeight/(childViewHeight+spacing)))
-            
-            let childAtBottomIndex = Int(round(scroll/(childViewHeight+spacing))) + childrenPossiblOnScreen
-            
-            let newIndex = childAtBottomIndex - childrenPossiblOnScreen
-            
-            
-            if 0 <= newIndex && newIndex < itemCount{
-                return items?[newIndex].id
-            }
-        }
-        return nil
-    }
-    
     private func thresholdMeet(_ itemsLoadedCount: Int, _ index: Int) -> Bool {
         return (itemsLoadedCount - index) == itemsFromEndThreshold
     }
@@ -268,14 +265,7 @@ extension CoreDataViewModel{
     private func moreItemsRemaining(_ itemsLoadedCount: Int, _ totalItemsAvailable: Int) -> Bool {
         return itemsLoadedCount < totalItemsAvailable
     }
-    
-    func getModelById(_ modelId:String) -> ScreenshotModel?{
-        if let index = items?.firstIndex(where: {$0.id == modelId}){
-            return items?[index]
-        }
-        return nil
-    }
-    
+        
     func setScrollViewDimensions(_ spacing:CGFloat,scrollViewHeight:CGFloat){
         self.spacing = spacing
         self.scrollViewHeight = scrollViewHeight

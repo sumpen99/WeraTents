@@ -54,11 +54,9 @@ extension YoutubeView{
     
     var mainContent:some View{
         VStack{
-            BaseTopBar(label: "Instruktionsfilmer", onNavigateBackAction: navigateBack)
-            SplitLine(color:Color.white).hCenter().padding(.top,5)
+            BaseTopBar(label: "Filmer", onNavigateBackAction: navigateBack)
             videoContent.vTop()
         }
-        .padding([.top,.horizontal])
     }
     
     var videoContent: some View {
@@ -77,7 +75,6 @@ extension YoutubeView{
                 Color.white
             }
         }
-        .padding(.top)
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
     }
