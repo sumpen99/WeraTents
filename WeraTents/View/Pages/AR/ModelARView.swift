@@ -61,7 +61,7 @@ struct ModelARView: View {
         .ignoresSafeArea()
         .safeAreaInset(edge: .bottom){
             if cameraManager.permission.isAuthorized{
-                bottomButtons
+                bottomButtons.vBottom()
             }
         }
         .toolbar(.hidden)
@@ -275,6 +275,32 @@ extension ModelARView{
 
 //MARK: - BOTTOM BUTTONS
 extension ModelARView{
+    func roundedImage(_ name:String,
+                      font:Font,
+                      scale:Image.Scale,
+                      radius:CGFloat,
+                      foreground:Color,
+                      background:Color,
+                      outerBackground:Color,
+                      thicknes:CGFloat) -> some View{
+            Image(systemName: name)
+            .font(font)
+            .bold()
+            .foregroundStyle(foreground)
+            .imageScale(scale)
+            .padding()
+            .background(
+                Circle()
+                .fill(background)
+            )
+            .padding(2)
+            .background(
+                Circle()
+                    .fill(outerBackground)
+            )
+             
+    }
+    
     var captureImageButton:some View{
         Button(action: captureImage, label: {
             if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
@@ -313,7 +339,7 @@ extension ModelARView{
     var removeModelButton:some View{
         Button(action:removeModel,
                label:{
-            roundedImage("minus",
+            roundedImage("minus.circle",
                          font:.title,
                          scale:.medium,
                          radius: 80.0,
@@ -359,7 +385,7 @@ extension ModelARView{
     var interactButtons:some View{
         ZStack{
             leadingButton.hLeading()
-            centerButton.hCenter()
+            centerButton.hCenter().padding(.bottom)
             showCarouselButton.hTrailing()
         }
         .frame(height: 90.0)
@@ -406,10 +432,10 @@ extension ModelARView{
     
     
     func saveCapturedImage(){
-        if let imageData = scaledImageWith(compressionQuality: 0.3,
-                                           ofSize: CGSize(width: 2040.0,
-                                                          height: HOME_CAPTURED_HEIGHT),
-                                           trimmed: false){
+        scaledImageWith(compressionQuality: 0.5,
+                        ofSize: CGSize(width: 2040.0,height: HOME_CAPTURED_HEIGHT),
+                        trimmed: false){ imageData in
+            if let imageData = imageData{
                 let managedObjectContext = PersistenceController.shared.container.viewContext
                 let model = ScreenshotModel(context:managedObjectContext)
                 model.buildWithName(arViewCoordinator.selectedTent)
@@ -424,9 +450,11 @@ extension ModelARView{
                 catch{
                     resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
                 }
-         }
-         else{
-             resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+            }
+            else{
+                resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+            }
+                
          }
     }
     
@@ -466,20 +494,26 @@ extension ModelARView{
     
     func scaledImageWith(compressionQuality toStore:CGFloat,
                          ofSize maxSize:CGSize,
-                         trimmed trimImage:Bool) -> Data?{
-        if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
-                                                    fileName: TEMP_SCREENSHOT_NAME,
-                                                     ext: "png"),
-           let data = try? Data(contentsOf: url),
-           let uiImage = UIImage(data: data),
-           let scaleFactor = calculateScaleFactor(ofSize:maxSize,
-                                                  imageWidth:uiImage.size.width,
-                                                  imageHeight: uiImage.size.height,
-                                                  trimImage:trimImage),
-           let thumb = uiImage.preparingThumbnail(of: scaleFactor){
-           return thumb.jpegData(compressionQuality: toStore)
+                         trimmed trimImage:Bool,completion:@escaping (Data?) -> Void){
+        DispatchQueue.global(qos: .background).async{
+            var jpegData:Data?
+            if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
+                                                        fileName: TEMP_SCREENSHOT_NAME,
+                                                         ext: "png"),
+               let data = try? Data(contentsOf: url),
+               let uiImage = UIImage(data: data),
+               let scaleFactor = calculateScaleFactor(ofSize:maxSize,
+                                                      imageWidth:uiImage.size.width,
+                                                      imageHeight: uiImage.size.height,
+                                                      trimImage:trimImage),
+               let thumb = uiImage.preparingThumbnail(of: scaleFactor){
+                jpegData = thumb.jpegData(compressionQuality: toStore)
+            }
+            DispatchQueue.main.async {
+                completion(jpegData)
+            }
         }
-        return nil
+        
     }
     
     func calculateScaleFactor(ofSize maxSize:CGSize,

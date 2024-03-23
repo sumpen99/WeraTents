@@ -78,7 +78,6 @@ extension SelectedHeader{
             .scaleEffect(scaleAmount)
             .font(.headline)
             .bold()
-            .frame(height: 33)
             .foregroundStyle(label == bindingLabel ? Color.white : unselectedlabelColor )
             .padding([.vertical],5)
             .padding([.horizontal],10)

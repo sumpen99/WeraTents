@@ -18,7 +18,7 @@ struct BaseTopBar:View {
             else{ regularTopBar }
             SplitLine()
         }
-        .padding(.vertical)
+        .padding(.top)
    }
 }
 

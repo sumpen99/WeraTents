@@ -60,39 +60,3 @@ extension View{
     
 }
 
-func roundedImage(_ name:String,
-                  font:Font,
-                  scale:Image.Scale,
-                  radius:CGFloat,
-                  foreground:Color,
-                  background:Color,
-                  outerBackground:Color,
-                  thicknes:CGFloat) -> some View{
-        Image(systemName: name)
-        .font(font)
-        .bold()
-        .foregroundStyle(foreground)
-        .imageScale(scale)
-        .padding()
-        .background(
-            Circle()
-            .fill(background)
-        )
-        .padding(2)
-        .background(
-            Circle()
-                .fill(outerBackground)
-        )
-         
-}
-
-func buttonImage(_ name:String,
-                  font:Font,
-                  foreground:Color) -> some View{
-    Image(systemName: name)
-    .font(font)
-    .bold()
-    .foregroundStyle(foreground)
-   
-}
-

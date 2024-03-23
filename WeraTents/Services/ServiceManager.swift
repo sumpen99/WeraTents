@@ -276,13 +276,16 @@ extension ServiceManager{
     }
     
     static func removefileFromFolder(folder named:TempFolder,fileName:String,ext:String){
-        guard let filePath = getFilePathUrlAt(folder: named, fileName: fileName, ext: ext) else { return }
-        do{
-            try FileManager.default.removeItem(at: filePath)
+        DispatchQueue.global(qos: .background).async {
+            guard let filePath = getFilePathUrlAt(folder: named, fileName: fileName, ext: ext) else { return }
+            do{
+                try FileManager.default.removeItem(at: filePath)
+            }
+            catch{
+                debugLog(object: error.localizedDescription)
+            }
         }
-        catch{
-            debugLog(object: error.localizedDescription)
-        }
+        
     }
     
     static func removeDataFromTemporary(_ url:URL?,completion: ((Bool) -> Void)? = nil){

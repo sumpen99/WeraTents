@@ -23,20 +23,22 @@ struct HomeView:View {
             .navigationDestination(for: Tent.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
-            .navigationDestination(for: TentsNavigator.self){  navigator in
+            .navigationDestination(for: CatalogeNavigator.self){  navigator in
                 TentsView(navigator:navigator)
             }
-             .navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
+            /*.navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
                 YoutubeView(videoResourcesItem: videoResourcesItem)
-            }
-            .navigationDestination(for: PdfResourcesItem.self){  pdfResourcesItem in
-                PdfView(pdfResourcesItem: pdfResourcesItem)
+            }*/
+            .navigationDestination(for: PdfResourceItem.self){  pdfResourceItem in
+                PdfContentView(pdfResourceItem: pdfResourceItem)
             }
             .navigationDestination(for: ModelRoute.self){  route in
                 switch route{
                 case .ROUTE_AR:                 ModelARView()
                 case .ROUTE_TENTS:              TentsView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
+                case .ROUTE_PDF:                PdfView()
+                case .ROUTE_YOUTUBE:            CapturedImages()
                 }
             }
         }
@@ -62,11 +64,11 @@ extension HomeView{
                 NavigationSection(labelText: "Katalog",
                                   action: navigateToTents,
                                   content: brandContent,
-                                  backgroundColor: Color.white.opacity(0.03))
+                                  backgroundColor: Color.materialDark)
                 NavigationSection(labelText: "För dig",
                                   action: navigateToCapturedImages,
                                   content: userLatestContent,
-                                  backgroundColor: Color.white.opacity(0.03))
+                                  backgroundColor: Color.materialDark)
              }
             
         }
@@ -128,7 +130,6 @@ extension HomeView{
         }
         .padding(.horizontal)
         .padding(.bottom,MENU_HEIGHT)
-        
     }
     
     @ViewBuilder
@@ -188,7 +189,7 @@ extension HomeView{
         if brand_category.count == 2{
             if let brand = brand_category.first,
                let cataloge = brand_category.last{
-               let tentsHelper = TentsNavigator(cataloge: String(cataloge),
+               let tentsHelper = CatalogeNavigator(cataloge: String(cataloge),
                                                 brand: String(brand))
                  navigationViewModel.appendToPathWith(tentsHelper)
             }
