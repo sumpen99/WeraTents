@@ -14,7 +14,7 @@ struct DataFile{
     let ext:String
 }
 
-enum DataState:Int,CaseIterable{
+enum DataState:CaseIterable{
     case INITIAL
     case DOWNLOAD
     case HAS_DATA
@@ -55,7 +55,6 @@ extension FirestoreDataButton{
     }
     @ViewBuilder
     var contentImage:some View{
-        
         switch currentState{
         case .INITIAL:
             baseImageWithName("square.and.arrow.down")
@@ -87,11 +86,7 @@ extension FirestoreDataButton{
 
 //MARK: - FUNCTIONS
 extension FirestoreDataButton{
-    func changeStatusTo(_ newState:DataState){
-        withAnimation{
-            currentState = newState
-        }
-    }
+    
     
     func disabledButton() -> Bool{
         return (currentState == .HAS_DATA || currentState == .DOWNLOAD) ? false : true
@@ -99,7 +94,7 @@ extension FirestoreDataButton{
     
     func executeAction(){
         switch currentState{
-        case .INITIAL:
+        case .DOWNLOAD:
             loadData()
         case .HAS_DATA:
             action?(file.name,resourceUrl)
@@ -109,9 +104,8 @@ extension FirestoreDataButton{
     
     func loadData(){
         guard let fileName = verifyFileName() else{ return }
-        debugLog(object: fileName)
         if fileExistsLocally(fileName: fileName){ return }
-         changeStatusTo(.LOADING)
+        changeStatusTo(.LOADING)
         firestoreViewModel.downloadDataFromStorage(fileName,
                                                    data: file.downloadAs){ url in
             if let url = url{
@@ -122,10 +116,11 @@ extension FirestoreDataButton{
                 changeStatusTo(.ERROR)
             }
         }
+        
     }
     
     func fileExistsLocally(fileName:String) -> Bool{
-        if let url =  ServiceManager.fileExistInside(folder: file.folder,
+        if let url = ServiceManager.fileExistInside(folder: file.folder,
                                           fileName: fileName,
                                           ext: file.ext){
             resourceUrl = url
@@ -145,5 +140,10 @@ extension FirestoreDataButton{
         return fileName
     }
     
+    func changeStatusTo(_ newState:DataState){
+        withAnimation{
+            currentState = newState
+        }
+    }
 }
 

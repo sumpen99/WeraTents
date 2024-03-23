@@ -19,6 +19,10 @@ class SceneViewCoordinator: NSObject,SCNSceneRendererDelegate,ObservableObject {
     var prevTranslate:CGPoint?
     var lastTime:TimeInterval?
     var prevTime:TimeInterval?
+    let MAX_ZOOM_LEVEL:CGFloat          = 10
+    let MIN_ZOOM_LEVEL:CGFloat          = 1
+    let ZOOM_SCALE:CGFloat              = 0.05
+    let ROTATE_SCALE:Float              = 0.4
     
     
     func createLightNode() ->SCNNode{
@@ -230,8 +234,8 @@ extension SceneViewCoordinator{
         if let previousPoint = previousPanPoint {
             let dx = Float(newPoint.x - previousPoint.x) * ROTATE_SCALE
             let dy = Float(newPoint.y - previousPoint.y) * ROTATE_SCALE
-            let dyPTAC = dy * PIXEL_TO_ANGLE
-            let dxPTAC = dx * PIXEL_TO_ANGLE
+            let dyPTAC = dy * .pi / 180
+            let dxPTAC = dx * .pi / 180
             transformMatrix(by: dxPTAC, and: dyPTAC)
         }
         previousPanPoint = newPoint

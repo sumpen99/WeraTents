@@ -45,16 +45,15 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                .fill(Color.lightGold )
+                .fill(Color.materialDark )
+                .shadow(color:Color.white,radius: 2.0)
                 buttonContainer
-                .shadow(color: Color.materialDarkest, radius: 2)
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
                 helper.menuBarWidth = newSize * 0.85
                 helper.paddingHorizontal = helper.menuBarWidth * 0.15
                 helper.paddingHorizontalOpen = helper.menuBarWidth - ICON_WIDTH
             }
-            .shadow(color:Color.lightGold,radius: CORNER_RADIUS_BRAND)
             .gesture(longPressGesture)
             .scaleEffect(helper.scaleAmount)
             .animation(.linear(duration: 0.25),value: helper.scaleAmount)
@@ -99,6 +98,7 @@ struct MenuButtonAnimation:View {
             }
             expandMenuButton
         }
+        
       }
 }
 
@@ -162,20 +162,18 @@ extension MenuButtonAnimation{
     
     func imageBase(_ name:String) -> some View{
         Image(systemName: name)
-        .shadow(color:Color.materialDarkest,radius: 2.0)
         .font(.title3)
         .bold()
         .foregroundStyle(Color.white)
         .padding()
-        .background(Color.lightGold)
+        .background(Color.materialDark)
         .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
         .clipShape(Circle())
-        .shadow(color:Color.lightGold,radius: 2.0)
     }
     
     func textLabelBase(_ text:String) -> some View{
         Text(text)
-            .foregroundStyle(openMenuSwitch ? Color.white : Color.white)
+            .foregroundStyle(openMenuSwitch ? Color.black : Color.white)
         .bold()
         .font(.headline)
     }
