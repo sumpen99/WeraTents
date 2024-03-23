@@ -103,7 +103,7 @@ extension ARTentPicker{
             LazyVGrid(columns: [GridItem(),GridItem()],
                       spacing: V_GRID_SPACING,
                       pinnedViews: .sectionHeaders){
-                ForEach(firestoreViewModel.tentItemByCategoryAndBrand(brand_category: helper.selectedBrandCategory),id:\.self){ tent in
+                ForEach(firestoreViewModel.tentItemsBy(brand_category: helper.selectedBrandCategory),id:\.self){ tent in
                     ZStack{
                         FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
                                        imageType: .PICKER)

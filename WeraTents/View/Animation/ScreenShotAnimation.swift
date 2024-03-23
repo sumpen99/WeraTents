@@ -90,10 +90,10 @@ extension ScreenShotAnimation{
                     .clipShape(RoundedRectangle(cornerRadius: 5.0))
                     .rotation3DEffect(.degrees(self.flag ? 360.0 : 0.0), 
                                       axis: (x:1.0,y:1.0,z:0.0))
-                    .frame(width: self.flag ? 0 : 150.0,
-                           height:self.flag ? 0 : 150.0)
-                    .offset(x:self.flag ? 0 : -75 ,
-                            y:self.flag ? 0 : -75)
+                    .frame(width: self.flag ? 0 : 100.0,
+                           height:self.flag ? 0 : 100.0)
+                    .offset(x:self.flag ? 0 : -50 ,
+                            y:self.flag ? 0 : -50)
                     .modifier(FollowPathModifier(pct: self.flag ? 1 : 0,
                                                  path: ShapeFlyingCard.createPath(
                                                     in:reader.boundingRect(),

@@ -9,15 +9,6 @@ import SwiftUI
 // FOR THE LOVE OF GOD DONT REMOVE IMPORT
 import FirebaseFirestoreSwift
 import OrderedCollections
-protocol CarouselItem:Identifiable,Hashable{
-    var id:String { get }
-    var index:Int { get }
-    var img:Image { get }
-    var name:String { get }
-    var label:String { get }
-    var shortDescription:String { get }
-    var price:String{ get }
-}
 
 struct VideoItem:Identifiable,Hashable{
     let id:String
@@ -29,20 +20,6 @@ struct VideoItem:Identifiable,Hashable{
     }
         
     static func == (lhs: VideoItem, rhs: VideoItem) -> Bool {
-        return lhs.id == rhs.id
-    }
-}
-
-struct PdfItem:Identifiable,Hashable{
-    let id:String
-    let pdfId:String
-    let title:String
-    
-    func hash(into hasher: inout Hasher) {
-        return hasher.combine(id)
-    }
-        
-    static func == (lhs: PdfItem, rhs: PdfItem) -> Bool {
         return lhs.id == rhs.id
     }
 }
@@ -59,19 +36,19 @@ struct VideoResourcesItem:Hashable{
     }
 }
 
-struct PdfResourcesItem:Hashable{
+struct PdfResourceItem:Hashable{
     let id:String
-    let listOfPdfItems:[PdfItem]
+    let pdfUrl:URL
     func hash(into hasher: inout Hasher) {
         return hasher.combine(id)
     }
         
-    static func == (lhs: PdfResourcesItem, rhs: PdfResourcesItem) -> Bool {
+    static func == (lhs: PdfResourceItem, rhs: PdfResourceItem) -> Bool {
         return lhs.id == rhs.id
     }
 }
 
-struct Meta{
+struct Meta:Codable{
     let width:Float
     let height:Float
     let depth:Float
@@ -302,6 +279,7 @@ struct TentDb:Codable,Comparable{
     var modelStorageIds:[String]?
     var instructionVideoUrls:[String]?
     var instructionPdfIds:[String]?
+    var meta:Meta?
        
     func toTent() -> Tent{
         return Tent(id: self.id ?? "",

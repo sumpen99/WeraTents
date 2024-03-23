@@ -20,7 +20,7 @@ struct ScrollviewLabelHeader:View {
     
     var body: some View {
         content
-        .frame(height: menuHeight)
+        .frame(minHeight: menuHeight)
         .scrollIndicators(.never)
     }
     
@@ -40,5 +40,6 @@ struct ScrollviewLabelHeader:View {
             }
             .padding()
         }
+       
     }
 }

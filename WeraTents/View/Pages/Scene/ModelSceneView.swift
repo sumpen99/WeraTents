@@ -25,8 +25,6 @@ enum ButtonSelection:String{
 enum ArrayToCheck{
     case EQUIPMENT
     case BARE_IN_MIND
-    case VIDEO_RESOURCE
-    case PDF_RESOURCE
     case USDZ_RESOURCE
 }
 
@@ -51,6 +49,7 @@ struct ModelHelper{
     var showTentLabel:Bool = true
     var showBottomContainer:Bool = false
     var hasNotFetchedData:Bool = true
+    var automaticFold:String? = "No"
     var selectedIconImageUrl:String?
     
 }
@@ -165,11 +164,12 @@ extension ModelSceneView{
     
     var openInformationButton:some View{
         Menu(content:{
-            youtubeButton
-            pdfButton
             webPageButton
         },label: {
-            buttonImage("ellipsis.circle",font: TOP_BAR_FONT,foreground: Color.white)
+            Image(systemName: "ellipsis.circle")
+            .font(TOP_BAR_FONT)
+            .bold()
+            .foregroundStyle(Color.white)
         })
         .padding(.horizontal)
       }
@@ -185,21 +185,6 @@ extension ModelSceneView{
                        toVisit: selectedTent.webpage)
     }
     
-    var youtubeButton: some View{
-        Button(action: navigateToMovies ){
-            Label("Instruktionsfilmer", systemImage: "play.tv")
-        }
-        .disabled(disabledVideoButton)
-        .padding()
-    }
-    
-    var pdfButton: some View{
-        Button(action: navigateToPdf ){
-            Label("Instruktionsmanual", systemImage: "book.pages")
-        }
-        .disabled(disabledPdfButton)
-        .padding()
-    }
 }
 
 //MARK: - BOTTOM CONTAINER
@@ -316,7 +301,10 @@ extension ModelSceneView{
                              splitColor: Color.lightGold.opacity(0.2),
                              toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
-                             offLabelText: "Visa")
+                             offLabelText: "Visa",
+                             automaticFold: $helper.automaticFold,
+                             showContent: false,
+                             addedSplitLine: true)
     }
     
     func foldableSection(headerText:String,contentText:String) -> some View{
@@ -325,7 +313,10 @@ extension ModelSceneView{
                              splitColor: Color.lightGold.opacity(0.2),
                              toggleColor:Color.lightGold,
                              onLabelText: "Dölj",
-                             offLabelText: "Visa")
+                             offLabelText: "Visa",
+                             automaticFold: $helper.automaticFold,
+                             showContent: false,
+                             addedSplitLine: true)
     }
     
     func buttonSection(_ size:CGFloat) -> some View{
@@ -431,15 +422,7 @@ extension ModelSceneView{
 
 //MARK: - FUNCTIONS
 extension ModelSceneView{
-    
-    var disabledVideoButton:Bool{
-        selectedTent.instructionVideoUrls?.count ?? 0 == 0
-    }
-    
-    var disabledPdfButton:Bool{
-        selectedTent.instructionPdfIds?.count ?? 0 == 0
-    }
-    
+   
     func checkArrayOf(type:ArrayToCheck) ->[String]?{
         switch type {
         case .EQUIPMENT:
@@ -450,17 +433,9 @@ extension ModelSceneView{
             if let bareInMind = selectedTent.bareInMind{
                 return bareInMind.count > 0 ? bareInMind : nil
             }
-        case .VIDEO_RESOURCE:
-            if let instructionVideoUrls = selectedTent.instructionVideoUrls{
-                return instructionVideoUrls.count > 0 ? instructionVideoUrls : nil
-            }
         case .USDZ_RESOURCE:
             if let modelStorageIds = selectedTent.modelStorageIds{
                 return modelStorageIds.count > 0 ? modelStorageIds : nil
-            }
-        case .PDF_RESOURCE:
-            if let instructionPdfIds = selectedTent.instructionPdfIds{
-                return instructionPdfIds.count > 0 ? instructionPdfIds : nil
             }
         }
         return nil
@@ -484,33 +459,7 @@ extension ModelSceneView{
          }
          else{ onCompletion() }
     }
-    
-    func navigateToMovies(){
-        if let instructionVideoUrls = checkArrayOf(type:.VIDEO_RESOURCE){
-            var listOfVideoItems:[VideoItem] = []
-            for videoUrl in instructionVideoUrls{
-                listOfVideoItems.append(VideoItem(id: shortId(),
-                                                  videoUrl: videoUrl,
-                                                  title: ""))
-            }
-            navigationViewModel.appendToPathWith(VideoResourcesItem(id: shortId(),
-                                                                    listOfVideoItems: listOfVideoItems))
-        }
-    }
-    
-    func navigateToPdf(){
-        if let instructionPdfIds = checkArrayOf(type:.PDF_RESOURCE){
-            var listOfPdfItems:[PdfItem] = []
-            for pdfId in instructionPdfIds{
-                listOfPdfItems.append(PdfItem(id: shortId(),
-                                                  pdfId: pdfId,
-                                                  title: ""))
-            }
-            navigationViewModel.appendToPathWith(PdfResourcesItem(id: shortId(),
-                                                                  listOfPdfItems: listOfPdfItems))
-        }
-    }
-    
+     
     func navigateBack(){
         sceneViewCoordinator.destroy()
         navigationViewModel.popPath()

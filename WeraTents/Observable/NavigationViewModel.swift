@@ -11,6 +11,8 @@ enum ModelRoute: Identifiable{
     case ROUTE_AR
     case ROUTE_TENTS
     case ROUTE_CAPTURED_IMAGES
+    case ROUTE_YOUTUBE
+    case ROUTE_PDF
     
     var id: Int {
         hashValue

@@ -25,6 +25,11 @@ enum LoadingState:Int,CaseIterable{
     case PDF_DOCUMENT
 }
 
+enum DownloadData{
+    case PDF
+    case USDZ
+}
+
 //MARK: - FIRESTORE REPOSITORY
 class FirestoreRepository{
     private let dB = Firestore.firestore()
@@ -121,24 +126,8 @@ extension FirestoreViewModel{
 extension FirestoreViewModel{
     func loadTentModelData(_ fileName:String,completion: @escaping (URL?) -> Void){
         if  FETCH_LOCALLY{
-            if let foundUrl = ServiceManager.fileExistInside(folder: .USDZ,
-                                                             fileName: fileName,
-                                                             ext: TempFolder.USDZ.rawValue){
-                completion(foundUrl)
-            }
-            else{
-                if let bundleUrl = ServiceManager.localUSDZUrl(fileName: fileName),
-                   let data = try? Data(contentsOf: bundleUrl){
-                    ServiceManager.writeDataToCache(fileName: fileName,
-                                                    data: data,
-                                                    folder: .USDZ,
-                                                    ext: "usdz",
-                                                    completion: completion)
-                }
-                else{
-                    completion(nil)
-                }
-            }
+            let bundleUrl = ServiceManager.localUSDZUrl(fileName: fileName)
+            completion(bundleUrl)
         }
         else{
             if let url = ServiceManager.fileExistInside(folder: .USDZ,
@@ -208,6 +197,27 @@ extension FirestoreViewModel{
             }
        }
     }
+    
+    func downloadDataFromStorage(_ fileName:String,data:DownloadData,completion: @escaping (URL?) -> Void){
+        if FETCH_LOCALLY{
+            switch data {
+                case .PDF:
+                let bundleUrl = ServiceManager.localPDFUrl(fileName: fileName)
+                completion(bundleUrl)
+                case .USDZ:
+                let bundleUrl = ServiceManager.localUSDZUrl(fileName: fileName)
+                completion(bundleUrl)
+            }
+        }
+        else{
+            switch data {
+                case .PDF:
+                downloadTentPdfFromStorage(fileName,completion: completion)
+                case .USDZ:
+                downloadTentModelFromStorage(fileName,completion: completion)
+            }
+        }
+    }
    
     func downloadTentModelFromStorage(_ fileName:String,completion: @escaping (URL?) -> Void){
         if let localUrl = ServiceManager.create(file: fileName,folder: .USDZ,ext: TempFolder.USDZ.rawValue){
@@ -228,6 +238,7 @@ extension FirestoreViewModel{
        }
        else{ completion(nil) }
     }
+    
 }
 
 //MARK: - COLLECTION COUNT
@@ -318,21 +329,29 @@ extension FirestoreViewModel{
         return nil
     }
 
-    func tentItemByCategoryAndBrand(brand_category toSplit:String?) -> [Tent]{
-        var tentItems:[Tent] = []
+    func tentItemsBy(brand_category toSplit:String?) -> [Tent]{
         guard let toSplit = toSplit else{ return [] }
         let sub_sequence = toSplit.split(separator: "-")
         if sub_sequence.count == 2{
-            if let weraAsset = weraAsset,
-               let catalogeItems = weraAsset.cataloge,
-               let brand = sub_sequence.first,
-               let label = sub_sequence.last,
-               let brands = catalogeItems[String(label)]?.brands,
-               let tents = brands[String(brand)]?.tents{
-                tentItems.append(contentsOf: tents.values)
+            if let category = sub_sequence.last,
+               let brand = sub_sequence.first{
+                return tentItemsBy(category: String(category),
+                                  brand: String(brand))
             }
         }
-        
+        return []
+    }
+    
+    func tentItemsBy(category:String?,brand:String?) -> [Tent]{
+        var tentItems:[Tent] = []
+        if let category = category,
+           let brand = brand,
+           let weraAsset = weraAsset,
+           let catalogeItems = weraAsset.cataloge,
+           let brands = catalogeItems[category]?.brands,
+           let tents = brands[brand]?.tents{
+                tentItems.append(contentsOf: tents.values)
+        }
         return tentItems
     }
     
