@@ -15,7 +15,7 @@ struct ScreenShotAnimation:View {
         if arAnimationState[ArAnimationState.FLASH_SCREEN.rawValue]{
             flashScreenContent
             .task{
-                ServiceManager.playSystemSound(with: 1108)
+                //ServiceManager.playSystemSound(with: 1108)
             }
         }
         else if arAnimationState[ArAnimationState.SEND_CARD.rawValue]{

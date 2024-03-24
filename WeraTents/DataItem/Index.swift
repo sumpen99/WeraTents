@@ -10,42 +10,19 @@ import SwiftUI
 import FirebaseFirestoreSwift
 import OrderedCollections
 
-struct VideoItem:Identifiable,Hashable{
-    let id:String
-    let videoUrl:String
-    let title:String
+struct CatalogeBrand:Identifiable,Hashable{
+    var id:String
+    var cataloge:String
+    var brand:String
     
     func hash(into hasher: inout Hasher) {
         return hasher.combine(id)
     }
         
-    static func == (lhs: VideoItem, rhs: VideoItem) -> Bool {
+    static func == (lhs: CatalogeBrand, rhs: CatalogeBrand) -> Bool {
         return lhs.id == rhs.id
     }
-}
-
-struct VideoResourcesItem:Hashable{
-    let id:String
-    let listOfVideoItems:[VideoItem]
-    func hash(into hasher: inout Hasher) {
-        return hasher.combine(id)
-    }
-        
-    static func == (lhs: VideoResourcesItem, rhs: VideoResourcesItem) -> Bool {
-        return lhs.id == rhs.id
-    }
-}
-
-struct PdfResourceItem:Hashable{
-    let id:String
-    let pdfUrl:URL
-    func hash(into hasher: inout Hasher) {
-        return hasher.combine(id)
-    }
-        
-    static func == (lhs: PdfResourceItem, rhs: PdfResourceItem) -> Bool {
-        return lhs.id == rhs.id
-    }
+    
 }
 
 struct Meta:Codable{

@@ -11,6 +11,7 @@ struct CatalogeButton:View {
     @Binding var catalogeDb:String?
     let buttonText:String
     let frameWidth:CGFloat
+    var disabledUnSelect:Bool = false
     let action:() -> Void
     var body: some View {
         content
@@ -54,7 +55,10 @@ extension CatalogeButton{
         return false
     }
     
+    var isDisabled: Bool{ disabledUnSelect && isSelected() }
+    
     func onAction(){
+        if isDisabled{ return }
         var selection:String? = nil
         if !isSelected(){
             selection = buttonText
