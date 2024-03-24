@@ -12,27 +12,10 @@ enum LibraryState{
     case EDIT
 }
 
-struct CoreDataRemoveItem:Comparable{
-    
+struct CoreDataRemoveItem{
     let modelId:NSManagedObjectID
     let imageId:NSManagedObjectID
     
-    static func < (lhs: CoreDataRemoveItem, rhs: CoreDataRemoveItem) -> Bool{
-        return lhs.modelId.hashValue > rhs.modelId.hashValue
-    }
-    static func <= (lhs: CoreDataRemoveItem, rhs: CoreDataRemoveItem) -> Bool{
-        return lhs.modelId.hashValue > rhs.modelId.hashValue
-    }
-    static func >= (lhs: CoreDataRemoveItem, rhs: CoreDataRemoveItem) -> Bool{
-        return lhs.modelId.hashValue > rhs.modelId.hashValue
-    }
-    static func > (lhs: CoreDataRemoveItem, rhs: CoreDataRemoveItem) -> Bool{
-        return lhs.modelId.hashValue > rhs.modelId.hashValue
-    }
-    
-    static func == (lhs: CoreDataRemoveItem, rhs: NSManagedObjectID) -> Bool {
-        return lhs.modelId == rhs
-    }
 }
 
 struct CapturedImages:View {
@@ -70,14 +53,6 @@ extension CapturedImages{
             topButtons
             itemsLoadedPage
         }
-     }
-}
-
-//MARK: - COREDATA-LIST
-extension CapturedImages{
-    
-    var itemsLoadedPage:some View{
-        savedScreenshotList
         .task{
             coreDataViewModel.setChildViewDimension(CHILD_VIEW_HEIGHT)
             coreDataViewModel.requestInitialSetOfItems()
@@ -86,15 +61,27 @@ extension CapturedImages{
             coreDataViewModel.clearAllData()
             clearAllData()
         }
+     }
+}
+
+//MARK: - COREDATA-LIST
+extension CapturedImages{
+    
+    var itemsLoadedPage:some View{
+        savedScreenshotList
     }
     
+    @ViewBuilder
     var savedScreenshotList:some View{
-        ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
-            screenShotCard(screenShot as? ScreenshotModel)
+        if coreDataViewModel.items?.count ?? 0 > 0{
+            ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
+                screenShotCard(screenShot as? ScreenshotModel)
+            }
+            .background{
+                Color.materialDark
+            }
         }
-        .background{
-            Color.materialDark
-        }
+        
     }
       
 }
@@ -114,8 +101,9 @@ extension CapturedImages{
                         labelText: model.name ?? "",
                         descriptionText: model.shortDesc ?? "",
                         dateText: model.date?.toISO8601String() ?? "",
-                        height: HOME_CAPTURED_HEIGHT,
-                        ignoreTapGesture: true)
+                        height: HOME_CAPTURED_HEIGHT){ newComment in
+                PersistenceController.updateScreenshot(model,with: newComment)
+            }
             .padding()
             .onTapGesture {
                 if state == .BASE{
@@ -279,7 +267,7 @@ extension CapturedImages{
     }
     
     var listCount:Int{
-        deleteModels.count/2
+        deleteModels.count
     }
     
     func navigateBack(){

@@ -35,7 +35,9 @@ struct FirestoreImage:View {
                 }
                 else{
                     firestoreViewModel.currentIconImage(newValue){ uiImage in
-                        ServiceManager.writeImageToCache(fileName: newValue, uiImage: uiImage){ _ in }
+                        DispatchQueue.global(qos: .background).async {
+                            ServiceManager.writeImageToCache(fileName: newValue, uiImage: uiImage){ _ in }
+                        }
                         self.uIImage = uiImage
                      }
                 }

@@ -46,7 +46,7 @@ extension CoreDataFetcher{
     func requestItemsBySearchCategorie(_ categorie:SearchCategorie,
                                        searchText:String,
                                        onResult: @escaping ((totalItems:Int,items:[ScreenshotModel])) -> Void) {
-        DispatchQueue.global().async{ [weak self] in
+        DispatchQueue.global(qos: .userInteractive).async{ [weak self] in
             if let strongSelf = self{
                 let items = strongSelf.fetchedRequestBySearchCategorie(categorie,searchText:searchText)
                 onResult((totalItems:items.count,items:items))
@@ -112,18 +112,23 @@ extension CoreDataFetcher{
     static func loadDataWith(limit fetchLimit:Int,
                             sortedOn sortValue:String,
                             onResult:@escaping([ScreenshotModel]) -> Void){
-        var screenShots:[ScreenshotModel] = []
-        let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
-        let sortDescriptors = [NSSortDescriptor(key: sortValue, ascending: false)]
-        fetchRequest.fetchLimit = fetchLimit
-        fetchRequest.sortDescriptors = sortDescriptors
-        fetchRequest.includesSubentities = true
-        do {
-            screenShots =  try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
-        } catch {
-            debugLog(object: error.localizedDescription)
+        DispatchQueue.global(qos: .userInteractive).async {
+            var screenShots:[ScreenshotModel] = []
+            let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
+            let sortDescriptors = [NSSortDescriptor(key: sortValue, ascending: false)]
+            fetchRequest.fetchLimit = fetchLimit
+            fetchRequest.sortDescriptors = sortDescriptors
+            fetchRequest.includesSubentities = true
+            do {
+                screenShots =  try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
+            } catch {
+                debugLog(object: error.localizedDescription)
+            }
+            DispatchQueue.main.async {
+                onResult(screenShots)
+            }
         }
-        onResult(screenShots)
+        
      }
     
 }
@@ -159,6 +164,8 @@ extension CoreDataFetcher{
     }
 }
 
+
+
 //MARK: - COREDATA-VIEWMODEL
 class CoreDataViewModel:ObservableObject{
     
@@ -177,7 +184,7 @@ class CoreDataViewModel:ObservableObject{
     var spacing:CGFloat?
     @Published var items: [ScreenshotModel]? = []
     @Published var dataIsLoading = false
-       
+     
 }
 
 //MARK: - COREDATA-VIEWMODEL REQUEST ITEMS
