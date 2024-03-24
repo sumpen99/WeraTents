@@ -174,19 +174,17 @@ extension ServiceManager{
     static func writeImageToCache(fileName toWriteTo:String,
                                   uiImage:UIImage?,
                                   folder:TempFolder = .PNG,completion:@escaping (Bool) -> Void){
-        DispatchQueue.global(qos: .background).async {
-            if let url = create(file: toWriteTo, folder: folder, ext: TempFolder.PNG.rawValue),
-               let uiImage = uiImage,
-               let data = uiImage.pngData(){
-               do {
-                    try data.write(to: url)
-                    DispatchQueue.main.async { completion(true)}
-                } catch {
-                    DispatchQueue.main.async { completion(false) }
-                }
-           }
-           DispatchQueue.main.async { completion(false) }
+         if let url = create(file: toWriteTo, folder: folder, ext: TempFolder.PNG.rawValue),
+           let uiImage = uiImage,
+           let data = uiImage.pngData(){
+           do {
+                try data.write(to: url)
+                completion(true)
+            } catch {
+                completion(false)
+            }
         }
+        completion(false)
     }
     
     static func writeDataToCache(fileName toWriteTo:String,

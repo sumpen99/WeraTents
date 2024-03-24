@@ -32,39 +32,19 @@ final class PersistenceController {
     
     private init(){ }
     
-    public func saveContext(backgroundContext:NSManagedObjectContext? = nil) throws{
-        let context = backgroundContext ?? container.viewContext
-        guard context.hasChanges else { throw CoreDataError.SAVE_FAILED("Context has no changes") }
-        try context.save()
+}
+
+//MARK: - UPDATE
+extension PersistenceController{
+    static func updateScreenshot(_ model:ScreenshotModel,with comment:String){
         
+        model.setValue(comment, forKey: "shortDesc")
+        saveChanges()
     }
-    
-    static func saveContext(backgroundContext:NSManagedObjectContext? = nil) throws{
-        let context = backgroundContext ?? shared.container.viewContext
-        guard context.hasChanges else { throw CoreDataError.SAVE_FAILED("Context has no changes") }
-        try context.save()
-    }
-    
-    static func deleteAllDataFromEntity(_ name:String){
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName:name)
-        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        do {
-            try shared.container.viewContext.execute(batchDeleteRequest)
-        } catch {
-            debugLog(object: error.localizedDescription)
-        }
-    }
-    
-    static func deleteScreenshotModel(_ meta: ScreenshotModel?){
-        guard let meta = meta else { return }
-        shared.container.viewContext.delete(meta)
-    }
-    
-    static func deleteScreenshotImage(_ image: ScreenshotImage?){
-        guard let image = image else { return }
-        shared.container.viewContext.delete(image)
-    }
-    
+}
+
+//MARK: - FETCH
+extension PersistenceController{
     static func fetchAndSortYearOfScreenshots(startDate:NSDate,endDate:NSDate) -> FETCH_RECORD{
         let fetchedScreenshotIds = fetchAllDatesDuringCurrentYear(NSPredicate(format: "date >= %@ AND date < %@",
                                                                         startDate,
@@ -148,6 +128,22 @@ final class PersistenceController {
         }
         return count
     }
+}
+
+//MARK: - SAVE
+extension PersistenceController {
+    public func saveContext(backgroundContext:NSManagedObjectContext? = nil) throws{
+        let context = backgroundContext ?? container.viewContext
+        guard context.hasChanges else { throw CoreDataError.SAVE_FAILED("Context has no changes") }
+        try context.save()
+        
+    }
+    
+    static func saveContext(backgroundContext:NSManagedObjectContext? = nil) throws{
+        let context = backgroundContext ?? shared.container.viewContext
+        guard context.hasChanges else { throw CoreDataError.SAVE_FAILED("Context has no changes") }
+        try context.save()
+    }
     
     static func saveChanges(){
         do {
@@ -155,6 +151,30 @@ final class PersistenceController {
         } catch {
             debugLog(object: error.localizedDescription)
         }
+    }
+}
+
+//MARK: - DELETE
+extension PersistenceController {
+   
+    static func deleteAllDataFromEntity(_ name:String){
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName:name)
+        let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        do {
+            try shared.container.viewContext.execute(batchDeleteRequest)
+        } catch {
+            debugLog(object: error.localizedDescription)
+        }
+    }
+    
+    static func deleteScreenshotModel(_ meta: ScreenshotModel?){
+        guard let meta = meta else { return }
+        shared.container.viewContext.delete(meta)
+    }
+    
+    static func deleteScreenshotImage(_ image: ScreenshotImage?){
+        guard let image = image else { return }
+        shared.container.viewContext.delete(image)
     }
     
     static func deleteMultipleItems(models:[CoreDataRemoveItem],completion:@escaping (Bool,Bool) -> Void){
@@ -180,9 +200,10 @@ final class PersistenceController {
             return false
         }
     }
-    
 }
 
+
+//MARK: - NSManagedObjectContext
 //https://stackoverflow.com/questions/14560900/coredata-delete-multiple-objects
 //https://www.avanderlee.com/swift/nsbatchdeleterequest-core-data/
 extension NSManagedObjectContext {

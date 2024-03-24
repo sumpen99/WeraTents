@@ -12,7 +12,7 @@ extension ScreenshotModel{
         if let tent = tent{
             self.name = tent.name
             self.label = tent.label
-            self.shortDesc = tent.shortDescription
+            self.shortDesc = ""
             self.modelId = tent.modelId
             self.date = Date()
             if let dimensions = tent.meta{
