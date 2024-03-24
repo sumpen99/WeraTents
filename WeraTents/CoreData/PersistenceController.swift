@@ -26,6 +26,7 @@ final class PersistenceController {
                 fatalError("Unable to load persistent store \(error)")
             }
         }
+        //container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return container
     }()
     
@@ -63,15 +64,6 @@ final class PersistenceController {
         guard let image = image else { return }
         shared.container.viewContext.delete(image)
     }
-    
-    static func deleteMultipleItems(modelIds:[NSManagedObjectID]){
-        let batchDeleteRequest = NSBatchDeleteRequest(objectIDs: modelIds)
-        do {
-            try shared.container.viewContext.executeAndMergeChanges(using: batchDeleteRequest)
-        } catch {
-            debugLog(object: error.localizedDescription)
-        }
-   }
     
     static func fetchAndSortYearOfScreenshots(startDate:NSDate,endDate:NSDate) -> FETCH_RECORD{
         let fetchedScreenshotIds = fetchAllDatesDuringCurrentYear(NSPredicate(format: "date >= %@ AND date < %@",
@@ -162,6 +154,30 @@ final class PersistenceController {
             try saveContext()
         } catch {
             debugLog(object: error.localizedDescription)
+        }
+    }
+    
+    static func deleteMultipleItems(models:[CoreDataRemoveItem],completion:@escaping (Bool,Bool) -> Void){
+        DispatchQueue.global(qos: .background).async {
+            let modelIds = models.map({$0.modelId})
+            let imageIds = models.map({$0.imageId})
+            DispatchQueue.main.async {
+                let modelResult = items(toDelete: modelIds)
+                let imageResult = items(toDelete: imageIds)
+                completion(modelResult,imageResult)
+            }
+        }
+   }
+    
+    static func items(toDelete itemIds:[NSManagedObjectID]) -> Bool{
+        do {
+            let batchDeleteRequest = NSBatchDeleteRequest(objectIDs: itemIds)
+            try shared.container.viewContext.executeAndMergeChanges(using: batchDeleteRequest)
+            return true
+        }
+        catch {
+            //debugLog(object: error.localizedDescription)
+            return false
         }
     }
     

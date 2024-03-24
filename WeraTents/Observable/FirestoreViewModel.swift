@@ -30,6 +30,10 @@ enum DownloadData{
     case USDZ
 }
 
+enum CatalogeFilter{
+    case YOUTUBE
+}
+
 //MARK: - FIRESTORE REPOSITORY
 class FirestoreRepository{
     private let dB = Firestore.firestore()
@@ -261,7 +265,7 @@ extension FirestoreViewModel{
     }
 }
 
-//MARK: ORDERED-DICTIONARY
+//MARK: - ORDERED-DICTIONARY
 extension FirestoreViewModel{
     func catalogeList() -> [String]{
         if let weraAsset = weraAsset,
@@ -270,6 +274,26 @@ extension FirestoreViewModel{
         }
         return []
     }
+    
+    func catalogeByFilter(on filter:CatalogeFilter,
+                          completion:@escaping ([CatalogeBrand]) -> Void){
+        DispatchQueue.global(qos: .background).async {[weak self] in
+            var filteredCataloge:[CatalogeBrand] = []
+            if let weraAsset = self?.weraAsset,
+               let cataloge = weraAsset.cataloge{
+               switch filter {
+               case .YOUTUBE:
+                   filteredCataloge = self?.filterOnMovies(cataloge) ?? []
+               }
+            }
+            DispatchQueue.main.async {
+                completion(filteredCataloge)
+            }
+        }
+         
+    }
+    
+    
     
     func currentBrandsOfCataloge(cataloge label:String?) -> [String]{
         if let weraAsset = weraAsset,
@@ -382,6 +406,44 @@ extension FirestoreViewModel{
             }
         }
      }
+}
+
+//MARK: - ORDERED-DICTIONARY-YOUTUBE
+extension FirestoreViewModel{
+    func filterOnMovies(_ cataloge:OrderedDictionary<String,Cataloge>) -> [CatalogeBrand]{
+        var filteredCataloge:[CatalogeBrand] = []
+        for member in cataloge.keys.elements{
+            if let member = cataloge[member],
+               let type = member.type,
+               let videos = member.instructionVideoUrls,
+               let brands = member.brands{
+                if !videos.isEmpty{
+                    for brand in brands.keys.elements{
+                        if let brand = brands[brand],
+                           let label = brand.label,
+                           let videos = brand.instructionVideoUrls{
+                            if !videos.isEmpty{
+                                filteredCataloge.append(CatalogeBrand(id: label,
+                                                                      cataloge: type,
+                                                                      brand: label))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return filteredCataloge
+    }
+    
+    func videoItemsBy(_ catalogeBrand:CatalogeBrand) -> [String]{
+        if let weraAsset = weraAsset,
+           let catalogeItems = weraAsset.cataloge,
+           let brands = catalogeItems[catalogeBrand.cataloge]?.brands,
+           let videos = brands[catalogeBrand.brand]?.instructionVideoUrls{
+            return videos
+        }
+        return []
+    }
 }
 
 //MARK: - HELPER FUNCTIONS

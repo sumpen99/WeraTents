@@ -313,9 +313,9 @@ extension ModelARView{
                              font:.largeTitle,
                              scale:.large,
                              radius: 90.0,
-                             foreground: Color.lightGold,
+                             foreground: Color.darkGreen,
                              background: Color.materialDarkest,
-                             outerBackground: Color.lightGold,
+                             outerBackground: Color.darkGreen,
                              thicknes:2.0)
             }
         })
@@ -432,8 +432,8 @@ extension ModelARView{
     
     
     func saveCapturedImage(){
-        scaledImageWith(compressionQuality: 0.5,
-                        ofSize: CGSize(width: 2040.0,height: HOME_CAPTURED_HEIGHT),
+        scaledImageWith(compressionQuality: 1.0,
+                        ofSize: CGSize(width: 2040.0,height: 2040.0),
                         trimmed: false){ imageData in
             if let imageData = imageData{
                 let managedObjectContext = PersistenceController.shared.container.viewContext

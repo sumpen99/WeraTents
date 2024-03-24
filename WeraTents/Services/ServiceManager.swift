@@ -178,14 +178,14 @@ extension ServiceManager{
             if let url = create(file: toWriteTo, folder: folder, ext: TempFolder.PNG.rawValue),
                let uiImage = uiImage,
                let data = uiImage.pngData(){
-                do {
+               do {
                     try data.write(to: url)
-                    completion(true)
+                    DispatchQueue.main.async { completion(true)}
                 } catch {
-                    completion(false)
-                    debugLog(object: error.localizedDescription)
+                    DispatchQueue.main.async { completion(false) }
                 }
            }
+           DispatchQueue.main.async { completion(false) }
         }
     }
     

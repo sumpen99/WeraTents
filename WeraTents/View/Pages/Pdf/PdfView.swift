@@ -7,6 +7,18 @@
 
 import SwiftUI
 
+struct PdfResourceItem:Hashable{
+    let id:String
+    let pdfUrl:URL
+    func hash(into hasher: inout Hasher) {
+        return hasher.combine(id)
+    }
+        
+    static func == (lhs: PdfResourceItem, rhs: PdfResourceItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+
 struct PdfView:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
