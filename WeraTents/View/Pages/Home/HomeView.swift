@@ -11,11 +11,11 @@ struct HomeView:View {
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var openMenuSwitch:Bool = false
-    @State var screenShots:[ScreenshotModel]?
-   
+       
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
             mainContent
+            .ignoresSafeArea(.keyboard)
             .safeAreaInset(edge: .top){
                 labelContainer
             }
@@ -38,6 +38,10 @@ struct HomeView:View {
                 case .ROUTE_YOUTUBE:            YoutubeView()
                 }
             }
+            
+        }
+        .onTapGesture {
+            endTextEditing()
         }
     }
 }
@@ -59,12 +63,16 @@ extension HomeView{
         ScrollView{
             LazyVStack(spacing:V_GRID_SPACING){
                 NavigationSection(labelText: "Katalog",
-                                  action: navigateToTents,
+                                  action: {
+                    navigateToRoute(.ROUTE_TENTS)
+                },
                                   content: brandContent,
                                   backgroundColor: Color.materialDark)
                 NavigationSection(labelText: "För dig",
-                                  action: navigateToCapturedImages,
-                                  content: userLatestContent,
+                                  action: {
+                    navigateToRoute(.ROUTE_CAPTURED_IMAGES)
+                },
+                                  content: CoreDataSection(limit: 3),
                                   backgroundColor: Color.materialDark)
              }
             
@@ -107,46 +115,6 @@ extension HomeView{
   
 }
 
-//MARK: - CAPTURED-IMAGES-SECTION
-extension HomeView{
-    var userLatestContent:some View{
-        LazyVGrid(columns: [GridItem(),GridItem()],
-                  alignment: .center,
-                  spacing: V_GRID_SPACING,
-                  pinnedViews: .sectionHeaders){
-            ForEach(screenShots ?? [],id:\.self){ item in
-                screenshotCard(item)
-                .padding(.vertical)
-             }
-                                                            
-        }
-        .task{
-           CoreDataFetcher.loadDataWith(limit: 3,sortedOn: "date"){ screenShotsItems in
-               screenShots = screenShotsItems
-           }
-        }
-        .padding(.horizontal)
-        .padding(.bottom,MENU_HEIGHT)
-    }
-    
-    @ViewBuilder
-    func screenshotCard(_ item:ScreenshotModel) -> some View{
-        if let image = item.image,
-           let imageData = image.data,
-           let uiImage = UIImage(data: imageData){
-            FlippedCard(image: Image(uiImage: uiImage),
-                        label: item.label,
-                        modelId: item.modelId,
-                        labelText: item.name ?? "",
-                        descriptionText: item.shortDesc ?? "",
-                        dateText: item.date?.toISO8601String() ?? "",
-                        height: HOME_CAPTURED_HEIGHT,
-                        ignoreTapGesture: true)
-       }
-    }
-    
-}
-
 //MARK: - TOP-LABEL
 extension HomeView{
     
@@ -175,12 +143,21 @@ extension HomeView{
     
 }
 
+//MARK: - KEYBOARD ON DONE
+extension HomeView{
+   
+    var toolbarButton:some View{
+        Button("Klar") {
+            endTextEditing()
+        }
+        .bold()
+        .foregroundStyle(Color.blue)
+    }
+    
+}
+
 //MARK: - FUNCTIONS
 extension HomeView{
-    
-    func navigateToTents(){
-        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_TENTS)
-    }
     
     func navigateToTentsBy(brand_category:[String.SubSequence]){
         if brand_category.count == 2{
@@ -194,8 +171,8 @@ extension HomeView{
         }
     }
     
-    func navigateToCapturedImages(){
-        navigationViewModel.appendToPathWith(ModelRoute.ROUTE_CAPTURED_IMAGES)
+    func navigateToRoute(_ toGoTo:ModelRoute){
+        navigationViewModel.appendToPathWith(toGoTo)
     }
     
     

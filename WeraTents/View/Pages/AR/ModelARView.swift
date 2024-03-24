@@ -403,18 +403,21 @@ extension ModelARView{
         helper.setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
                           values: [true,true,true])
         arViewCoordinator.captureSnapshot(){ uiImage in
-            if let uiImage = uiImage{
-                ServiceManager.writeImageToCache(fileName: TEMP_SCREENSHOT_NAME,
-                                                 uiImage: uiImage,
-                                                 folder: .SCREEN_SHOT){ result in
-                    helper.setStateOf(animation: .SEND_CARD, value: true)
+            DispatchQueue.global(qos: .userInteractive).async {
+                if let uiImage = uiImage{
+                    ServiceManager.writeImageToCache(fileName: TEMP_SCREENSHOT_NAME,
+                                                     uiImage: uiImage,
+                                                     folder: .SCREEN_SHOT){ result in
+                        helper.setStateOf(animation: .SEND_CARD, value: true)
+                    }
+                }
+                else{
+                    appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
+                        helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
+                    }
                 }
             }
-            else{
-                appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
-                    helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
-                }
-            }
+            
         }
     }
     
@@ -432,30 +435,32 @@ extension ModelARView{
     
     
     func saveCapturedImage(){
-        scaledImageWith(compressionQuality: 1.0,
-                        ofSize: CGSize(width: 2040.0,height: 2040.0),
-                        trimmed: false){ imageData in
-            if let imageData = imageData{
-                let managedObjectContext = PersistenceController.shared.container.viewContext
-                let model = ScreenshotModel(context:managedObjectContext)
-                model.buildWithName(arViewCoordinator.selectedTent)
-             
-                let image = ScreenshotImage(context:managedObjectContext)
-                image.data = imageData
-                model.image = image
-                do{
-                    try PersistenceController.saveContext()
-                    resetAndNotifyUserWithToastState(.SUCCESS,"Sparat!")
+        DispatchQueue.global(qos: .userInteractive).async {
+            scaledImageWith(compressionQuality: 1.0,
+                            ofSize: CGSize(width: 2040.0,height: 2040.0),
+                            trimmed: false){ imageData in
+                if let imageData = imageData{
+                    let managedObjectContext = PersistenceController.shared.container.viewContext
+                    let model = ScreenshotModel(context:managedObjectContext)
+                    model.buildWithName(arViewCoordinator.selectedTent)
+                    
+                    let image = ScreenshotImage(context:managedObjectContext)
+                    image.data = imageData
+                    model.image = image
+                    do{
+                        try PersistenceController.saveContext()
+                        resetAndNotifyUserWithToastState(.SUCCESS,"Sparat!")
+                    }
+                    catch{
+                        resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
+                    }
                 }
-                catch{
+                else{
                     resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
                 }
-            }
-            else{
-                resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
-            }
                 
-         }
+            }
+        }
     }
     
     func resetAndNotifyUserWithToastState(_ state:ToastState,_ message:String){
@@ -495,7 +500,6 @@ extension ModelARView{
     func scaledImageWith(compressionQuality toStore:CGFloat,
                          ofSize maxSize:CGSize,
                          trimmed trimImage:Bool,completion:@escaping (Data?) -> Void){
-        DispatchQueue.global(qos: .background).async{
             var jpegData:Data?
             if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
                                                         fileName: TEMP_SCREENSHOT_NAME,
@@ -509,11 +513,7 @@ extension ModelARView{
                let thumb = uiImage.preparingThumbnail(of: scaleFactor){
                 jpegData = thumb.jpegData(compressionQuality: toStore)
             }
-            DispatchQueue.main.async {
-                completion(jpegData)
-            }
-        }
-        
+            completion(jpegData)
     }
     
     func calculateScaleFactor(ofSize maxSize:CGSize,
