@@ -46,7 +46,7 @@ struct MenuButtonAnimation:View {
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
                 .fill(Color.materialDark )
-                .shadow(color:Color.white,radius: 2.0)
+                .shadow(color:Color.white,radius: 0.5,y:0.3)
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
@@ -142,7 +142,7 @@ extension MenuButtonAnimation{
     var pdfButton:some View{
         Button(action: { navigateTo(ModelRoute.ROUTE_PDF) }, label: {
             HStack{
-                textLabelBase("Manualer")
+                textLabelBase("Instruktionsmanualer")
                 imageBase("book.pages")
             }
         })
@@ -150,9 +150,9 @@ extension MenuButtonAnimation{
     }
     
     var youtubeButton:some View{
-        Button(action: { debugLog(object: "Contact button ")}, label: {
+        Button(action: { navigateTo(ModelRoute.ROUTE_YOUTUBE) }, label: {
             HStack{
-                textLabelBase("Filmer")
+                textLabelBase("Instruktionsfilmer")
                 imageBase("play.tv")
             }
         })

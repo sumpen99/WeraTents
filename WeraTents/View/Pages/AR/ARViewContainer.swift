@@ -38,7 +38,7 @@ struct ARViewContainer: UIViewRepresentable {
     }
     
     func makeUIView(context: Context) -> UIViewType {
-         let arView = ARView(frame: .zero)
+        let arView = ARView(frame: .zero)
         arViewCoordinator.setARView(arView)
         return arView
         
@@ -101,10 +101,8 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
     
     func run(){
         if let arView = arView{
-            let configuration = arView.setConfiguration()
-            self.arView?.session.run(configuration)
+            arView.configurateAndRun()
         }
-        
     }
     
     func kill() {
@@ -196,15 +194,15 @@ class ARViewCoordinator: NSObject,ARSessionDelegate,ObservableObject{
 
 //MARK: -- CONFIGURATION
 extension ARView{
-    func setConfiguration() -> ARWorldTrackingConfiguration{
+    
+    func configurateAndRun(){
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = [.horizontal,.vertical]
         configuration.environmentTexturing = .automatic
         if ARWorldTrackingConfiguration.supportsSceneReconstruction(.meshWithClassification) {
             configuration.sceneReconstruction = .meshWithClassification
         }
-        return configuration
-        
+        self.session.run(configuration)
     }
     
     func disablePlaneDetection(){

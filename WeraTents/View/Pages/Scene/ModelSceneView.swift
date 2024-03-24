@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-enum ModelDimensionHeader:String{
-    case GRID_ON        = "Dimensioner På"
-    case GRID_OFF       = "Av"
-}
-
 enum ButtonSelection:String{
     case DESCRIPTION = "Beskrivning"
     case EQUIPMENT = "Medföljande utrustning"
@@ -42,8 +37,6 @@ struct ModelHelper{
     let buttons:[ButtonSelection] = ButtonSelection.all
     let headers:[HeaderSelection] = HeaderSelection.all
     var buttonSelection:ButtonSelection? = .DESCRIPTION
-    var header:ModelDimensionHeader = .GRID_ON
-    var toggleDimensionBox:Bool = true
     var presentSheet:Bool = false
     var selectedButtonIndex:Int = 0
     var showTentLabel:Bool = true
@@ -72,7 +65,7 @@ struct ModelSceneView: View {
         .ignoresSafeArea(.all)
         .toolbar(.hidden)
         .safeAreaInset(edge: .top){
-            topContainer
+            BaseTopBar(label: "Model", onNavigateBackAction: navigateBack)
         }
     }
 }
@@ -106,85 +99,6 @@ extension ModelSceneView{
         }
     }
         
-}
-
-//MARK: - TOPCONTAINER
-extension ModelSceneView{
-    var topContainer:some View{
-        VStack{
-            HStack{
-                BackButtonAction(action: navigateBack).hLeading()
-                Text("Model")
-                .font(.headline)
-                .hCenter()
-                .bold()
-                .foregroundStyle(Color.white)
-                openInformationButton.hTrailing()
-            }
-            SplitLine()
-        }
-        .padding(.vertical)
-   }
-    
-    var toggleGridButtons:some View{
-        HStack{
-            gridHeaderCell(.GRID_ON)
-            gridHeaderCell(.GRID_OFF)
-        }
-        .background{
-            Color.materialDark
-        }
-        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-   }
-    
-    func gridHeaderCell(_ header:ModelDimensionHeader) -> some View{
-        return Text(header.rawValue)
-        .font(.headline)
-        .bold()
-        .frame(height: 33)
-        .foregroundStyle(header == helper.header ? Color.background : Color.materialDarkest )
-        .padding([.vertical],5)
-        .padding([.horizontal],10)
-        .background(
-             ZStack{
-                 if header == helper.header{
-                     RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-                    .fill(Color.white)
-                    .matchedGeometryEffect(id: "CURRENT_SCENE_ HEADER", in: animation)
-                 }
-             }
-        )
-       .onTapGesture {
-            withAnimation{
-                helper.header = header
-                sceneViewCoordinator.toggleDimensionBox()
-            }
-        }
-    }
-    
-    var openInformationButton:some View{
-        Menu(content:{
-            webPageButton
-        },label: {
-            Image(systemName: "ellipsis.circle")
-            .font(TOP_BAR_FONT)
-            .bold()
-            .foregroundStyle(Color.white)
-        })
-        .padding(.horizontal)
-      }
-    
-    
-}
-
-//MARK: - POPUP MENU BUTTONS
-extension ModelSceneView{
-    var webPageButton: some View{
-        UrlLabelButton(label: "Hemsida",
-                       image: "network",
-                       toVisit: selectedTent.webpage)
-    }
-    
 }
 
 //MARK: - BOTTOM CONTAINER
@@ -453,7 +367,6 @@ extension ModelSceneView{
            let modelId = usdzModels.first{
             firestoreViewModel.loadTentModelData(modelId){ url in
                 sceneViewCoordinator.setSceneViewFromUrl(url)
-                //ServiceManager.removeDataFromTemporary(url)
                 onCompletion()
             }
          }
@@ -465,9 +378,7 @@ extension ModelSceneView{
         navigationViewModel.popPath()
      }
     
-    func toggleBorder(){
-        sceneViewCoordinator.toggleDimensionBox()
-    }
+   
     
     func animateBottenContainerWith(value:Bool){
         withAnimation{

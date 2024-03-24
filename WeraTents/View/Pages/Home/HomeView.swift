@@ -26,9 +26,6 @@ struct HomeView:View {
             .navigationDestination(for: CatalogeNavigator.self){  navigator in
                 TentsView(navigator:navigator)
             }
-            /*.navigationDestination(for: VideoResourcesItem.self){  videoResourcesItem in
-                YoutubeView(videoResourcesItem: videoResourcesItem)
-            }*/
             .navigationDestination(for: PdfResourceItem.self){  pdfResourceItem in
                 PdfContentView(pdfResourceItem: pdfResourceItem)
             }
@@ -38,7 +35,7 @@ struct HomeView:View {
                 case .ROUTE_TENTS:              TentsView()
                 case .ROUTE_CAPTURED_IMAGES:    CapturedImages()
                 case .ROUTE_PDF:                PdfView()
-                case .ROUTE_YOUTUBE:            CapturedImages()
+                case .ROUTE_YOUTUBE:            YoutubeView()
                 }
             }
         }
