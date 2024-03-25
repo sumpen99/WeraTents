@@ -14,12 +14,13 @@ struct HomeView:View {
        
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
-            mainContent
-            .ignoresSafeArea(.keyboard)
+            appBackgroundGradient
+            .ignoresSafeArea(.all)
+            .toolbar(.hidden)
             .safeAreaInset(edge: .top){
-                labelContainer
+                mainContent
             }
-            .modifier(NavigationViewModifier())
+            .ignoresSafeArea(edges:[.bottom])
             .navigationDestination(for: Tent.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
@@ -50,10 +51,14 @@ struct HomeView:View {
 extension HomeView{
     
     var mainContent:some View{
-        scrollContainer
+        VStack{
+            labelContainer
+            scrollContainer
+       }
         .overlay{
             MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
         }
+        
     }
 }
 

@@ -245,13 +245,20 @@ extension ARView{
         let anchorEntity = MyEntity()
         anchorEntity.position = position
         anchorEntity.name = "tentAnchor"
+        //debugLog(object: self.cameraTransform.translation)
         //let radians = 180.0 * Float.pi / 180.0
-        modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.37835, 0.0)
+       // modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.37835, 0.0)
+        modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.5, 0.0)
         //modelEntity.orientation = simd_quatf(angle: radians, axis: SIMD3(x: 0, y: 1, z: 0))
         anchorEntity.addChild(modelEntity)
         anchorEntity.generateCollisionShapes(recursive: true)
         self.installGestures([.rotation,.translation],for: anchorEntity)
         self.scene.addAnchor(anchorEntity)
+        
+        //SIMD3<Float>(0.34103954, 0.084617235, 0.46363127)
+        //SIMD3<Float>(0.028374603, 0.038251586, -0.0012956648)
+        //SIMD3<Float>(0.5781791, 0.10084207, 0.1204987)
+
     
     }
 }

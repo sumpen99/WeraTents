@@ -19,14 +19,12 @@ struct CoreDataRemoveItem{
 }
 
 struct CapturedImages:View {
+    @Namespace var namespace
     @EnvironmentObject var navigationViewModel: NavigationViewModel
-    @StateObject var coreDataViewModel:CoreDataViewModel
+    @StateObject var coreDataViewModel:CoreDataViewModel = CoreDataViewModel()
     @State var state:LibraryState = .BASE
     @State var deleteModels:[CoreDataRemoveItem] = []
-    
-    init() {
-        self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
-    }
+ 
     
     var body: some View {
         appBackgroundGradient
@@ -52,16 +50,8 @@ extension CapturedImages{
     var mainContent:some View{
         VStack{
             topButtons
-            screenShotContent
+            screenShotList
         }
-    }
-    
-    var content:some View{
-        CoreDataSectionList(coreDataViewModel:coreDataViewModel)
-    }
-    
-    var screenShotContent:some View{
-        screenShotList
     }
     
 }
@@ -75,7 +65,7 @@ extension CapturedImages{
                       alignment: .center,
                       spacing: V_GRID_SPACING,
                       pinnedViews: .sectionHeaders){
-                ForEach(coreDataViewModel.items,id:\.objectID){ item in
+                ForEach(coreDataViewModel.items){ item in
                     screenShotCard(item)
                     .padding(.vertical)
                  }
@@ -91,16 +81,22 @@ extension CapturedImages{
            let image = model.image,
            let imageData = image.data,
            let uiImage = UIImage(data: imageData){
-            FlippedCard(image: Image(uiImage: uiImage),
+             FlippedCard(image: Image(uiImage: uiImage),
                         label: model.label,
                         modelId: model.modelId,
                         labelText: model.name ?? "",
                         descriptionText: model.shortDesc ?? "",
-                        dateText: model.date?.toISO8601String() ?? "",
-                        height: HOME_CAPTURED_HEIGHT){ newComment in
-                PersistenceController.updateScreenshot(model,with: newComment)
-            }
+                        dateText: model.date?.toISO8601String() ?? "")
+                        { newComment in
+                            PersistenceController.updateScreenshot(model,with: newComment)}
+                         deleteCard: {
+                            PersistenceController.deleteMultipleItems(models:[CoreDataRemoveItem(modelId: model.objectID,imageId:image.objectID)]){
+                                    modelDeleted,imageDeleted in
+                                    resetListOfSavedTubes()
+                        }
+                }
             .onTapGesture {
+                if state == .BASE { return }
                 toggleListId(modelId:model.objectID,
                              imageId:image.objectID)
             }
@@ -141,8 +137,8 @@ extension CapturedImages{
             .font(.headline)
             .bold()
         }
-        .disabled(!coreDataViewModel.hasItemsLoaded)
-        .opacity(coreDataViewModel.hasItemsLoaded ? 1.0 : 0.0)
+        //.disabled(!coreDataViewModel.hasItemsLoaded)
+        //.opacity(coreDataViewModel.hasItemsLoaded ? 1.0 : 0.0)
         .padding(.horizontal)
     }
     
@@ -247,6 +243,7 @@ extension CapturedImages{
     
     var topButtons:some View{
         currentTopBarButtons()
+        .matchedGeometryEffect(id: "CURRENT_SCREEN_SHOTS", in: namespace)
         .padding(.top)
     }
 }

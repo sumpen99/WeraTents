@@ -93,16 +93,10 @@ struct ModelARView: View {
 
 //MARK: - MAIN CONTENT
 extension ModelARView{
-    
+     
     var mainContent:some View{
         ZStack{
-            Color.clear
-            arContent
-        }
-    }
-    
-    var arContent:some View{
-        ZStack{
+            Color.darkestGreen
             if cameraManager.permission.isAuthorized{
                 ARViewContainer(arViewCoordinator: arViewCoordinator)
                 .task{
@@ -135,7 +129,7 @@ extension ModelARView{
         }
         .padding()
         .background{
-            Color.section
+            Color.darkestGreen
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
         .vCenter()
@@ -177,7 +171,7 @@ extension ModelARView{
     var shortInfoOnHowToDo:some View{
         GeometryReader{ reader in
             ZStack{
-                Color.materialDarkest
+                Color.darkestGreen
                 shortInfoContent(reader.size.width)
              }
             .frame(height:reader.size.height/4.0)
@@ -314,7 +308,7 @@ extension ModelARView{
                              scale:.large,
                              radius: 90.0,
                              foreground: Color.darkGreen,
-                             background: Color.materialDarkest,
+                             background: Color.darkestGreen,
                              outerBackground: Color.darkGreen,
                              thicknes:2.0)
             }
@@ -330,7 +324,7 @@ extension ModelARView{
                          scale:.large,
                          radius: 90.0,
                          foreground: Color.darkGreen,
-                         background: Color.materialDarkest,
+                         background: Color.darkestGreen,
                          outerBackground: Color.darkGreen,
                          thicknes:2.0)
         })
@@ -344,7 +338,7 @@ extension ModelARView{
                          scale:.medium,
                          radius: 80.0,
                          foreground: Color.red,
-                         background: Color.materialDarkest,
+                         background: Color.darkestGreen,
                          outerBackground: Color.red,
                          thicknes:2.0)
         })
@@ -357,7 +351,7 @@ extension ModelARView{
                          scale:.medium,
                          radius: 80.0,
                          foreground: Color.lightGold,
-                         background: Color.materialDarkest,
+                         background: Color.darkestGreen,
                          outerBackground: Color.lightGold,
                          thicknes:2.0)
         })
@@ -437,7 +431,7 @@ extension ModelARView{
     func saveCapturedImage(){
         DispatchQueue.global(qos: .userInteractive).async {
             scaledImageWith(compressionQuality: 1.0,
-                            ofSize: CGSize(width: 2040.0,height: 2040.0),
+                            ofSize: CGSize(width: 2040.0,height: 250.0),
                             trimmed: false){ imageData in
                 if let imageData = imageData{
                     let managedObjectContext = PersistenceController.shared.container.viewContext

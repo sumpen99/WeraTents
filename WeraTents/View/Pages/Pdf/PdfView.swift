@@ -26,25 +26,22 @@ struct PdfView:View {
     @Namespace var namespace
     
     var body: some View {
-        background
-        .toolbar(.hidden)
+        appBackgroundGradient
         .ignoresSafeArea(.all)
+        .toolbar(.hidden)
         .safeAreaInset(edge: .top){
             mainContent
         }
+        .ignoresSafeArea(edges:[.bottom])
     }
 }
 
 //MARK: - MAIN CONTENT
 extension PdfView{
     
-    var background:some View{
-        appBackgroundGradient
-    }
-    
     var mainContent:some View{
         VStack{
-            BaseTopBar(label: "Manual",onNavigateBackAction: navigateBack)
+            BaseTopBar(label: "Manualer",onNavigateBackAction: navigateBack)
             CatalogeSection(helper: $helper)
             scrollContent
         }
