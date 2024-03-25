@@ -179,7 +179,6 @@ class CoreDataViewModel:ObservableObject{
     var lastScrollOffset: CGPoint?
     @Published var items: [ScreenshotModel] = []
     @Published var dataIsLoading = false
-  
 }
 
 //MARK: - COREDATA-VIEWMODEL REQUEST ITEMS
@@ -192,12 +191,12 @@ extension CoreDataViewModel{
      
     func requestItems(page: Int) {
         dataIsLoading = true
-        coreDataFetcher.requestItemsByPage(page){ response in
+        coreDataFetcher.requestItemsByPage(page){ [weak self] response in
             DispatchQueue.main.async{
-                self.totalItemsAvailable = response.totalItems
-                self.items.append(contentsOf: response.items)
-                self.itemsLoadedCount = self.items.count
-                self.dataIsLoading = false
+                self?.totalItemsAvailable = response.totalItems
+                self?.items.append(contentsOf: response.items)
+                self?.itemsLoadedCount = self?.items.count
+                self?.dataIsLoading = false
             }
         }
    }

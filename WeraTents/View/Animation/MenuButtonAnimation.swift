@@ -32,7 +32,8 @@ struct MenuButtonAnimation:View {
             openButtonList
             content
         }
-        .padding(.horizontal)
+        .padding()
+        .padding(.bottom)
         .vBottom()
         .background{
             if openMenuSwitch{
@@ -93,7 +94,7 @@ struct MenuButtonAnimation:View {
                 HStack(spacing:0){
                     startARButton
                     textLabel
-                    SplitLine(direction: .VERTICAL,color: Color.white,thickness: 2.0)
+                    SplitLine(direction: .VERTICAL,color: Color.white,thickness: 1.0)
                 }
             }
             expandMenuButton

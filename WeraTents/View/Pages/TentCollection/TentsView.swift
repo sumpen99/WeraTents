@@ -148,21 +148,22 @@ extension TentsView{
             Text(label)
             .font(.headline)
             .padding()
-            .foregroundStyle(Color.darkerGreen)
+            .foregroundStyle(Color.white)
             .hLeading()
             .background{
                 RoundedRectangle(cornerRadius: 5.0)
-                .fill(Color.white)
+                .fill(Color.section)
             }
         }
-        .background{
-            Color.section
-        }
         .clipShape(RoundedRectangle(cornerRadius: 5.0))
+        .shadow(color:Color.darkGreen,radius: 5.0)
         .padding(.horizontal)
         .padding(.top,50.0)
-        .padding(.bottom)
-        .shadow(color:Color.darkGreen,radius: 5.0)
+        .padding(.bottom,25.0)
+        /*.background(RoundedRectangle(cornerRadius: 5.0).stroke(lineWidth: 2.0).foregroundStyle(Color.lightGold))
+        .padding(1.0)
+        .padding(.top,50.0)
+        .padding(.bottom,25.0)*/
         
      }
 }

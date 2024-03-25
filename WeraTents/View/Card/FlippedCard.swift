@@ -12,24 +12,19 @@ struct FlippedCard:View {
     let label:String?
     let modelId:String?
     let labelText:String
-    let descriptionText:String
+    @State var descriptionText:String
     let dateText:String
-    let height:CGFloat
     let saveNewComment:(String) -> Void
+    let deleteCard:() -> Void
     @State var width:CGFloat = 0.0
-    @State var angle: CGFloat = -360.0
+    @State var angle: CGFloat = 0.0
     @State var textInput:String = ""
     
     var body: some View {
         mainContent
-        .frame(height: height)
+        .frame(height: HOME_CAPTURED_HEIGHT)
         .onAppear{
             textInput = descriptionText
-        }
-        .onDisappear{
-            if textInput != descriptionText{
-                saveNewComment(textInput)
-            }
         }
     }
     
@@ -44,7 +39,6 @@ extension FlippedCard{
             .rotation3DEffect(.degrees(Double(angle)),
                                   axis: (x:0,y:1,z:0))
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-            .shadow(color:Color.lightGold,radius: 2.0)
             .onAppear{
                 self.width = reader.size.width
             }
@@ -79,6 +73,7 @@ extension FlippedCard{
         .rotation3DEffect(.degrees(180), axis: (x:0,y:1,z:0))
      }
     
+    @ViewBuilder
     var cardText: some View{
         VStack(spacing: V_SPACING_REG){
             Text(labelText)
@@ -86,13 +81,41 @@ extension FlippedCard{
             .foregroundStyle(Color.materialDark)
             .bold()
             TextEditorWithPlaceholder(text: $textInput)
-            Text(dateText)
-            .font(.caption2)
-            .foregroundStyle(Color.materialDark)
-            .bold()
+            bottomRow
+            
+            
        }
         .padding(.vertical)
-        .padding(.horizontal,5.0)
+        .padding(.horizontal,10.0)
+    }
+    
+    var bottomRow:some View{
+        HStack{
+            Text(dateText)
+            .font(.caption)
+            .foregroundStyle(Color.materialDark)
+            .bold()
+            .hLeading()
+            Spacer()
+            if descriptionText != textInput{
+                Button(action: saveAndReset, label: {
+                    Text("Spara")
+                    .font(.callout)
+                    .foregroundStyle(Color.blue)
+                    .bold()
+                })
+                .hTrailing()
+            }
+            else{
+                Button(action: deleteCard, label: {
+                    Text("Radera")
+                    .font(.callout)
+                    .foregroundStyle(Color.blue)
+                    .bold()
+                })
+                .hTrailing()
+            }
+        }
     }
     
 }
@@ -102,9 +125,9 @@ extension FlippedCard{
         DragGesture(coordinateSpace: .global)
         .onChanged{ gesture in
             let theta = (atan2(gesture.location.x - self.width / 2.0,
-                               self.height / 2.0  - gesture.location.y) - 
+                               HOME_CAPTURED_HEIGHT / 2.0  - gesture.location.y) -
                          atan2(gesture.startLocation.x - self.width / 2.0,
-                               self.height / 2.0 - gesture.startLocation.y))
+                               HOME_CAPTURED_HEIGHT / 2.0 - gesture.startLocation.y))
                 .radToDeg()
             self.angle = (theta + self.angle).truncatingRemainder(dividingBy: 360.0)
         }
@@ -129,9 +152,18 @@ extension FlippedCard{
                 (-360 <= self.angle && self.angle <= -270)  ||
                 (270 < self.angle && self.angle <= 360)
     }
+    
+    func saveAndReset(){
+        withAnimation{
+            descriptionText = textInput
+        }
+        saveNewComment(textInput)
+    }
+    
+    
 }
 
-
+//MARK: - TEXT-EDITOR-WITH-PLACEHOLDER
 struct TextEditorWithPlaceholder: View {
     @Binding var text: String
     
@@ -151,7 +183,7 @@ struct TextEditorWithPlaceholder: View {
             
             VStack {
                 TextEditor(text: $text)
-                    .frame(minHeight: 150, maxHeight: 300)
+                    .vTop()
                     .opacity(text.isEmpty ? 0.85 : 1)
                     .font(.callout)
                     .scrollContentBackground(.hidden)
