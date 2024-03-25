@@ -65,6 +65,18 @@ extension View{
                                         for: nil)
     }
     
+    func appBackgroundLinearGradient() -> some View{
+        self.background{
+            appBackgroundGradient
+            .edgesIgnoringSafeArea(.all)
+        }
+    }
     
+}
+
+var appBackgroundGradient:some View{
+    LinearGradient(gradient: Gradient(colors: [Color(hex:0x243226),Color.darkerGreen]),
+                   startPoint: .top,
+                   endPoint: .bottom)
 }
 

@@ -33,7 +33,7 @@ extension CoreDataFetcher{
             let nextOffset = nextOffset
             let fetchLimit = CORE_DATA_FETCH_LIMIT
             incremeantPageIndex()
-            DispatchQueue.global().async{ [weak self] in
+            DispatchQueue.global(qos: .userInitiated).async{ [weak self] in
                 if let strongSelf = self{
                     let items = strongSelf.fetchedRequestWithOffset(nextOffset, fetchLimit: fetchLimit)
                     onResult((totalItems:strongSelf.totalItems,items:items))
@@ -83,7 +83,7 @@ extension CoreDataFetcher{
         //fetchRequest.fetchBatchSize = fetchLimit
         //fetchRequest.predicate = predicate
         fetchRequest.sortDescriptors = sortDescriptors
-        fetchRequest.includesSubentities = true
+        //fetchRequest.includesSubentities = true
         do {
             return try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
         } catch {
@@ -164,11 +164,8 @@ extension CoreDataFetcher{
     }
 }
 
-
-
 //MARK: - COREDATA-VIEWMODEL
 class CoreDataViewModel:ObservableObject{
-    
     private let itemsFromEndThreshold = 3
     
     private var totalItemsAvailable: Int?
@@ -180,18 +177,40 @@ class CoreDataViewModel:ObservableObject{
     var currentScrollOffset: CGPoint?
     var scrollViewHeight:CGFloat?
     var lastScrollOffset: CGPoint?
-    var childViewHeight:CGFloat?
-    var spacing:CGFloat?
-    @Published var items: [ScreenshotModel]? = []
+    @Published var items: [ScreenshotModel] = []
     @Published var dataIsLoading = false
-     
+  
 }
 
 //MARK: - COREDATA-VIEWMODEL REQUEST ITEMS
 extension CoreDataViewModel{
+    
     func requestInitialSetOfItems(){
         resetPageCounter()
         requestItems(page: page)
+    }
+     
+    func requestItems(page: Int) {
+        dataIsLoading = true
+        coreDataFetcher.requestItemsByPage(page){ response in
+            DispatchQueue.main.async{
+                self.totalItemsAvailable = response.totalItems
+                self.items.append(contentsOf: response.items)
+                self.itemsLoadedCount = self.items.count
+                self.dataIsLoading = false
+            }
+        }
+   }
+    
+    func requestMoreItemsIfNeeded(index: Int) {
+        guard let itemsLoadedCount = itemsLoadedCount,
+              let totalItemsAvailable = totalItemsAvailable else {
+            return
+        }
+        if thresholdMeet(itemsLoadedCount, index) && moreItemsRemaining(itemsLoadedCount, totalItemsAvailable) {
+            page += 1
+            requestItems(page: page)
+        }
     }
     
     func requestAllUniqueLabels(onResult: @escaping ([String]) -> Void){
@@ -207,34 +226,6 @@ extension CoreDataViewModel{
 
         }
     }
-     
-    func requestItems(page: Int) {
-        dataIsLoading = true
-        Task { [weak self] in
-            if let strongSelf = self{
-                strongSelf.coreDataFetcher.requestItemsByPage(page){ response in
-                    DispatchQueue.main.async{
-                        strongSelf.totalItemsAvailable = response.totalItems
-                        strongSelf.items?.append(contentsOf: response.items)
-                        strongSelf.itemsLoadedCount = strongSelf.items?.count
-                        strongSelf.dataIsLoading = false
-                    }
-                }
-            }
-
-        }
-    }
-    
-    func requestMoreItemsIfNeeded(index: Int) {
-        guard let itemsLoadedCount = itemsLoadedCount,
-              let totalItemsAvailable = totalItemsAvailable else {
-            return
-        }
-        if thresholdMeet(itemsLoadedCount, index) && moreItemsRemaining(itemsLoadedCount, totalItemsAvailable) {
-            page += 1
-            requestItems(page: page)
-        }
-    }
     
     func requestBySearchCategorie(_ categorie:SearchCategorie,searchText:String,onResult:((Int) ->Void)? = nil){
         dataIsLoading = true
@@ -244,15 +235,13 @@ extension CoreDataViewModel{
                     DispatchQueue.main.async{
                         strongSelf.resetPageCounter()
                         strongSelf.totalItemsAvailable = response.totalItems
-                        strongSelf.items?.append(contentsOf: response.items)
-                        strongSelf.itemsLoadedCount = strongSelf.items?.count
+                        strongSelf.items.append(contentsOf: response.items)
+                        strongSelf.itemsLoadedCount = strongSelf.items.count
                         strongSelf.dataIsLoading = false
                         onResult?(strongSelf.itemsLoadedCount ?? 0)
                     }
                 }
             }
-            
-
         }
     }
 }
@@ -261,8 +250,7 @@ extension CoreDataViewModel{
 extension CoreDataViewModel{
     
     var hasItemsLoaded:Bool{
-        if let count = items?.count{ return count > 0 }
-        return false
+        return items.count > 0
     }
     
     private func thresholdMeet(_ itemsLoadedCount: Int, _ index: Int) -> Bool {
@@ -272,25 +260,16 @@ extension CoreDataViewModel{
     private func moreItemsRemaining(_ itemsLoadedCount: Int, _ totalItemsAvailable: Int) -> Bool {
         return itemsLoadedCount < totalItemsAvailable
     }
-        
-    func setScrollViewDimensions(_ spacing:CGFloat,scrollViewHeight:CGFloat){
-        self.spacing = spacing
-        self.scrollViewHeight = scrollViewHeight
-    }
-    
-    func setChildViewDimension(_ childViewHeight:CGFloat){
-        self.childViewHeight = childViewHeight
-    }
     
     func resetPageCounter(){
         page = 0
-        items?.removeAll()
+        items.removeAll()
         coreDataFetcher.resetPageCounter()
     }
     
     func clearAllData(){
         page = 0
-        items?.removeAll()
+        items.removeAll()
         coreDataFetcher.reset()
     }
     

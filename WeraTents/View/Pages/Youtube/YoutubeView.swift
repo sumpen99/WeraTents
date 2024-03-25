@@ -27,11 +27,12 @@ struct YoutubeView:View {
     
     var body: some View {
         background
-        .toolbar(.hidden)
         .ignoresSafeArea(.all)
+        .toolbar(.hidden)
         .safeAreaInset(edge: .top){
             mainContent
         }
+        .ignoresSafeArea(edges:[.bottom])
         .onChange(of: self.selectedVideoUrl,initial: true){ (_ , videoUrl) in
             guard let videoUrl = videoUrl else{
                 return self.youTubePlayer.stop()
@@ -45,38 +46,38 @@ struct YoutubeView:View {
 
 //MARK: - MAIN CONTENT
 extension YoutubeView{
-    
+   
     var background:some View{
-        Color.background
+        ZStack{
+            appBackgroundGradient
+            catalogeContent
+        }
     }
     
     var mainContent:some View{
         VStack{
             BaseTopBar(label: "Filmer",onNavigateBackAction: navigateBack)
-            catalogeContent
             videoContent
         }
     }
-     
 }
 
 //MARK: - CATALOGE CONTENT
 extension YoutubeView{
     var catalogeContent:some View{
-        VStack{
-            GeometryReader{ reader in
+        GeometryReader{ reader in
+            VStack{
+                SplitLine(color:Color.lightGold)
                 ScrollView(.horizontal){
                     HStack(spacing: V_SPACING_REG){
                         catalogeButtons(reader.size.width)
-                        .hCenter()
                     }
                 }
             }
-            .frame(height: HOME_BRAND_HEIGHT)
-            .hCenter()
-            SplitLine(color: Color.lightGold)
+            .padding(.bottom)
         }
-        .hCenter()
+        .frame(height: 100.0)
+        .vBottom()
         .task{
             firestoreViewModel.catalogeByFilter(on: .YOUTUBE){ labels in
                 filteredCataloge = labels
@@ -128,12 +129,10 @@ extension YoutubeView{
                     playerViewView
                 }
             }
-            .background{
-                Color.white
-            }
         }
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
+        .vTop()
     }
 }
 

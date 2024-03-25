@@ -39,7 +39,7 @@ struct PdfView:View {
 extension PdfView{
     
     var background:some View{
-        Color.background
+        appBackgroundGradient
     }
     
     var mainContent:some View{
@@ -104,7 +104,7 @@ extension PdfView{
             }
         }
         .background{
-            Color.materialDark
+            Color.section
         }
    }
   
@@ -117,6 +117,7 @@ extension PdfView{
         VStack(spacing:0){
             HStack{
                 Label(title, systemImage: "doc")
+                .bold()
                 .foregroundStyle(Color.white)
                 .hLeading()
                 .padding(.leading)

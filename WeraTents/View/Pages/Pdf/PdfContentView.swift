@@ -37,7 +37,7 @@ struct PdfContentView:View {
 extension PdfContentView{
     
     var background:some View{
-        Color.background
+        appBackgroundGradient
     }
     
     var mainContent:some View{

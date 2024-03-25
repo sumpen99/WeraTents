@@ -45,7 +45,7 @@ extension BrandSection{
                               unselectedlabelColor: Color.gray)
         .background{
             RoundedRectangle(cornerRadius: 5.0)
-            .fill(Color.materialDark)
+            .fill(Color.section)
         }
         .onChange(of: helper.selectedBrand, initial: false){ oldValue,newValue in
             withAnimation{

@@ -23,71 +23,67 @@ struct CapturedImages:View {
     @StateObject var coreDataViewModel:CoreDataViewModel
     @State var state:LibraryState = .BASE
     @State var deleteModels:[CoreDataRemoveItem] = []
-        
     
     init() {
         self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
     }
     
     var body: some View {
-        background
+        appBackgroundGradient
+        .ignoresSafeArea(.all)
         .toolbar(.hidden)
-        .ignoresSafeArea()
         .safeAreaInset(edge: .top){
-            content
-         }
-    }
-}
-
-//MARK: - MAIN CONTENT
-extension CapturedImages{
-    var background:some View{
-        Color.background
-        .vCenter()
-        .hCenter()
-        
-    }
-    
-    var content:some View{
-        VStack(spacing:0){
-            topButtons
-            itemsLoadedPage
+            mainContent
         }
+        .ignoresSafeArea(edges:[.bottom])
         .task{
-            coreDataViewModel.setChildViewDimension(CHILD_VIEW_HEIGHT)
             coreDataViewModel.requestInitialSetOfItems()
         }
         .onDisappear{
             coreDataViewModel.clearAllData()
             clearAllData()
         }
-     }
+    }
 }
 
-//MARK: - COREDATA-LIST
+//MARK: - MAIN CONTENT
 extension CapturedImages{
     
-    var itemsLoadedPage:some View{
-        savedScreenshotList
+    var mainContent:some View{
+        VStack{
+            topButtons
+            screenShotContent
+        }
     }
     
-    @ViewBuilder
-    var savedScreenshotList:some View{
-        if coreDataViewModel.items?.count ?? 0 > 0{
-            ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
-                screenShotCard(screenShot as? ScreenshotModel)
-            }
-            .background{
-                Color.materialDark
-            }
-        }
-        
+    var content:some View{
+        CoreDataSectionList(coreDataViewModel:coreDataViewModel)
     }
-      
+    
+    var screenShotContent:some View{
+        screenShotList
+    }
+    
 }
 
 //MARK: - COREDATA-CARD
 extension CapturedImages{
+    
+    var screenShotList:some View{
+        ScrollView{
+            LazyVGrid(columns: [GridItem(),GridItem()],
+                      alignment: .center,
+                      spacing: V_GRID_SPACING,
+                      pinnedViews: .sectionHeaders){
+                ForEach(coreDataViewModel.items,id:\.objectID){ item in
+                    screenShotCard(item)
+                    .padding(.vertical)
+                 }
+                                                                
+            }
+            .padding(.horizontal)
+        }
+    }
     
     @ViewBuilder
     func screenShotCard(_ model:ScreenshotModel?) -> some View{
@@ -104,11 +100,7 @@ extension CapturedImages{
                         height: HOME_CAPTURED_HEIGHT){ newComment in
                 PersistenceController.updateScreenshot(model,with: newComment)
             }
-            .padding()
             .onTapGesture {
-                if state == .BASE{
-                    return
-                }
                 toggleListId(modelId:model.objectID,
                              imageId:image.objectID)
             }
@@ -129,8 +121,7 @@ extension CapturedImages{
 
 //MARK: - BUTTONS
 extension CapturedImages{
-     
-    
+  
     var libraryLabel:some View{
         Text("Bibliotek")
         .foregroundStyle(Color.white)
@@ -146,7 +137,7 @@ extension CapturedImages{
             }
         }){
             Text("Redigera")
-            .foregroundStyle(Color.lightBlue)
+            .foregroundStyle(Color.white)
             .font(.headline)
             .bold()
         }
@@ -162,7 +153,7 @@ extension CapturedImages{
             }
         }){
             Text("Avbryt")
-            .foregroundStyle(Color.lightBlue)
+            .foregroundStyle(Color.white)
             .font(.headline)
             .bold()
             .hTrailing()
@@ -172,7 +163,7 @@ extension CapturedImages{
     var selectAllButton:some View{
         Button(action: selectAllItems ){
             Text("Välj alla")
-            .foregroundStyle(Color.lightBlue)
+            .foregroundStyle(Color.white)
             .font(.headline)
             .bold()
             .hLeading()
@@ -199,8 +190,7 @@ extension CapturedImages{
                 editButton
             }
             SplitLine()
-       }
-        
+        }
     }
     
     var editTopBarButtons:some View{
@@ -212,12 +202,13 @@ extension CapturedImages{
     }
     
     var editTopBarSection:some View{
-        VStack(spacing:0){
+        VStack{
             Text("Alla bilder")
                 .font(.title)
                 .foregroundStyle(Color.white)
                 .bold()
                 .hLeading()
+                .padding([.horizontal,.top])
             VStack(spacing:V_SPACING_REG){
                 Text("\(listCount) valda")
                     .font(.title2)
@@ -227,11 +218,12 @@ extension CapturedImages{
                 removeButton
             }
             .padding([.leading,.top])
+            .padding(.horizontal)
             .opacity(emptyDeleteList ? 0.5 : 1.0)
+            SplitLine(color:Color.lightGold)
         }
-        .padding()
         .background{
-            Color.materialDark
+            Color.section
         }
     }
     
@@ -255,7 +247,7 @@ extension CapturedImages{
     
     var topButtons:some View{
         currentTopBarButtons()
-            .padding(.vertical)
+        .padding(.top)
     }
 }
 
@@ -275,17 +267,16 @@ extension CapturedImages{
     }
     
     func selectAllItems(){
-        if let items = coreDataViewModel.items?.compactMap({
+        let items = coreDataViewModel.items.compactMap({
             if let imageId = $0.image?.objectID{
                 return CoreDataRemoveItem(modelId: $0.objectID,
                                           imageId: imageId)
             }
             return nil
-            
-        }){
-            deleteModels.removeAll()
-            deleteModels.append(contentsOf: items)
-        }
+        })
+        deleteModels.removeAll()
+        deleteModels.append(contentsOf: items)
+        
     }
      
     func deleteSelectedItems(){
@@ -322,8 +313,11 @@ extension CapturedImages{
     }
     
     func reset(){
-        state = .BASE
-        deleteModels.removeAll()
+        withAnimation{
+            state = .BASE
+            deleteModels.removeAll()
+        }
+        
     }
     
     func clearListOfIds(){
