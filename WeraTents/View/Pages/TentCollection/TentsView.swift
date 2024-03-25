@@ -21,6 +21,7 @@ struct TentsView:View {
         .safeAreaInset(edge: .top){
             mainContent
         }
+        .ignoresSafeArea(edges:[.bottom])
         .task{
             if let navigator = navigator{
                 helper.initFromNavigator(navigator)
@@ -35,7 +36,7 @@ struct TentsView:View {
 extension TentsView{
     var background:some View{
         ZStack{
-            Color.background
+            appBackgroundGradient
             labelImage
         }
         .vCenter()
@@ -61,6 +62,7 @@ extension TentsView{
             BaseTopBar(label: "Kollektion", onNavigateBackAction: navigateBack)
             CatalogeSection(helper: $helper)
             scrollContent
+            
        }
     }
     
@@ -77,11 +79,10 @@ extension TentsView{
                 SplitLine(color: Color.lightGold)
                 modelHeaderList
                 SplitLine(color: Color.lightGold)
-                currentDescriptionText
                 cardByModelId
+                currentDescriptionText
             }
             .padding(.top)
-            .vTop()
         }
         .scrollIndicators(.hidden)
         .padding(.horizontal)
@@ -119,7 +120,7 @@ extension TentsView{
                               unselectedlabelColor: Color.gray)
         .background{
             RoundedRectangle(cornerRadius: 5.0)
-                .fill(Color.materialDark)
+                .fill(Color.section)
         }
     }
   
@@ -143,19 +144,26 @@ extension TentsView{
     }
     
     func baseDescriptionText(_ label:String) -> some View{
-        ZStack{
-            Color.materialDark
+        LazyVStack{
             Text(label)
             .font(.headline)
             .padding()
-            .foregroundStyle(Color.white)
+            .foregroundStyle(Color.darkerGreen)
             .hLeading()
+            .background{
+                RoundedRectangle(cornerRadius: 5.0)
+                .fill(Color.white)
+            }
+        }
+        .background{
+            Color.section
         }
         .clipShape(RoundedRectangle(cornerRadius: 5.0))
-        .vBottom()
-        .hCenter()
-        .shadow(color:Color.materialDark,radius: 2.0)
-        .padding(.vertical)
+        .padding(.horizontal)
+        .padding(.top,50.0)
+        .padding(.bottom)
+        .shadow(color:Color.darkGreen,radius: 5.0)
+        
      }
 }
 

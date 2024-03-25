@@ -96,7 +96,7 @@ extension ModelARView{
     
     var mainContent:some View{
         ZStack{
-            Color.background
+            Color.clear
             arContent
         }
     }
@@ -135,7 +135,7 @@ extension ModelARView{
         }
         .padding()
         .background{
-            Color.white.opacity(0.03)
+            Color.section
         }
         .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
         .vCenter()
@@ -153,7 +153,7 @@ extension ModelARView{
     var spinnerContent:some View{
         GeometryReader{ reader in
             ZStack{
-                Color.materialDarkest
+                Color.section
                 SpinnerAnimation(timer:SpinnerTimer.noDelayedStartTime(),
                                  frameSize:CGSize(width:reader.size.width*0.5,
                                                   height: reader.size.height*0.25),

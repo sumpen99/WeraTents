@@ -64,7 +64,7 @@ extension ARTentPicker{
                 pickerContent(reader.size)
             }
             .background{
-                Color.materialDarkest
+                Color.section
             }
             .onAppear{
                 helper.offset = reader.center()

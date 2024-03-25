@@ -67,13 +67,13 @@ extension HomeView{
                     navigateToRoute(.ROUTE_TENTS)
                 },
                                   content: brandContent,
-                                  backgroundColor: Color.materialDark)
+                                  backgroundColor: Color.section)
                 NavigationSection(labelText: "För dig",
                                   action: {
                     navigateToRoute(.ROUTE_CAPTURED_IMAGES)
                 },
                                   content: CoreDataSection(limit: 3),
-                                  backgroundColor: Color.materialDark)
+                                  backgroundColor: Color.section)
              }
             
         }
@@ -124,7 +124,6 @@ extension HomeView{
            labelImage
         }
         .padding(.horizontal)
-        
     }
     
     var labelText:some View{

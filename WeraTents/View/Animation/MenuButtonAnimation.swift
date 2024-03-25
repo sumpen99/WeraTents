@@ -45,7 +45,7 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                .fill(Color.materialDark )
+                .fill(Color.darkerGreen )
                 .shadow(color:Color.white,radius: 0.5,y:0.3)
                 buttonContainer
             }
@@ -166,7 +166,7 @@ extension MenuButtonAnimation{
         .bold()
         .foregroundStyle(Color.white)
         .padding()
-        .background(Color.materialDark)
+        .background(Color.darkerGreen)
         .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
         .clipShape(Circle())
     }

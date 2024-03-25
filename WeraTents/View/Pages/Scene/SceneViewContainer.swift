@@ -292,7 +292,7 @@ struct SceneViewContainer: UIViewRepresentable {
     
     func makeUIView(context: Context) -> UIViewType {
         let scnView = SCNView(frame:.zero)
-        scnView.backgroundColor = UIColor(Color.background)
+        scnView.backgroundColor = UIColor(Color.clear)
         sceneViewCoordinator.scnView = scnView
         return scnView
     }
