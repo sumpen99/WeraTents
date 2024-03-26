@@ -153,18 +153,74 @@ extension HomeView{
     
 }
 
-//MARK: - KEYBOARD ON DONE
+//MARK: - BEGINING OF NEWS SECTION
 extension HomeView{
    
     var newsContent:some View{
-        ZStack{
-            Color.white
+        ScrollView(.horizontal){
+            LazyHStack(alignment: .center, spacing: 20, pinnedViews: [.sectionHeaders]){
+                newsBox
+                newsBox
+            }
         }
-        .padding(.top)
-        .hCenter()
-        .frame(width:175.0,height: 175.0)
+        .hLeading()
+        .padding()
+     }
+    
+    var newsBox:some View{
+        HStack{
+            newsImage
+             newsText
+        }
+        .hLeading()
+        .background{
+            Rectangle().fill(Color.darkerGreen.opacity(0.3))
+        }
+     }
+    
+    var newsImage:some View{
+        Image("weratent-logo")
+        .resizable()
+        .frame(width:150.0,height: 150.0)
+        .opacity(0.85)
     }
     
+    var newsText:some View{
+        VStack(spacing:V_SPACING_REG){
+            newsHeaderText
+            newsSubHeaderText
+            newsButton
+       }
+        .foregroundStyle(Color.white)
+        .frame(width: 240)
+    }
+    
+    var newsHeaderText:some View{
+        Text("Wera inleder samarbete med Subaru Nordic runt taktält")
+        .font(.headline)
+        .bold()
+        .hLeading()
+    }
+    
+    var newsSubHeaderText:some View{
+        Text("Ska leverera till återförsäljare i Norden")
+        .font(.callout)
+       .hLeading()
+    }
+    
+    var newsButton:some View{
+        Button(action: {}, label: {
+            Text("Läs mer")
+                .bold()
+            .shadow(color: Color.materialDarkest, radius: 5, x: 0, y: 5)
+        })
+        .tint(Color.lightGold)
+        .buttonStyle(.borderedProminent)
+        .hTrailing()
+        .shadow(color:Color.lightGold,radius: 2.0)
+        .padding(.trailing)
+    }
+     
 }
 
 //MARK: - KEYBOARD ON DONE

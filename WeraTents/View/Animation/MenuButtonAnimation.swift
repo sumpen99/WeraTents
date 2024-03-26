@@ -47,7 +47,7 @@ struct MenuButtonAnimation:View {
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
                 .fill(Color.darkerGreen )
-                .shadow(color:Color.white,radius: 0.5,y:0.3)
+                .shadow(color:Color.lightGold,radius: 0.5,y:0.3)
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
