@@ -11,6 +11,6 @@ struct NavigationViewModifier: ViewModifier {
         .vCenter()
         .hCenter()
         .scrollContentBackground(.hidden)
-        .background( Color.background )
+        .appBackgroundLinearGradient()
     }
 }

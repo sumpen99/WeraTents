@@ -32,7 +32,8 @@ struct MenuButtonAnimation:View {
             openButtonList
             content
         }
-        .padding(.horizontal)
+        .padding()
+        .padding(.bottom)
         .vBottom()
         .background{
             if openMenuSwitch{
@@ -45,7 +46,7 @@ struct MenuButtonAnimation:View {
         GeometryReader{ reader in
             ZStack{
                 RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
-                .fill(Color.materialDark )
+                .fill(Color.darkerGreen )
                 .shadow(color:Color.white,radius: 0.5,y:0.3)
                 buttonContainer
             }
@@ -93,7 +94,7 @@ struct MenuButtonAnimation:View {
                 HStack(spacing:0){
                     startARButton
                     textLabel
-                    SplitLine(direction: .VERTICAL,color: Color.white,thickness: 2.0)
+                    SplitLine(direction: .VERTICAL,color: Color.white,thickness: 1.0)
                 }
             }
             expandMenuButton
@@ -166,7 +167,7 @@ extension MenuButtonAnimation{
         .bold()
         .foregroundStyle(Color.white)
         .padding()
-        .background(Color.materialDark)
+        .background(Color.darkerGreen)
         .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
         .clipShape(Circle())
     }

@@ -23,28 +23,26 @@ struct PdfView:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @State var helper:CatalogeHelper = CatalogeHelper()
+    @State var groupedDownloadedFile:GroupedDownloader?
     @Namespace var namespace
     
     var body: some View {
-        background
-        .toolbar(.hidden)
+        appBackgroundGradient
         .ignoresSafeArea(.all)
+        .toolbar(.hidden)
         .safeAreaInset(edge: .top){
             mainContent
         }
+        .ignoresSafeArea(edges:[.bottom])
     }
 }
 
 //MARK: - MAIN CONTENT
 extension PdfView{
     
-    var background:some View{
-        Color.background
-    }
-    
     var mainContent:some View{
         VStack{
-            BaseTopBar(label: "Manual",onNavigateBackAction: navigateBack)
+            BaseTopBar(label: "Manualer",onNavigateBackAction: navigateBack)
             CatalogeSection(helper: $helper)
             scrollContent
         }
@@ -104,7 +102,7 @@ extension PdfView{
             }
         }
         .background{
-            Color.materialDark
+            Color.section
         }
    }
   
@@ -117,12 +115,14 @@ extension PdfView{
         VStack(spacing:0){
             HStack{
                 Label(title, systemImage: "doc")
+                .bold()
                 .foregroundStyle(Color.white)
                 .hLeading()
                 .padding(.leading)
                 FirestoreDataButton(file: dataFile,
                                     imageName: "chevron.right",
                                     imageColor: Color.white,
+                                    groupedDownloadedFile:$groupedDownloadedFile,
                                     action: navigateToPdfContainer)
                 .hTrailing()
             }

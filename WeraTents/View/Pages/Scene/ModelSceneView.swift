@@ -74,7 +74,7 @@ struct ModelSceneView: View {
 extension ModelSceneView{
     var mainContent:some View{
         ZStack{
-            Color.background
+            appBackgroundGradient
             sceneviewContent
             bottomContainer
         }

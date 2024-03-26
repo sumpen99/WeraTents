@@ -47,9 +47,6 @@ extension View{
     func checkmarkCircle() -> some View{
         Image(systemName: "checkmark.circle.fill")
         .resizable()
-        .background{
-            Circle().fill(Color.background).frame(width: 26, height: 26)
-        }
         .foregroundStyle(Color.white)
         .frame(width: 24, height: 24)
         .font(.system(size: 20, weight: .bold, design: .default))
@@ -65,6 +62,18 @@ extension View{
                                         for: nil)
     }
     
+    func appBackgroundLinearGradient() -> some View{
+        self.background{
+            appBackgroundGradient
+            .edgesIgnoringSafeArea(.all)
+        }
+    }
     
+}
+
+var appBackgroundGradient:some View{
+    LinearGradient(gradient: Gradient(colors: [Color(hex:0x243226),Color.darkerGreen]),
+                   startPoint: .top,
+                   endPoint: .bottom)
 }
 

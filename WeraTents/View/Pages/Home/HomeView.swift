@@ -14,12 +14,13 @@ struct HomeView:View {
        
     var body: some View{
         NavigationStack(path:$navigationViewModel.pathTo){
-            mainContent
-            .ignoresSafeArea(.keyboard)
+            appBackgroundGradient
+            .ignoresSafeArea(.all)
+            .toolbar(.hidden)
             .safeAreaInset(edge: .top){
-                labelContainer
+                mainContent
             }
-            .modifier(NavigationViewModifier())
+            .ignoresSafeArea(edges:[.bottom])
             .navigationDestination(for: Tent.self){  tent in
                 ModelSceneView(selectedTent:tent)
             }
@@ -50,10 +51,14 @@ struct HomeView:View {
 extension HomeView{
     
     var mainContent:some View{
-        scrollContainer
-        .overlay{
+        VStack{
+            labelContainer
+            scrollContainer
+       }
+       .overlay{
             MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
         }
+        
     }
 }
 
@@ -67,13 +72,19 @@ extension HomeView{
                     navigateToRoute(.ROUTE_TENTS)
                 },
                                   content: brandContent,
-                                  backgroundColor: Color.materialDark)
-                NavigationSection(labelText: "För dig",
+                                  backgroundColor: Color.section)
+                NavigationSection(labelText: "Nyheter",
+                                  action: {
+                    
+                },
+                                  content: newsContent,
+                                  backgroundColor: Color.section)
+                NavigationSection(labelText: "Dina bilder",
                                   action: {
                     navigateToRoute(.ROUTE_CAPTURED_IMAGES)
                 },
-                                  content: CoreDataSection(limit: 3),
-                                  backgroundColor: Color.materialDark)
+                                  content: Color.clear,
+                                  backgroundColor: Color.section)
              }
             
         }
@@ -124,7 +135,6 @@ extension HomeView{
            labelImage
         }
         .padding(.horizontal)
-        
     }
     
     var labelText:some View{
@@ -139,6 +149,20 @@ extension HomeView{
          .resizable()
          .frame(width:80,height: 80)
          .hTrailing()
+    }
+    
+}
+
+//MARK: - KEYBOARD ON DONE
+extension HomeView{
+   
+    var newsContent:some View{
+        ZStack{
+            Color.white
+        }
+        .padding(.top)
+        .hCenter()
+        .frame(width:175.0,height: 175.0)
     }
     
 }

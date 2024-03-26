@@ -20,12 +20,13 @@ struct PdfContentView:View {
     }
     
     var body: some View {
-        background
-        .toolbar(.hidden)
+        appBackgroundGradient
         .ignoresSafeArea(.all)
+        .toolbar(.hidden)
         .safeAreaInset(edge: .top){
             mainContent
         }
+        .ignoresSafeArea(edges:[.bottom])
         .task {
             pdfViewCoordinator.setNewDocumentFrom(url: self.pdfResourceItem.pdfUrl)
         }
@@ -36,15 +37,10 @@ struct PdfContentView:View {
 //MARK: - MAIN CONTENT
 extension PdfContentView{
     
-    var background:some View{
-        Color.background
-    }
-    
     var mainContent:some View{
         VStack{
             BaseTopBar(label: "Manual",onNavigateBackAction: navigateBack)
             pdfContainer
-            .padding(.horizontal)
         }
     }
     

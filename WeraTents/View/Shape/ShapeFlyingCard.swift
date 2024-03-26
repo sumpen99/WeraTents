@@ -34,6 +34,17 @@ struct ShapeFlyingCard: Shape {
         return path
     }
     
+    static func createCenerPath(in rect: CGRect,fromPoint:CGPoint) -> Path {
+        let centerX = rect.size.width/2.0
+        let centerY = rect.size.height/2.0
+        var path = Path()
+        path.move(to: fromPoint)
+        path.addCurve(to: CGPoint(x:centerX, y: centerY),
+                      control1: CGPoint(x:centerX, y: centerY),
+                      control2: CGPoint(x:centerX, y: centerY))
+        return path
+    }
+    
     
     static func createUpperPath(in rect: CGRect,fromPoint:CGPoint) -> Path {
         let padding:CGFloat = AR_SELECTED_IMAGE/4.0
