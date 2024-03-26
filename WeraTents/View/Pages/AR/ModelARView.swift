@@ -40,6 +40,7 @@ struct ArHelper{
 }
 
 struct ModelARView: View {
+    @Environment(\.managedObjectContext) var managedObjectContext
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
     @StateObject private var sceneViewCoordinator: SceneViewCoordinator
@@ -51,7 +52,7 @@ struct ModelARView: View {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
         self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
         self._cameraManager = StateObject(wrappedValue: CameraManger())
-    }
+   }
             
     var body: some View{
         mainContent
@@ -429,33 +430,29 @@ extension ModelARView{
     
     
     func saveCapturedImage(){
-        DispatchQueue.global(qos: .userInteractive).async {
-            scaledImageWith(compressionQuality: 1.0,
-                            ofSize: CGSize(width: 2040.0,height: 250.0),
-                            trimmed: false){ imageData in
-                if let imageData = imageData{
-                    let managedObjectContext = PersistenceController.shared.container.viewContext
-                    let model = ScreenshotModel(context:managedObjectContext)
-                    model.buildWithName(arViewCoordinator.selectedTent)
-                    
-                    let image = ScreenshotImage(context:managedObjectContext)
-                    image.data = imageData
-                    model.image = image
+        let model = ScreenshotModel(context:managedObjectContext)
+        let image =  ScreenshotImage(context:managedObjectContext)
+        DispatchQueue.global(qos: .userInteractive).async { [weak arViewCoordinator] in
+            if let imageData = scaledImageWith(compressionQuality: 1.0,
+                            ofSize: CGSize(width: 2040.0,height: HOME_CAPTURED_HEIGHT),
+                            trimmed: false){
+                model.buildWithName(arViewCoordinator?.selectedTent)
+                image.data = imageData
+                model.image = image
                     do{
-                        try PersistenceController.saveContext()
+                        try managedObjectContext.save()
                         resetAndNotifyUserWithToastState(.SUCCESS,"Sparat!")
                     }
                     catch{
                         resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
                     }
-                }
-                else{
-                    resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
-                }
-                
+            }
+            else{
+                resetAndNotifyUserWithToastState(.FAIL,"Misslyckades med att spara!")
             }
         }
     }
+    
     
     func resetAndNotifyUserWithToastState(_ state:ToastState,_ message:String){
         appStateViewModel.activateToast(state,message)
@@ -493,7 +490,7 @@ extension ModelARView{
     
     func scaledImageWith(compressionQuality toStore:CGFloat,
                          ofSize maxSize:CGSize,
-                         trimmed trimImage:Bool,completion:@escaping (Data?) -> Void){
+                         trimmed trimImage:Bool) ->Data?{
             var jpegData:Data?
             if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
                                                         fileName: TEMP_SCREENSHOT_NAME,
@@ -507,7 +504,7 @@ extension ModelARView{
                let thumb = uiImage.preparingThumbnail(of: scaleFactor){
                 jpegData = thumb.jpegData(compressionQuality: toStore)
             }
-            completion(jpegData)
+            return jpegData
     }
     
     func calculateScaleFactor(ofSize maxSize:CGSize,

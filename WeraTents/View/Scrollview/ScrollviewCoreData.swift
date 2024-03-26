@@ -14,7 +14,7 @@ struct ScrollViewCoreData<Content: View>: View {
             GridItem(),
     ]
     var content: (NSManagedObject) -> Content
-     
+    
     var body: some View{
         GeometryReader{ reader in
             ScrollView {
@@ -25,6 +25,7 @@ struct ScrollViewCoreData<Content: View>: View {
                     ForEach(Array(zip(coreDataViewModel.items.indices,
                                       coreDataViewModel.items)),id:\.0){ index, model in
                         content(model)
+                            .padding(.vertical)
                             .id(model.id)
                             .onAppear {
                                 coreDataViewModel.requestMoreItemsIfNeeded(index: index)
@@ -33,7 +34,6 @@ struct ScrollViewCoreData<Content: View>: View {
                     
                 }
                 .padding(.horizontal)
-                .padding(.bottom,MENU_HEIGHT)
             }
             .scrollIndicators(.hidden)
             .overlay {

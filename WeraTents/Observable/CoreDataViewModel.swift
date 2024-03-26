@@ -14,7 +14,7 @@ enum SearchCategorie : String{
 
 //MARK: - COREDATA-FETCHER
 class CoreDataFetcher{
-    let CORE_DATA_FETCH_LIMIT = 50
+    let CORE_DATA_FETCH_LIMIT = 500
     
     var totalItems:Int = 0
     var totalPages:Int = 0
@@ -166,7 +166,7 @@ extension CoreDataFetcher{
 
 //MARK: - COREDATA-VIEWMODEL
 class CoreDataViewModel:ObservableObject{
-    private let itemsFromEndThreshold = 3
+    private let itemsFromEndThreshold = 30
     
     private var totalItemsAvailable: Int?
     private var itemsLoadedCount: Int?
@@ -191,12 +191,16 @@ extension CoreDataViewModel{
      
     func requestItems(page: Int) {
         dataIsLoading = true
-        coreDataFetcher.requestItemsByPage(page){ [weak self] response in
-            DispatchQueue.main.async{
-                self?.totalItemsAvailable = response.totalItems
-                self?.items.append(contentsOf: response.items)
-                self?.itemsLoadedCount = self?.items.count
-                self?.dataIsLoading = false
+        Task { [weak self] in
+            if let strongSelf = self{
+                strongSelf.coreDataFetcher.requestItemsByPage(page){ response in
+                    DispatchQueue.main.async{
+                        strongSelf.totalItemsAvailable = response.totalItems
+                        strongSelf.items.append(contentsOf: response.items)
+                        strongSelf.itemsLoadedCount = strongSelf.items.count
+                        strongSelf.dataIsLoading = false
+                    }
+                }
             }
         }
    }

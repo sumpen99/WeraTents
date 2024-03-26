@@ -7,11 +7,34 @@
 
 import SwiftUI
 
-struct DataFile{
+struct DataFile:Comparable{
+    
+    
     let downloadAs:DownloadData
     let folder:TempFolder
     let name:String?
     let ext:String
+    
+    static func < (lhs: DataFile, rhs: DataFile) -> Bool {
+        if let lhsName = lhs.name,
+           let rhsName = rhs.name{
+            return lhsName < rhsName
+        }
+        return false
+    }
+    
+    static func == (lhs: DataFile, rhs: DataFile) -> Bool {
+        return lhs.downloadAs == rhs.downloadAs &&
+            lhs.folder == rhs.folder &&
+            lhs.name == rhs.name &&
+            lhs.ext == rhs.ext
+    }
+}
+
+struct GroupedDownloader:Equatable{
+    var file:DataFile
+    var status:DataState
+    var resourceUrl:URL?
 }
 
 enum DataState:CaseIterable{
@@ -28,11 +51,16 @@ struct FirestoreDataButton:View {
     let file:DataFile
     let imageName:String
     let imageColor:Color
+    @Binding var groupedDownloadedFile:GroupedDownloader?
     var action:((String?,URL?) -> Void)? = nil
     @State var currentState:DataState = .INITIAL
     @State var resourceUrl:URL?
+    
     var body: some View {
         content
+        .onChange(of: groupedDownloadedFile,initial: false){ oldValue,newValue in
+            updateIfItAffectsMe(newValue)
+        }
         .task{
             guard let fileName = verifyFileName() else { return }
             if !fileExistsLocally(fileName: fileName){
@@ -106,6 +134,7 @@ extension FirestoreDataButton{
         guard let fileName = verifyFileName() else{ return }
         if fileExistsLocally(fileName: fileName){ return }
         changeStatusTo(.LOADING)
+        sendSignalToGroup()
         firestoreViewModel.downloadDataFromStorage(fileName,
                                                    data: file.downloadAs){ url in
             if let url = url{
@@ -115,6 +144,7 @@ extension FirestoreDataButton{
             else{
                 changeStatusTo(.ERROR)
             }
+            sendSignalToGroup()
         }
         
     }
@@ -132,12 +162,28 @@ extension FirestoreDataButton{
         }
     }
     
+    func updateIfItAffectsMe(_ groupedDownloader:GroupedDownloader?){
+        if let groupedDownloader = groupedDownloader{
+            if groupedDownloader.file == file{
+                resourceUrl = groupedDownloader.resourceUrl
+                changeStatusTo(groupedDownloader.status)
+            }
+           
+        }
+    }
+    
     func verifyFileName() -> String?{
         guard let fileName = file.name else{
             changeStatusTo(.INVALID_FILE_NAME)
             return nil
         }
         return fileName
+    }
+    
+    func sendSignalToGroup(){
+        groupedDownloadedFile = GroupedDownloader(file: file,
+                                                  status: currentState,
+                                                  resourceUrl: resourceUrl)
     }
     
     func changeStatusTo(_ newState:DataState){

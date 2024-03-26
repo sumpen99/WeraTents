@@ -23,6 +23,7 @@ struct PdfView:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var firestoreViewModel: FirestoreViewModel
     @State var helper:CatalogeHelper = CatalogeHelper()
+    @State var groupedDownloadedFile:GroupedDownloader?
     @Namespace var namespace
     
     var body: some View {
@@ -121,6 +122,7 @@ extension PdfView{
                 FirestoreDataButton(file: dataFile,
                                     imageName: "chevron.right",
                                     imageColor: Color.white,
+                                    groupedDownloadedFile:$groupedDownloadedFile,
                                     action: navigateToPdfContainer)
                 .hTrailing()
             }

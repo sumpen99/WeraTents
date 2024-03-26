@@ -8,35 +8,32 @@
 import SwiftUI
 import CoreData
 struct CoreDataSection:View {
-    let limit:Int
-    @State var latestScreenShots:[ScreenshotModel] = []
+    @StateObject var coreDataViewModel:CoreDataViewModel
+    init(){
+        self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
+    }
     
     var body:some View{
-        content
-        .task {
-            fetchData()
+        screenShotList
+        .task{
+            coreDataViewModel.requestInitialSetOfItems()
         }
         .onDisappear{
-            latestScreenShots.removeAll()
+            coreDataViewModel.clearAllData()
         }
     }
     
-    func fetchData(){
-        CoreDataFetcher.loadDataWith(limit: limit,sortedOn: "date"){  items in
-            latestScreenShots = items
-        }
-    }
 }
 
 //MARK: - CONTENT
 extension CoreDataSection{
-    var content:some View{
+    var screenShotList:some View{
         LazyVGrid(columns: [GridItem(),GridItem()],
                   alignment: .center,
                   spacing: V_GRID_SPACING,
                   pinnedViews: .sectionHeaders){
-             ForEach(latestScreenShots,id:\.self){ item in
-                screenshotCard(item)
+            ForEach(coreDataViewModel.items,id:\.self){ screenShot in
+                screenshotCard(screenShot)
                 .padding(.vertical)
              }
                                                             
@@ -59,12 +56,6 @@ extension CoreDataSection{
                         { newComment in
                             PersistenceController
                             .updateScreenshot(model,with: newComment)}
-                        deleteCard:{
-                            PersistenceController.deleteMultipleItems(models:[CoreDataRemoveItem(modelId: model.objectID,imageId: image.objectID)]){
-                                modelDeleted,imageDeleted in
-                                self.fetchData()
-                            }
-                        }
                 }
     }
 }

@@ -15,7 +15,6 @@ struct FlippedCard:View {
     @State var descriptionText:String
     let dateText:String
     let saveNewComment:(String) -> Void
-    let deleteCard:() -> Void
     @State var width:CGFloat = 0.0
     @State var angle: CGFloat = 0.0
     @State var textInput:String = ""
@@ -48,11 +47,12 @@ extension FlippedCard{
     @ViewBuilder
     var sideContent:some View{
         ZStack{
-            Color.lightBrown
             if itIsFrontside(){
+                Color.clear
                 frontSide
            }
             else{
+                Color.lightBrown
                 backSide
             }
         }
@@ -76,39 +76,29 @@ extension FlippedCard{
     @ViewBuilder
     var cardText: some View{
         VStack(spacing: V_SPACING_REG){
-            Text(labelText)
-            .font(.caption)
-            .foregroundStyle(Color.materialDark)
-            .bold()
+            baseText(labelText)
             TextEditorWithPlaceholder(text: $textInput)
             bottomRow
-            
-            
        }
         .padding(.vertical)
         .padding(.horizontal,10.0)
     }
     
+    func baseText(_ text:String) -> some View{
+        Text(text)
+        .font(.caption)
+        .foregroundStyle(Color.materialDark)
+        .bold()
+    }
+    
     var bottomRow:some View{
         HStack{
-            Text(dateText)
-            .font(.caption)
-            .foregroundStyle(Color.materialDark)
-            .bold()
+            baseText(dateText)
             .hLeading()
             Spacer()
             if descriptionText != textInput{
                 Button(action: saveAndReset, label: {
                     Text("Spara")
-                    .font(.callout)
-                    .foregroundStyle(Color.blue)
-                    .bold()
-                })
-                .hTrailing()
-            }
-            else{
-                Button(action: deleteCard, label: {
-                    Text("Radera")
                     .font(.callout)
                     .foregroundStyle(Color.blue)
                     .bold()
