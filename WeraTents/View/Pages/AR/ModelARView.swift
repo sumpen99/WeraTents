@@ -13,51 +13,31 @@ enum ArAnimationState:Int,CaseIterable{
     case SHOW_CAROUSEL
     case SAVING_SCREEN_SHOT
     case DELAY_CAPTURE_BUTTON
-    case SHOW_TAKEN_PICTURE
     case SHOW_SELECTED_TENT_IMAGE
     case SEND_PICKED_IMAGE
     case LOADING_USDZ_MODEL
     case SHOW_SHORT_DESCRIPTION
+    case DONT_SHOW_INFO_TEXT_AGAIN
 }
-
-struct ArHelper{
-    var animationState:[Bool] = Array(repeating: false, count: ArAnimationState.allCases.count)
-    var selectedTent:Tent?
-    var dontShowInfoTextAgain:Bool = false
-    func stateOf(animation state:ArAnimationState) -> Bool{
-        return animationState[state.rawValue]
-    }
-    
-    mutating func setStateOf(animation state:ArAnimationState,value:Bool){
-        animationState[state.rawValue] = value
-    }
-    
-    mutating func setStateOf(animations states:[ArAnimationState],values:[Bool]){
-        for i in 0..<states.count{
-            animationState[states[i].rawValue] = values[i]
-        }
-    }
-}
+var CURRENT_TAKEN_SCREEN_SHOT_IMAGE:UIImage?
 
 struct ModelARView: View {
     @Environment(\.managedObjectContext) var managedObjectContext
     @EnvironmentObject var firestoreViewModel:FirestoreViewModel
     @StateObject private var arViewCoordinator: ARViewCoordinator
-    @StateObject private var sceneViewCoordinator: SceneViewCoordinator
     @StateObject private var cameraManager: CameraManger
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var appStateViewModel: AppStateViewModel
-    @State var helper:ArHelper = ArHelper()
-    @State var currentTakenScreenShotImage:UIImage?
+    @State var animationState:[Bool] = Array(repeating: false, count:ArAnimationState.allCases.count)
+    @State var selectedTent:Tent?
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
-        self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
         self._cameraManager = StateObject(wrappedValue: CameraManger())
    }
             
     var body: some View{
         mainContent
-        .onChange(of: helper.selectedTent,initial: false){ oldValue,newValue in
+        .onChange(of: selectedTent,initial: false){ oldValue,newValue in
             resetArCoordinatorWith(newTent: newValue)
         }
         .ignoresSafeArea()
@@ -71,22 +51,17 @@ struct ModelARView: View {
             topBar
         }
         .overlay{
-            if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
-                ScreenShotAnimation(arAnimationState:$helper.animationState,
-                                    currentTakenScreenShotImage:$currentTakenScreenShotImage)
+            if stateOf(animation: .SAVING_SCREEN_SHOT){
+                ScreenShotAnimation(arAnimationState:$animationState,
+                                    action:actionAfterCapturedImage)
             }
-            else if helper.stateOf(animation: .SHOW_TAKEN_PICTURE){
-                SwipableCard(isShown:$helper.animationState[ArAnimationState.SHOW_TAKEN_PICTURE.rawValue],
-                             currentTakenScreenShotImage:$currentTakenScreenShotImage,
-                             action:actionAfterCapturedImage)
-            }
-            else if helper.stateOf(animation: .SHOW_CAROUSEL){
+            else if stateOf(animation: .SHOW_CAROUSEL){
                 pickerContent
             }
-            else if helper.stateOf(animation: .LOADING_USDZ_MODEL){
+            else if stateOf(animation: .LOADING_USDZ_MODEL){
                 spinnerContent
             }
-            else if helper.stateOf(animation: .SHOW_SHORT_DESCRIPTION){
+            else if stateOf(animation: .SHOW_SHORT_DESCRIPTION){
                 shortInfoOnHowToDo
             }
         }
@@ -142,8 +117,6 @@ extension ModelARView{
         .padding()
     }
     
-    
-   
 }
 
 //MARK: - LOADING SPINNER
@@ -161,7 +134,7 @@ extension ModelARView{
             .frame(width: reader.size.width*0.75,height:reader.size.height/4.0)
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
             .animation(.easeIn(duration: 0.25),
-                       value: helper.animationState[ArAnimationState.LOADING_USDZ_MODEL.rawValue])
+                       value: animationState[ArAnimationState.LOADING_USDZ_MODEL.rawValue])
             .transition(.scale.combined(with: .opacity))
             .ignoresSafeArea(.all)
             .vCenter()
@@ -181,7 +154,7 @@ extension ModelARView{
             .frame(height:reader.size.height/4.0)
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
             .animation(.easeIn(duration: 1.25),
-                       value: helper.animationState[ArAnimationState.SHOW_SHORT_DESCRIPTION.rawValue])
+                       value: animationState[ArAnimationState.SHOW_SHORT_DESCRIPTION.rawValue])
             .transition(.scale.combined(with: .opacity))
             .ignoresSafeArea(.all)
             .vCenter()
@@ -210,7 +183,7 @@ extension ModelARView{
     
     var shortInfoButtons: some View{
         HStack{
-            Toggle(isOn: $helper.dontShowInfoTextAgain) {
+            Toggle(isOn: $animationState[ArAnimationState.DONT_SHOW_INFO_TEXT_AGAIN.rawValue]) {
                 Text("Visa inte igen")
             }
             .toggleStyle(CheckboxStyle(alignLabelLeft: true,
@@ -251,9 +224,9 @@ extension ModelARView{
 extension ModelARView{
     @ViewBuilder
     var pickerContent:some View{
-        if helper.stateOf(animation: .SHOW_CAROUSEL){
-            ARTentPicker(animationState:$helper.animationState,
-                         selectedTent: $helper.selectedTent)
+        if stateOf(animation: .SHOW_CAROUSEL){
+            ARTentPicker(animationState:$animationState,
+                         selectedTent: $selectedTent)
          }
     }
 }
@@ -262,7 +235,7 @@ extension ModelARView{
 extension ModelARView{
     @ViewBuilder
     var selectedtentImage:some View{
-        if let tent = helper.selectedTent{
+        if let tent = selectedTent{
             FirestoreImage(iconImageUrl: tent.iconStorageIds?.first,
                            imageType: .PICKER)
             .frame(width:AR_SELECTED_IMAGE,height: AR_SELECTED_IMAGE)
@@ -301,7 +274,7 @@ extension ModelARView{
     
     var captureImageButton:some View{
         Button(action: captureImage, label: {
-            if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
+            if stateOf(animation: .SAVING_SCREEN_SHOT){
                 ProgressView()
                 .foregroundStyle(Color.white)
                 .hCenter()
@@ -317,7 +290,7 @@ extension ModelARView{
                              thicknes:2.0)
             }
         })
-        .disabled(helper.stateOf(animation: .DELAY_CAPTURE_BUTTON))
+        .disabled(stateOf(animation: .DELAY_CAPTURE_BUTTON))
     }
     
     var placeModelButton:some View{
@@ -398,16 +371,16 @@ extension ModelARView{
 //MARK: - FUNCTIONS CAPTURED IMAGES
 extension ModelARView{
     func captureImage(){
-        helper.setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
+        setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
                           values: [true,true,true])
         arViewCoordinator.captureSnapshot(){ uiImage in
             if let uiImage = uiImage{
-                currentTakenScreenShotImage = uiImage
-                helper.setStateOf(animation: .SEND_CARD, value: true)
+                CURRENT_TAKEN_SCREEN_SHOT_IMAGE = uiImage
+                setStateOf(animation: .SEND_CARD, value: true)
             }
             else{
                 appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
-                    helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
+                    setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
                 }
             }
             
@@ -433,8 +406,9 @@ extension ModelARView{
         DispatchQueue.global(qos: .userInteractive).async { [weak arViewCoordinator] in
             if let imageData = scaledImageWith(compressionQuality: 1.0,
                             ofSize: CGSize(width: 2040.0,height: HOME_CAPTURED_HEIGHT),
-                            trimmed: false){
-                model.buildWithName(arViewCoordinator?.selectedTent)
+                            trimmed: false),
+               let arViewCoordinator = arViewCoordinator{
+                model.buildWithName(arViewCoordinator.selectedTent)
                 image.data = imageData
                 model.image = image
                     do{
@@ -455,27 +429,27 @@ extension ModelARView{
     func resetAndNotifyUserWithToastState(_ state:ToastState,_ message:String){
         appStateViewModel.activateToast(state,message)
         clearTempFromImage()
-        helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+        setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
     }
     
     func resetWithoutNotifyUserWithToastState(){
         clearTempFromImage()
-        helper.setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
+        setStateOf(animation: .DELAY_CAPTURE_BUTTON, value: false)
     }
     
     func clearTempFromImage(){
-        currentTakenScreenShotImage = nil
+        CURRENT_TAKEN_SCREEN_SHOT_IMAGE = nil
     }
     
     func resetCarousel(){
         withAnimation{
-            helper.animationState[ArAnimationState.SHOW_CAROUSEL.rawValue].toggle()
+            animationState[ArAnimationState.SHOW_CAROUSEL.rawValue].toggle()
         }
     }
    
     func animateStateOf(_ state:ArAnimationState,with value:Bool){
         withAnimation{
-            helper.animationState[state.rawValue] = value
+            animationState[state.rawValue] = value
         }
     }
     
@@ -488,7 +462,7 @@ extension ModelARView{
                          ofSize maxSize:CGSize,
                          trimmed trimImage:Bool) ->Data?{
             var jpegData:Data?
-            if let uiImage = currentTakenScreenShotImage,
+            if let uiImage = CURRENT_TAKEN_SCREEN_SHOT_IMAGE,
                let scaleFactor = calculateScaleFactor(ofSize:maxSize,
                                                       imageWidth:uiImage.size.width,
                                                       imageHeight: uiImage.size.height,
@@ -546,9 +520,23 @@ extension ModelARView{
         arViewCoordinator.action(.PLACE_3D_MODEL){ [weak appStateViewModel] result in
             if !result{
                 appStateViewModel?.activateToast(.FAIL,"Ett fel uppstod!"){
-                    helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
+                    setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
                 }
             }
+        }
+    }
+    
+    func stateOf(animation state:ArAnimationState) -> Bool{
+        return animationState[state.rawValue]
+    }
+    
+    func setStateOf(animation state:ArAnimationState,value:Bool){
+        animationState[state.rawValue] = value
+    }
+    
+    func setStateOf(animations states:[ArAnimationState],values:[Bool]){
+        for i in 0..<states.count{
+            animationState[states[i].rawValue] = values[i]
         }
     }
     
