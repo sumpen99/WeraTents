@@ -24,6 +24,7 @@ struct CapturedImages:View {
     @StateObject var coreDataViewModel:CoreDataViewModel = CoreDataViewModel()
     @State var state:LibraryState = .BASE
     @State var deleteModels:[CoreDataRemoveItem] = []
+    @State var expandedImageValues:ExpandedImageValues?
  
     init(){
         self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
@@ -44,6 +45,11 @@ struct CapturedImages:View {
             coreDataViewModel.clearAllData()
             clearAllData()
         }
+        .overlay{
+            if expandedImageValues != nil{
+                ExpandedImage(expandedImageValues: $expandedImageValues)
+            }
+        }
     }
 }
 
@@ -63,10 +69,10 @@ extension CapturedImages{
 extension CapturedImages{
     
     var screenShotList:some View{
-        /*ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
+        ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
                         screenShotCard(screenShot as? ScreenshotModel)
-        }*/
-        ScrollView{
+        }
+        /*ScrollView{
             LazyVGrid(columns: [GridItem(),GridItem()],
                       alignment: .center,
                       spacing: V_GRID_SPACING,
@@ -78,7 +84,7 @@ extension CapturedImages{
                                                                 
             }
             .padding(.horizontal)
-        }
+        }*/
     }
     
     @ViewBuilder
@@ -95,11 +101,25 @@ extension CapturedImages{
                         dateText: model.date?.toISO8601String() ?? "")
                         { newComment in
                             PersistenceController.updateScreenshot(model,with: newComment)}
-            .onTapGesture {
+                        tapGestureAction: { tappedPoint in
+                            if state == .BASE {
+                                withAnimation{
+                                    expandedImageValues = ExpandedImageValues(
+                                                            selectedImage: Image(uiImage: uiImage), startPosition: tappedPoint,
+                                                                startValues: CGSize(),
+                                                                endValues: CGSize())
+                                }
+                           }
+                            else{
+                                toggleListId(modelId:model.objectID,
+                                             imageId:image.objectID)
+                            }
+                        }
+            /*.onTapGesture(coordinateSpace: .global) { location in
                 if state == .BASE { return }
                 toggleListId(modelId:model.objectID,
                              imageId:image.objectID)
-            }
+            }*/
             .overlay{
                 cardIsSelected(model.objectID)
                 .onTapGesture {
@@ -123,6 +143,28 @@ extension CapturedImages{
             }
        }
     }
+    
+    /*var expandedImage:some View{
+        selectedImageToExpand?
+        .resizable()
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+        .onTapGesture {
+            withAnimation{
+                selectedImageToExpand = nil
+            }
+        }
+        .animation(.easeInOut(duration: 0.25),value: selectedImageToExpand)
+        .transition(.scale.combined(with: .opacity))
+        .vCenter()
+        .hCenter()
+        .padding()
+        .background{
+            RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
+                .fill(Color.white)
+        }
+        .padding()
+    }*/
 }
 
 //MARK: - BUTTONS
