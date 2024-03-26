@@ -15,6 +15,7 @@ struct FlippedCard:View {
     @State var descriptionText:String
     let dateText:String
     let saveNewComment:(String) -> Void
+    let tapGestureAction:(CGPoint) -> Void
     @State var width:CGFloat = 0.0
     @State var angle: CGFloat = 0.0
     @State var textInput:String = ""
@@ -24,6 +25,9 @@ struct FlippedCard:View {
         .frame(height: HOME_CAPTURED_HEIGHT)
         .onAppear{
             textInput = descriptionText
+        }
+        .onTapGesture(coordinateSpace: .global) { location in
+            executeTapAction(location)
         }
     }
     
@@ -130,7 +134,7 @@ extension FlippedCard{
             }
         }
     }
-    
+     
 }
 
 
@@ -141,6 +145,12 @@ extension FlippedCard{
         return  (-90.0 < self.angle && self.angle <= 90.0) ||
                 (-360 <= self.angle && self.angle <= -270)  ||
                 (270 < self.angle && self.angle <= 360)
+    }
+    
+    func executeTapAction(_ location:CGPoint){
+        if itIsFrontside(){
+            tapGestureAction(location)
+        }
     }
     
     func saveAndReset(){

@@ -73,11 +73,17 @@ extension HomeView{
                 },
                                   content: brandContent,
                                   backgroundColor: Color.section)
-                NavigationSection(labelText: "För dig",
+                NavigationSection(labelText: "Nyheter",
+                                  action: {
+                    
+                },
+                                  content: newsContent,
+                                  backgroundColor: Color.section)
+                NavigationSection(labelText: "Dina bilder",
                                   action: {
                     navigateToRoute(.ROUTE_CAPTURED_IMAGES)
                 },
-                                  content: ZStack{ Color.clear},
+                                  content: Color.clear,
                                   backgroundColor: Color.section)
              }
             
@@ -143,6 +149,20 @@ extension HomeView{
          .resizable()
          .frame(width:80,height: 80)
          .hTrailing()
+    }
+    
+}
+
+//MARK: - KEYBOARD ON DONE
+extension HomeView{
+   
+    var newsContent:some View{
+        ZStack{
+            Color.white
+        }
+        .padding(.top)
+        .hCenter()
+        .frame(width:175.0,height: 175.0)
     }
     
 }

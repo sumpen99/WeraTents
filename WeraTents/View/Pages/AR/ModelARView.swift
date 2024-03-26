@@ -48,6 +48,7 @@ struct ModelARView: View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @EnvironmentObject var appStateViewModel: AppStateViewModel
     @State var helper:ArHelper = ArHelper()
+    @State var currentTakenScreenShotImage:UIImage?
     init() {
         self._arViewCoordinator = StateObject(wrappedValue: ARViewCoordinator())
         self._sceneViewCoordinator = StateObject(wrappedValue: SceneViewCoordinator())
