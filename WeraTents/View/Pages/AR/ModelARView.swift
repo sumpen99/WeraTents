@@ -72,10 +72,12 @@ struct ModelARView: View {
         }
         .overlay{
             if helper.stateOf(animation: .SAVING_SCREEN_SHOT){
-                ScreenShotAnimation(arAnimationState:$helper.animationState)
+                ScreenShotAnimation(arAnimationState:$helper.animationState,
+                                    currentTakenScreenShotImage:$currentTakenScreenShotImage)
             }
             else if helper.stateOf(animation: .SHOW_TAKEN_PICTURE){
                 SwipableCard(isShown:$helper.animationState[ArAnimationState.SHOW_TAKEN_PICTURE.rawValue],
+                             currentTakenScreenShotImage:$currentTakenScreenShotImage,
                              action:actionAfterCapturedImage)
             }
             else if helper.stateOf(animation: .SHOW_CAROUSEL){
@@ -399,18 +401,13 @@ extension ModelARView{
         helper.setStateOf(animations: [.FLASH_SCREEN,.SAVING_SCREEN_SHOT,.DELAY_CAPTURE_BUTTON],
                           values: [true,true,true])
         arViewCoordinator.captureSnapshot(){ uiImage in
-            DispatchQueue.global(qos: .userInteractive).async {
-                if let uiImage = uiImage{
-                    ServiceManager.writeImageToCache(fileName: TEMP_SCREENSHOT_NAME,
-                                                     uiImage: uiImage,
-                                                     folder: .SCREEN_SHOT){ result in
-                        helper.setStateOf(animation: .SEND_CARD, value: true)
-                    }
-                }
-                else{
-                    appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
-                        helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
-                    }
+            if let uiImage = uiImage{
+                currentTakenScreenShotImage = uiImage
+                helper.setStateOf(animation: .SEND_CARD, value: true)
+            }
+            else{
+                appStateViewModel.activateToast(.FAIL,"Misslyckades med att fånga skärmen!"){
+                    helper.setStateOf(animation: .SAVING_SCREEN_SHOT, value: false)
                 }
             }
             
@@ -467,9 +464,7 @@ extension ModelARView{
     }
     
     func clearTempFromImage(){
-        ServiceManager.removefileFromFolder(folder: .SCREEN_SHOT,
-                                            fileName: TEMP_SCREENSHOT_NAME,
-                                            ext: "png")
+        currentTakenScreenShotImage = nil
     }
     
     func resetCarousel(){
@@ -493,11 +488,7 @@ extension ModelARView{
                          ofSize maxSize:CGSize,
                          trimmed trimImage:Bool) ->Data?{
             var jpegData:Data?
-            if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
-                                                        fileName: TEMP_SCREENSHOT_NAME,
-                                                         ext: "png"),
-               let data = try? Data(contentsOf: url),
-               let uiImage = UIImage(data: data),
+            if let uiImage = currentTakenScreenShotImage,
                let scaleFactor = calculateScaleFactor(ofSize:maxSize,
                                                       imageWidth:uiImage.size.width,
                                                       imageHeight: uiImage.size.height,

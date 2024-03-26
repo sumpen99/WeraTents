@@ -53,6 +53,7 @@ struct SafeAreaBounds{
 
 struct SwipableCard: View {
     @Binding var isShown:Bool
+    @Binding var currentTakenScreenShotImage:UIImage?
     let action:(Bool) -> Void
     @GestureState private var startLocation: CGPoint? = nil
     @State var location = CGPoint()
@@ -67,11 +68,7 @@ struct SwipableCard: View {
     
     @ViewBuilder
     var content:some View{
-        if let url = ServiceManager.fileExistInside(folder: .SCREEN_SHOT,
-                                                    fileName: TEMP_SCREENSHOT_NAME,
-                                                     ext: "png"),
-           let data = try? Data(contentsOf: url),
-           let uiImage = UIImage(data: data){
+        if let uiImage = currentTakenScreenShotImage{
             GeometryReader{ reader in
                 ZStack{
                     Color.white
