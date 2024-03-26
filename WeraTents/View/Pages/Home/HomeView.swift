@@ -55,7 +55,7 @@ extension HomeView{
             labelContainer
             scrollContainer
        }
-        .overlay{
+       .overlay{
             MenuButtonAnimation(openMenuSwitch: $openMenuSwitch)
         }
         
@@ -77,7 +77,7 @@ extension HomeView{
                                   action: {
                     navigateToRoute(.ROUTE_CAPTURED_IMAGES)
                 },
-                                  content: CoreDataSection(limit: 3),
+                                  content: ZStack{ Color.clear},
                                   backgroundColor: Color.section)
              }
             

@@ -25,6 +25,9 @@ struct CapturedImages:View {
     @State var state:LibraryState = .BASE
     @State var deleteModels:[CoreDataRemoveItem] = []
  
+    init(){
+        self._coreDataViewModel = StateObject(wrappedValue: CoreDataViewModel())
+    }
     
     var body: some View {
         appBackgroundGradient
@@ -60,12 +63,15 @@ extension CapturedImages{
 extension CapturedImages{
     
     var screenShotList:some View{
+        /*ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
+                        screenShotCard(screenShot as? ScreenshotModel)
+        }*/
         ScrollView{
             LazyVGrid(columns: [GridItem(),GridItem()],
                       alignment: .center,
                       spacing: V_GRID_SPACING,
-                      pinnedViews: .sectionHeaders){
-                ForEach(coreDataViewModel.items){ item in
+                      pinnedViews: .sectionHeaders){[weak coreDataViewModel] in
+                ForEach(coreDataViewModel?.items ?? [],id:\.self){ item in
                     screenShotCard(item)
                     .padding(.vertical)
                  }
@@ -89,12 +95,6 @@ extension CapturedImages{
                         dateText: model.date?.toISO8601String() ?? "")
                         { newComment in
                             PersistenceController.updateScreenshot(model,with: newComment)}
-                         deleteCard: {
-                            PersistenceController.deleteMultipleItems(models:[CoreDataRemoveItem(modelId: model.objectID,imageId:image.objectID)]){
-                                    modelDeleted,imageDeleted in
-                                    resetListOfSavedTubes()
-                        }
-                }
             .onTapGesture {
                 if state == .BASE { return }
                 toggleListId(modelId:model.objectID,
@@ -102,15 +102,25 @@ extension CapturedImages{
             }
             .overlay{
                 cardIsSelected(model.objectID)
+                .onTapGesture {
+                    toggleListId(modelId:model.objectID,
+                                 imageId:image.objectID)
+                }
             }
        }
         
      }
     
     @ViewBuilder
-    func cardIsSelected(_ id:NSManagedObjectID?) -> some View{
-        if onListContainsModelId(id){
-            checkmarkCircle()
+    func cardIsSelected(_ modelId:NSManagedObjectID?) -> some View{
+        if onListContainsModelId(modelId){
+            Color.white.opacity(0.1)
+            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
+            .vTop()
+            .hCenter()
+            .overlay{
+                checkmarkCircle()
+            }
        }
     }
 }
@@ -137,8 +147,8 @@ extension CapturedImages{
             .font(.headline)
             .bold()
         }
-        //.disabled(!coreDataViewModel.hasItemsLoaded)
-        //.opacity(coreDataViewModel.hasItemsLoaded ? 1.0 : 0.0)
+        .disabled(!coreDataViewModel.hasItemsLoaded)
+        .opacity(coreDataViewModel.hasItemsLoaded ? 1.0 : 0.0)
         .padding(.horizontal)
     }
     
@@ -326,7 +336,9 @@ extension CapturedImages{
     }
     
     func updateState(){
-        state = emptyDeleteList ? .BASE : state
+        withAnimation{
+            state = emptyDeleteList ? .BASE : state
+        }
     }
     
 }
