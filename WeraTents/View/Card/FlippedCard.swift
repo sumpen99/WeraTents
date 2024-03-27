@@ -51,7 +51,7 @@ extension FlippedCard{
     @ViewBuilder
     var sideContent:some View{
         ZStack{
-            if itIsFrontside(){
+            if itIsFrontside{
                 Color.clear
                 frontSide
            }
@@ -77,11 +77,11 @@ extension FlippedCard{
         .rotation3DEffect(.degrees(180), axis: (x:0,y:1,z:0))
      }
     
-    @ViewBuilder
     var cardText: some View{
         VStack(spacing: V_SPACING_REG){
             baseText(labelText)
-            TextEditorWithPlaceholder(text: $textInput)
+            TextEditorWithPlaceholder(text: $textInput,
+                                      placeholderText: "Lägg till en kommentar...")
             bottomRow
        }
         .padding(.vertical)
@@ -96,20 +96,8 @@ extension FlippedCard{
     }
     
     var bottomRow:some View{
-        HStack{
-            baseText(dateText)
-            .hLeading()
-            Spacer()
-            if descriptionText != textInput{
-                Button(action: saveAndReset, label: {
-                    Text("Spara")
-                    .font(.callout)
-                    .foregroundStyle(Color.blue)
-                    .bold()
-                })
-                .hTrailing()
-            }
-        }
+        baseText(dateText)
+        .hLeading()
     }
     
 }
@@ -126,7 +114,8 @@ extension FlippedCard{
             self.angle = (theta + self.angle).truncatingRemainder(dividingBy: 360.0)
         }
         .onEnded { gesture in
-            if itIsFrontside(){
+            if itIsFrontside{
+                saveIfWeHaveNewChanges()
                 self.angle = 0.0
             }
             else{
@@ -141,56 +130,30 @@ extension FlippedCard{
 //MARK: - FUNCTIONS
 extension FlippedCard{
         
-    func itIsFrontside() -> Bool{
-        return  (-90.0 < self.angle && self.angle <= 90.0) ||
+    var itIsFrontside: Bool{
+        return  (self.angle == 0.0) ||
+                (-90.0 < self.angle && self.angle <= 90.0) ||
                 (-360 <= self.angle && self.angle <= -270)  ||
                 (270 < self.angle && self.angle <= 360)
     }
     
+    
     func executeTapAction(_ location:CGPoint){
-        if itIsFrontside(){
+        if itIsFrontside{
             tapGestureAction(location)
         }
     }
     
-    func saveAndReset(){
-        withAnimation{
-            descriptionText = textInput
+    func saveIfWeHaveNewChanges(){
+        if descriptionText != textInput{
+            saveAndReset()
         }
+    }
+    
+    func saveAndReset(){
+        descriptionText = textInput
         saveNewComment(textInput)
     }
     
     
-}
-
-//MARK: - TEXT-EDITOR-WITH-PLACEHOLDER
-struct TextEditorWithPlaceholder: View {
-    @Binding var text: String
-    
-    var body: some View {
-        ZStack(alignment: .leading) {
-            Color(uiColor: .tertiaryLabel).opacity(0.2)
-            if text.isEmpty {
-               VStack {
-                    Text("Lägg till en kommentar...")
-                        .padding(.top, 10)
-                        .padding(.leading, 6)
-                        .opacity(0.6)
-                        .font(.callout)
-                    Spacer()
-                }
-            }
-            
-            VStack {
-                TextEditor(text: $text)
-                    .vTop()
-                    .opacity(text.isEmpty ? 0.85 : 1)
-                    .font(.callout)
-                    .scrollContentBackground(.hidden)
-                Spacer()
-            }
-            
-        }
-        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_BRAND))
-    }
 }

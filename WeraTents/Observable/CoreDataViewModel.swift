@@ -84,6 +84,7 @@ class CoreDataViewModel:ObservableObject{
     private var itemsLoadedCount: Int?
     private var page = 0
     private let coreDataFetcher: CoreDataFetcher = CoreDataFetcher()
+    @Published var deleteModels:[CoreDataRemoveItem] = []
     @Published var items: [ScreenshotModel] = []
     @Published var dataIsLoading = false
 }
@@ -152,5 +153,81 @@ extension CoreDataViewModel{
         coreDataFetcher.reset()
     }
     
+}
+
+//MARK: - DELETE MODELS
+extension CoreDataViewModel{
+    func selectAllItemsToBeRemoved(){
+        let items = items.compactMap({
+            if let imageId = $0.image?.objectID{
+                return CoreDataRemoveItem(modelId: $0.objectID,
+                                          imageId: imageId)
+            }
+            return nil
+        })
+        deleteModels = items
+    }
+    
+    func removeSelectedItems() -> Void){
+        PersistenceController.deleteMultipleItems(models: deleteModels){ models,images in
+            self.resetAndReFetch()
+        }
+    }
+    
+    func hasModelAddedToBeRemoved(_ modelId:NSManagedObjectID?) -> Bool{
+        if let modelId = modelId,
+           let _ = deleteModels.firstIndex(where: {$0.modelId == modelId}){
+            return true
+        }
+        return false
+    }
+    
+    func toggleModel(_ modelId:NSManagedObjectID?,imageId:NSManagedObjectID?){
+        if let modelId = modelId,
+           let imageId = imageId{
+            if let index = deleteModels.firstIndex(where: {$0.modelId == modelId}){
+                deleteModels.remove(at: index)
+            }
+            else{
+                deleteModels.append(CoreDataRemoveItem(modelId: modelId,
+                                                       imageId: imageId))
+            }
+        }
+    }
+    
+   
+    
+    func resetAndReFetch(){
+        withAnimation{
+            deleteModels.removeAll()
+        }
+        requestInitialSetOfItems()
+    }
+}
+
+//MARK: - TEST MEMOMORY WITH MORE ITEMS
+extension CoreDataViewModel{
+    func requestDataToTestMemory(multiple count:Int){
+        resetPageCounter()
+        requestMultipliedItems(by:count)
+    }
+     
+    func requestMultipliedItems(by count:Int) {
+        dataIsLoading = true
+        Task { [weak self] in
+            if let strongSelf = self{
+                strongSelf.coreDataFetcher.requestItemsByPage(0){ response in
+                    DispatchQueue.main.async{
+                        for _ in 0..<count{
+                            strongSelf.items.append(contentsOf: response.items)
+                        }
+                        strongSelf.totalItemsAvailable = response.totalItems * count
+                        strongSelf.itemsLoadedCount = strongSelf.items.count
+                        strongSelf.dataIsLoading = false
+                    }
+                }
+            }
+        }
+   }
 }
 
