@@ -23,6 +23,7 @@ struct CapturedImages:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @StateObject var coreDataViewModel:CoreDataViewModel = CoreDataViewModel()
     @State var state:LibraryState = .BASE
+    @State var deleteModels:[CoreDataRemoveItem] = []
     @State var expandedImageValues:ExpandedImageValues?
  
     init(){
@@ -38,8 +39,11 @@ struct CapturedImages:View {
         }
         .ignoresSafeArea(edges:[.bottom])
         .task{
-            coreDataViewModel.requestDataToTestMemory(multiple: 100)
-            //coreDataViewModel.requestInitialSetOfItems()
+            coreDataViewModel.requestInitialSetOfItems()
+        }
+        .onDisappear{
+            coreDataViewModel.clearAllData()
+            clearAllData()
         }
         .overlay{
             if expandedImageValues != nil{
@@ -66,9 +70,9 @@ extension CapturedImages{
     
     var screenShotList:some View{
         ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
-            screenShotCard(screenShot as? ScreenshotModel)
+                        screenShotCard(screenShot as? ScreenshotModel)
         }
-     }
+    }
     
     @ViewBuilder
     func screenShotCard(_ model:ScreenshotModel?) -> some View{
@@ -94,15 +98,15 @@ extension CapturedImages{
                                 }
                            }
                             else{
-                                coreDataViewModel.toggleModel(model.objectID,
-                                                              imageId:image.objectID)
+                                toggleListId(modelId:model.objectID,
+                                             imageId:image.objectID)
                             }
                         }
-            .overlay{
+             .overlay{
                 cardIsSelected(model.objectID)
                 .onTapGesture {
-                    coreDataViewModel.toggleModel(model.objectID,
-                                                  imageId:image.objectID)
+                    toggleListId(modelId:model.objectID,
+                                 imageId:image.objectID)
                 }
             }
        }
@@ -111,7 +115,7 @@ extension CapturedImages{
     
     @ViewBuilder
     func cardIsSelected(_ modelId:NSManagedObjectID?) -> some View{
-        if coreDataViewModel.hasModelAddedToBeRemoved(modelId){
+        if onListContainsModelId(modelId){
             Color.white.opacity(0.1)
             .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
             .vTop()
@@ -121,7 +125,6 @@ extension CapturedImages{
             }
        }
     }
-    
 }
 
 //MARK: - BUTTONS
@@ -166,7 +169,7 @@ extension CapturedImages{
     }
     
     var selectAllButton:some View{
-        Button(action: selectedAllItems ){
+        Button(action: selectAllItems ){
             Text("Välj alla")
             .foregroundStyle(Color.white)
             .font(.headline)
@@ -261,43 +264,78 @@ extension CapturedImages{
 extension CapturedImages{
     
     var emptyDeleteList:Bool{
-        coreDataViewModel.deleteModels.count == 0
+        deleteModels.count == 0
     }
     
     var listCount:Int{
-        coreDataViewModel.deleteModels.count
+        deleteModels.count
     }
     
     func navigateBack(){
         navigationViewModel.popPath()
     }
-         
+    
+    func selectAllItems(){
+        let items = coreDataViewModel.items.compactMap({
+            if let imageId = $0.image?.objectID{
+                return CoreDataRemoveItem(modelId: $0.objectID,
+                                          imageId: imageId)
+            }
+            return nil
+        })
+        deleteModels = items
+    }
+     
     func deleteSelectedItems(){
-        coreDataViewModel.removeSelectedItems{
-            updateState()
+        PersistenceController.deleteMultipleItems(models: deleteModels){ modelResult,imageResult in
+           resetListOfSavedTubes()
         }
      }
     
-    func selectedAllItems(){
-        coreDataViewModel.selectAllItemsToBeRemoved()
-     }
+    func resetListOfSavedTubes(){
+        clearListOfIds()
+        coreDataViewModel.requestInitialSetOfItems()
+        updateState()
+    }
+    
+    func onListContainsModelId(_ modelId:NSManagedObjectID?) -> Bool{
+        if let modelId = modelId,
+           let _ = deleteModels.firstIndex(where: {$0.modelId == modelId}){
+            return true
+        }
+        return false
+    }
+    
+    func toggleListId(modelId:NSManagedObjectID?,imageId:NSManagedObjectID?){
+        if let modelId = modelId,
+           let imageId = imageId{
+            if let index = deleteModels.firstIndex(where: {$0.modelId == modelId}){
+                deleteModels.remove(at: index)
+            }
+            else{
+                deleteModels.append(CoreDataRemoveItem(modelId: modelId,
+                                                       imageId: imageId))
+            }
+        }
+    }
     
     func reset(){
         withAnimation{
             state = .BASE
-            coreDataViewModel.deleteModels.removeAll()
+            deleteModels.removeAll()
         }
+        
     }
     
     func clearListOfIds(){
-        coreDataViewModel.deleteModels.removeAll()
+        deleteModels.removeAll()
     }
      
     func clearAllData(){
-        coreDataViewModel.deleteModels.removeAll()
+        deleteModels.removeAll()
     }
     
-    func updateStateWith(_ newState:LibraryState){
+    func updateState(){
         withAnimation{
             state = emptyDeleteList ? .BASE : state
         }
