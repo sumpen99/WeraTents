@@ -15,7 +15,7 @@ struct BackButtonAction:View{
     var body: some View{
         Button(action:{ action?() }){
             Image(systemName: imgLabel)
-            .font(TOP_BAR_FONT)
+                .font(.title)
             .bold()
             .foregroundStyle(color)
             .padding(.horizontal)

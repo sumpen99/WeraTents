@@ -52,17 +52,7 @@ class FirestoreRepository{
         let base = DbPath.WERA.rawValue
         return dB.collection(base).document(base)
     }
-    
-    func tentCollection() -> CollectionReference{
-        let collection = DbPath.WERA_TENTS.rawValue
-        return dB.collection(collection)
-    }
-    
-    func tentDocument(tentId:String) -> DocumentReference{
-        let base = DbPath.WERA_TENTS.rawValue
-        return dB.collection(base).document(tentId)
-    }
-     
+         
     func tentIconReference(fileName:String) -> StorageReference{
         let folder = DbPath.TENT_ICONS.rawValue
         let path = "\(folder)/\(fileName).png"
@@ -249,22 +239,6 @@ extension FirestoreViewModel{
     
 }
 
-//MARK: - COLLECTION COUNT
-extension FirestoreViewModel{
-    func tentCollectionCount(_ tentId:String){
-        let ref = repo.tentCollection()
-        let tentCount = ref.count
-        tentCount.getAggregation(source: .server){ snapShot,error in
-            if let snapShot = snapShot{
-                debugLog(object: snapShot.count)
-            }
-            else{
-                debugLog(object: error?.localizedDescription ?? "")
-            }
-        }
-    }
-}
-
 //MARK: - ORDERED-DICTIONARY
 extension FirestoreViewModel{
     func catalogeList() -> [String]{
@@ -292,8 +266,6 @@ extension FirestoreViewModel{
         }
          
     }
-    
-    
     
     func currentBrandsOfCataloge(cataloge label:String?) -> [String]{
         if let weraAsset = weraAsset,

@@ -22,7 +22,7 @@ struct FlippedCard:View {
     
     var body: some View {
         mainContent
-        .frame(height: HOME_CAPTURED_HEIGHT)
+        .frame(height: CAPTURED_HEIGHT_SHOW)
         .onAppear{
             textInput = descriptionText
         }
@@ -119,9 +119,9 @@ extension FlippedCard{
         DragGesture(coordinateSpace: .global)
         .onChanged{ gesture in
             let theta = (atan2(gesture.location.x - self.width / 2.0,
-                               HOME_CAPTURED_HEIGHT / 2.0  - gesture.location.y) -
+                               CAPTURED_HEIGHT_SHOW / 2.0  - gesture.location.y) -
                          atan2(gesture.startLocation.x - self.width / 2.0,
-                               HOME_CAPTURED_HEIGHT / 2.0 - gesture.startLocation.y))
+                               CAPTURED_HEIGHT_SHOW / 2.0 - gesture.startLocation.y))
                 .radToDeg()
             self.angle = (theta + self.angle).truncatingRemainder(dividingBy: 360.0)
         }
