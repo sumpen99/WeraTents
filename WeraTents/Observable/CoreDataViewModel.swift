@@ -146,11 +146,4 @@ extension CoreDataViewModel{
         coreDataFetcher.resetPageCounter()
     }
     
-    func clearAllData(){
-        page = 0
-        items.removeAll()
-        coreDataFetcher.reset()
-    }
-    
 }
-

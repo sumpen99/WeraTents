@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let FETCH_LOCALLY:Bool              = true
+let FETCH_LOCALLY:Bool              = false
 let BULLET                          = "•\t"
 let MAX_STORAGE_PNG_SIZE:Int64      = 1 * 1024 * 1024
 let CORNER_RADIUS_CAROUSEL          = 18.0
