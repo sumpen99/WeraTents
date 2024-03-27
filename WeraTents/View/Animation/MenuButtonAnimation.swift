@@ -25,6 +25,8 @@ struct MenuButtonAnimation:View {
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @State var helper:MenuHelper = MenuHelper()
     @Binding var openMenuSwitch:Bool
+    let ICON_WIDTH = 50.0
+    let ANIMATED_MENU_HEIGHT = 70.0
      
     @ViewBuilder
     var body: some View {
@@ -45,9 +47,9 @@ struct MenuButtonAnimation:View {
     var content:some View{
         GeometryReader{ reader in
             ZStack{
-                RoundedRectangle(cornerRadius: CORNER_RADIUS_MENU)
+                RoundedRectangle(cornerRadius: 5.0)
                 .fill(Color.darkerGreen )
-                .shadow(color:Color.white,radius: 0.5,y:0.3)
+                .shadow(color:Color.lightGold,radius: 0.5,y:0.3)
                 buttonContainer
             }
             .onChange(of: reader.size.width,initial: true){ oldSize,newSize in
@@ -82,7 +84,7 @@ struct MenuButtonAnimation:View {
             .hTrailing()
             .vBottom()
             .padding([.bottom])
-            .padding(.trailing,(ICON_WIDTH-ICON_OPEN_WIDTH)/2.0)
+            .padding(.trailing,(ICON_WIDTH-ICON_WIDTH)/2.0)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
@@ -168,7 +170,7 @@ extension MenuButtonAnimation{
         .foregroundStyle(Color.white)
         .padding()
         .background(Color.darkerGreen)
-        .frame(width: ICON_OPEN_WIDTH,height:ICON_OPEN_WIDTH)
+        .frame(width: ICON_WIDTH,height:ICON_WIDTH)
         .clipShape(Circle())
     }
     

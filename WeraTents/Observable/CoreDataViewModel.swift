@@ -43,106 +43,19 @@ extension CoreDataFetcher{
         onResult((totalItems:totalItems,items:[]))
     }
     
-    func requestItemsBySearchCategorie(_ categorie:SearchCategorie,
-                                       searchText:String,
-                                       onResult: @escaping ((totalItems:Int,items:[ScreenshotModel])) -> Void) {
-        DispatchQueue.global(qos: .userInteractive).async{ [weak self] in
-            if let strongSelf = self{
-                let items = strongSelf.fetchedRequestBySearchCategorie(categorie,searchText:searchText)
-                onResult((totalItems:items.count,items:items))
-            }
-            
-        }
-    }
-}
-
-//MARK: - COREDATA-FETCHER FETCH ITEMS
-extension CoreDataFetcher{
-    func fetchedUniqueValueRequest<T>(_ column:String,value:T.Type) -> [T]{
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "ScreenshotModel")
-        fetchRequest.resultType = .dictionaryResultType
-        fetchRequest.returnsDistinctResults = true
-        fetchRequest.propertiesToFetch = [column]
-        fetchRequest.includesSubentities = false
-        do {
-            let result = try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
-            if let res = result as? [[String: T]] {
-                return res.compactMap{ $0[column] }
-            }
-        } catch {
-            debugLog(object: error.localizedDescription)
-        }
-        return []
-     }
-    
     func fetchedRequestWithOffset(_ fetchOffset:Int,fetchLimit:Int) -> [ScreenshotModel]{
         let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
         let sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
         fetchRequest.fetchOffset = fetchOffset
         fetchRequest.fetchLimit = fetchLimit
-        //fetchRequest.fetchBatchSize = fetchLimit
-        //fetchRequest.predicate = predicate
         fetchRequest.sortDescriptors = sortDescriptors
-        //fetchRequest.includesSubentities = true
         do {
             return try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
         } catch {
             return []
         }
      }
-     
-    func fetchedRequestBySearchCategorie(_ categorie:SearchCategorie,searchText:String) -> [ScreenshotModel]{
-        guard let predicate = getPredicateBySearchCategorie(categorie,searchText: searchText)
-        else{ return [] }
-        let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
-        let sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
-        fetchRequest.predicate = predicate
-        fetchRequest.sortDescriptors = sortDescriptors
-        fetchRequest.includesSubentities = false
-        do {
-            return try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
-        } catch {
-            return []
-        }
-     }
-}
-
-//MARK: - STATIC COREDATA-FETCHER
-extension CoreDataFetcher{
-    static func loadDataWith(limit fetchLimit:Int,
-                            sortedOn sortValue:String,
-                            onResult:@escaping([ScreenshotModel]) -> Void){
-        DispatchQueue.global(qos: .userInteractive).async {
-            var screenShots:[ScreenshotModel] = []
-            let fetchRequest: NSFetchRequest<ScreenshotModel> = ScreenshotModel.fetchRequest()
-            let sortDescriptors = [NSSortDescriptor(key: sortValue, ascending: false)]
-            fetchRequest.fetchLimit = fetchLimit
-            fetchRequest.sortDescriptors = sortDescriptors
-            fetchRequest.includesSubentities = true
-            do {
-                screenShots =  try PersistenceController.shared.container.viewContext.fetch(fetchRequest)
-            } catch {
-                debugLog(object: error.localizedDescription)
-            }
-            DispatchQueue.main.async {
-                onResult(screenShots)
-            }
-        }
-        
-     }
-    
-}
-
-//MARK: - COREDATA-FETCHER PREDICATE
-extension CoreDataFetcher{
-    func getPredicateBySearchCategorie(_ categorie:SearchCategorie,searchText:String) -> NSPredicate?{
-        //predicate = NSPredicate(format: "%K =[c] %@", argumentArray: [#keyPath(TubeModel.message), searchValue])//caseinsensitive
-        switch categorie{
-            case .NAME:
-            return NSPredicate(format: "name contains[c] %@", searchText)
-            default:return nil
-        }
-    }
+       
 }
 
 //MARK: - COREDATA-FETCHER HELPER
@@ -167,16 +80,10 @@ extension CoreDataFetcher{
 //MARK: - COREDATA-VIEWMODEL
 class CoreDataViewModel:ObservableObject{
     private let itemsFromEndThreshold = 30
-    
     private var totalItemsAvailable: Int?
     private var itemsLoadedCount: Int?
     private var page = 0
-    
     private let coreDataFetcher: CoreDataFetcher = CoreDataFetcher()
-    
-    var currentScrollOffset: CGPoint?
-    var scrollViewHeight:CGFloat?
-    var lastScrollOffset: CGPoint?
     @Published var items: [ScreenshotModel] = []
     @Published var dataIsLoading = false
 }
@@ -216,37 +123,6 @@ extension CoreDataViewModel{
         }
     }
     
-    func requestAllUniqueLabels(onResult: @escaping ([String]) -> Void){
-        dataIsLoading = true
-        Task { [weak self] in
-            if let strongSelf = self{
-                let result = strongSelf.coreDataFetcher.fetchedUniqueValueRequest("name", value: String.self)
-                onResult(result)
-            }
-            else{
-                onResult([])
-            }
-
-        }
-    }
-    
-    func requestBySearchCategorie(_ categorie:SearchCategorie,searchText:String,onResult:((Int) ->Void)? = nil){
-        dataIsLoading = true
-        Task { [weak self] in
-            if let strongSelf = self{
-                strongSelf.coreDataFetcher.requestItemsBySearchCategorie(categorie,searchText: searchText){ response in
-                    DispatchQueue.main.async{
-                        strongSelf.resetPageCounter()
-                        strongSelf.totalItemsAvailable = response.totalItems
-                        strongSelf.items.append(contentsOf: response.items)
-                        strongSelf.itemsLoadedCount = strongSelf.items.count
-                        strongSelf.dataIsLoading = false
-                        onResult?(strongSelf.itemsLoadedCount ?? 0)
-                    }
-                }
-            }
-        }
-    }
 }
 
 //MARK: - COREDATA-VIEWMODEL HELPER
@@ -277,8 +153,4 @@ extension CoreDataViewModel{
     }
     
 }
-
-
-
-
 

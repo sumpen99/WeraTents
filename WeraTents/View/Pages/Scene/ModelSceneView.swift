@@ -120,8 +120,8 @@ extension ModelSceneView{
             .background{
                 Color.lightBrown
             }
-            .frame(height: helper.presentSheet ? 0.0 : MENU_HEIGHT)
-            .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_SHEET))
+            .frame(height: helper.presentSheet ? 0.0 : 75.0)
+            .clipShape(RoundedRectangle(cornerRadius: 10.0))
             .hCenter()
             .vBottom()
             .animation(.linear(duration: 0.25),value: helper.presentSheet)
@@ -132,7 +132,7 @@ extension ModelSceneView{
     
     var selectedTentLabel:some View{
         Text(selectedTent.name)
-        .frame(height: TIP_OF_SHEET)
+        .frame(height: 40.0)
         .font(.title3)
         .bold()
         .padding([.top,.bottom])

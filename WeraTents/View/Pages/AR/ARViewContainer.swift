@@ -248,7 +248,7 @@ extension ARView{
         //debugLog(object: self.cameraTransform.translation)
         //let radians = 180.0 * Float.pi / 180.0
        // modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.37835, 0.0)
-        modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.5, 0.0)
+        modelEntity.transform.translation -= SIMD3<Float>(0.0, 0.37835, 0.0)
         //modelEntity.orientation = simd_quatf(angle: radians, axis: SIMD3(x: 0, y: 1, z: 0))
         anchorEntity.addChild(modelEntity)
         anchorEntity.generateCollisionShapes(recursive: true)

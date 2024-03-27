@@ -405,7 +405,7 @@ extension ModelARView{
         let image =  ScreenshotImage(context:managedObjectContext)
         DispatchQueue.global(qos: .userInteractive).async { [weak arViewCoordinator] in
             if let imageData = scaledImageWith(compressionQuality: 1.0,
-                            ofSize: CGSize(width: 2040.0,height: HOME_CAPTURED_HEIGHT),
+                            ofSize: CGSize(width: 2040.0,height: CAPTURED_HEIGHT_STORE),
                             trimmed: false),
                let arViewCoordinator = arViewCoordinator{
                 model.buildWithName(arViewCoordinator.selectedTent)
