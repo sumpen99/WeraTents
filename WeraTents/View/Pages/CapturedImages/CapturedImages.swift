@@ -19,7 +19,6 @@ struct CoreDataRemoveItem{
 }
 
 struct CapturedImages:View {
-    @Namespace var namespace
     @EnvironmentObject var navigationViewModel: NavigationViewModel
     @StateObject var coreDataViewModel:CoreDataViewModel = CoreDataViewModel()
     @State var state:LibraryState = .BASE
@@ -40,10 +39,6 @@ struct CapturedImages:View {
         .ignoresSafeArea(edges:[.bottom])
         .task{
             coreDataViewModel.requestInitialSetOfItems()
-        }
-        .onDisappear{
-            coreDataViewModel.clearAllData()
-            clearAllData()
         }
         .overlay{
             if expandedImageValues != nil{
@@ -72,19 +67,6 @@ extension CapturedImages{
         ScrollViewCoreData(coreDataViewModel:coreDataViewModel){ screenShot in
                         screenShotCard(screenShot as? ScreenshotModel)
         }
-        /*ScrollView{
-            LazyVGrid(columns: [GridItem(),GridItem()],
-                      alignment: .center,
-                      spacing: V_GRID_SPACING,
-                      pinnedViews: .sectionHeaders){[weak coreDataViewModel] in
-                ForEach(coreDataViewModel?.items ?? [],id:\.self){ item in
-                    screenShotCard(item)
-                    .padding(.vertical)
-                 }
-                                                                
-            }
-            .padding(.horizontal)
-        }*/
     }
     
     @ViewBuilder
@@ -115,12 +97,7 @@ extension CapturedImages{
                                              imageId:image.objectID)
                             }
                         }
-            /*.onTapGesture(coordinateSpace: .global) { location in
-                if state == .BASE { return }
-                toggleListId(modelId:model.objectID,
-                             imageId:image.objectID)
-            }*/
-            .overlay{
+             .overlay{
                 cardIsSelected(model.objectID)
                 .onTapGesture {
                     toggleListId(modelId:model.objectID,
@@ -143,28 +120,6 @@ extension CapturedImages{
             }
        }
     }
-    
-    /*var expandedImage:some View{
-        selectedImageToExpand?
-        .resizable()
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL))
-        .onTapGesture {
-            withAnimation{
-                selectedImageToExpand = nil
-            }
-        }
-        .animation(.easeInOut(duration: 0.25),value: selectedImageToExpand)
-        .transition(.scale.combined(with: .opacity))
-        .vCenter()
-        .hCenter()
-        .padding()
-        .background{
-            RoundedRectangle(cornerRadius: CORNER_RADIUS_CAROUSEL)
-                .fill(Color.white)
-        }
-        .padding()
-    }*/
 }
 
 //MARK: - BUTTONS
@@ -179,11 +134,7 @@ extension CapturedImages{
      }
     
     var editButton:some View{
-        Button(action: {
-            withAnimation{
-                state = .EDIT
-            }
-        }){
+        Button(action: { updateStateWith(.EDIT)}){
             Text("Redigera")
             .foregroundStyle(Color.white)
             .font(.headline)
@@ -195,11 +146,7 @@ extension CapturedImages{
     }
     
     var cancelButton:some View{
-        Button(action: {
-            withAnimation{
-                reset()
-            }
-        }){
+        Button(action: resetStateAndClearDeletedModelsList){
             Text("Avbryt")
             .foregroundStyle(Color.white)
             .font(.headline)
@@ -258,7 +205,7 @@ extension CapturedImages{
                 .hLeading()
                 .padding([.horizontal,.top])
             VStack(spacing:V_SPACING_REG){
-                Text("\(listCount) valda")
+                Text("\(deleteListCount) valda")
                     .font(.title2)
                     .foregroundStyle(Color.white)
                     .bold()
@@ -295,26 +242,12 @@ extension CapturedImages{
     
     var topButtons:some View{
         currentTopBarButtons()
-        .matchedGeometryEffect(id: "CURRENT_SCREEN_SHOTS", in: namespace)
         .padding(.top)
     }
 }
 
-//MARK: - FUNCTIONS
+//MARK: - FUNCTIONS INVOLVING DELETE OPERATIONS
 extension CapturedImages{
-    
-    var emptyDeleteList:Bool{
-        deleteModels.count == 0
-    }
-    
-    var listCount:Int{
-        deleteModels.count
-    }
-    
-    func navigateBack(){
-        navigationViewModel.popPath()
-    }
-    
     func selectAllItems(){
         let items = coreDataViewModel.items.compactMap({
             if let imageId = $0.image?.objectID{
@@ -323,9 +256,7 @@ extension CapturedImages{
             }
             return nil
         })
-        deleteModels.removeAll()
-        deleteModels.append(contentsOf: items)
-        
+        deleteModels = items
     }
      
     func deleteSelectedItems(){
@@ -333,12 +264,6 @@ extension CapturedImages{
            resetListOfSavedTubes()
         }
      }
-    
-    func resetListOfSavedTubes(){
-        clearListOfIds()
-        coreDataViewModel.requestInitialSetOfItems()
-        updateState()
-    }
     
     func onListContainsModelId(_ modelId:NSManagedObjectID?) -> Bool{
         if let modelId = modelId,
@@ -360,29 +285,38 @@ extension CapturedImages{
             }
         }
     }
+}
+
+//MARK: - FUNCTIONS
+extension CapturedImages{
     
-    func reset(){
-        withAnimation{
-            state = .BASE
-            deleteModels.removeAll()
-        }
-        
+    var emptyDeleteList:Bool{
+        deleteModels.count == 0
     }
     
-    func clearListOfIds(){
+    var deleteListCount:Int{
+        deleteModels.count
+    }
+    
+    func navigateBack(){
+        navigationViewModel.popPath()
+    }
+    
+    func resetListOfSavedTubes(){
+        resetStateAndClearDeletedModelsList()
+        coreDataViewModel.requestInitialSetOfItems()
+    }
+    
+    func resetStateAndClearDeletedModelsList(){
+        updateStateWith(.BASE)
         deleteModels.removeAll()
     }
      
-    func clearAllData(){
-        deleteModels.removeAll()
-    }
-    
-    func updateState(){
+    func updateStateWith(_ newState:LibraryState){
         withAnimation{
-            state = emptyDeleteList ? .BASE : state
+            state = newState
         }
     }
-    
 }
 
 
