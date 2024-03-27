@@ -34,7 +34,8 @@ struct FirestoreImage:View {
                     self.uIImage = uiImage
                 }
                 else{
-                    firestoreViewModel.currentIconImage(newValue){ uiImage in
+                    firestoreViewModel
+                        .downloadTentIconImageFromStorage(fileName: newValue){ uiImage in
                         DispatchQueue.global(qos: .background).async {
                             ServiceManager.writeImageToCache(fileName: newValue, uiImage: uiImage){ _ in }
                         }

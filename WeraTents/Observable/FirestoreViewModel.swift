@@ -74,7 +74,8 @@ class FirestoreRepository{
 
 //MARK: - FIRESTORE VIEWMODEL
 class FirestoreViewModel:ObservableObject{
-    @Published var isLoadingData:[Bool] = Array.init(repeating: false, 
+    let MAX_STORAGE_PNG_SIZE:Int64      = 1 * 1024 * 1024
+    @Published var isLoadingData:[Bool] = Array.init(repeating: false,
                                                      count: LoadingState.allCases.count)
     @Published var weraAsset:Wera?
     let repo = FirestoreRepository()
@@ -82,25 +83,8 @@ class FirestoreViewModel:ObservableObject{
 
 //MARK: - LOAD WERA ASSETS DATA
 extension FirestoreViewModel{
+    
     func loadWeraAssets(){
-        if FETCH_LOCALLY{ loadWeraAssetsFromLocal() }
-        else{ loadWeraAssetsFromServer() }
-    }
-    
-    func loadWeraAssetsFromLocal(){
-        ServiceManager.readJsonFromBundleFile("mainData.json",value: WeraDb.self){ [weak self] data in
-            if let strongSelf = self,
-                let data = data{
-                let wera = data.toWera()
-                DispatchQueue.main.async {
-                    strongSelf.weraAsset = wera
-                    strongSelf.updateLoadingStateWith(state: .TENT_ASSETS, value: false)
-                }
-            }
-        }
-    }
-    
-    func loadWeraAssetsFromServer(){
         let coll = repo.weraCollection()
         coll.getDocuments(){ [weak self] snapshot,error in
         guard let strongSelf = self,
@@ -123,61 +107,26 @@ extension FirestoreViewModel{
 //MARK: - LOAD TENT MODEL DATA
 extension FirestoreViewModel{
     func loadTentModelData(_ fileName:String,completion: @escaping (URL?) -> Void){
-        if  FETCH_LOCALLY{
-            let bundleUrl = ServiceManager.localUSDZUrl(fileName: fileName)
-            completion(bundleUrl)
+        if let url = ServiceManager.fileExistInside(folder: .USDZ,
+                                                    fileName: fileName,
+                                                    ext: TempFolder.USDZ.rawValue){
+            completion(url)
         }
-        else{
-            if let url = ServiceManager.fileExistInside(folder: .USDZ,
-                                                        fileName: fileName,
-                                                        ext: TempFolder.USDZ.rawValue){
-                completion(url)
-            }
-            else{ downloadTentModelFromStorage(fileName, completion: completion) }
-        }
+        else{ downloadTentModelFromStorage(fileName, completion: completion) }
     }
 }
 
 //MARK: - LOAD TENT PDF DATA
 extension FirestoreViewModel{
     func loadTentPdfData(_ fileName:String,completion: @escaping (URL?) -> Void){
-        if  FETCH_LOCALLY{
-            let url = ServiceManager.localPDFUrl(fileName: fileName)
+        if let url = ServiceManager.fileExistInside(folder: .PDF,
+                                                    fileName: fileName,
+                                                    ext: TempFolder.PDF.rawValue){
             completion(url)
         }
-        else{
-            if let url = ServiceManager.fileExistInside(folder: .PDF,
-                                                        fileName: fileName,
-                                                        ext: TempFolder.PDF.rawValue){
-                completion(url)
-            }
-            else{ downloadTentPdfFromStorage(fileName, completion: completion) }
-        }
+        else{ downloadTentPdfFromStorage(fileName, completion: completion) }
     }
     
-}
-
-//MARK: - LOAD IMAGES
-extension FirestoreViewModel{
-    func currentIconImage(_ iconImageUrl:String,
-                          completion: @escaping (UIImage?) -> Void){
-        if FETCH_LOCALLY{
-            loadTentImagesFromLocal([iconImageUrl]){ images in
-                completion(images.first)
-            }
-        }
-        else{
-            downloadTentIconImageFromStorage(fileName: iconImageUrl,completion: completion)
-        }
-    }
-    
-    
-    func loadTentImagesFromLocal(_ imageNames:[String],completion: @escaping ([UIImage]) -> Void){
-        ServiceManager.loadImagesFromBundle("Tent",imageNames: imageNames){ images in
-            DispatchQueue.main.async { completion(images) }
-        }
-    }
-  
 }
 
 //MARK: - DOWNLOAD DATA
@@ -197,23 +146,11 @@ extension FirestoreViewModel{
     }
     
     func downloadDataFromStorage(_ fileName:String,data:DownloadData,completion: @escaping (URL?) -> Void){
-        if FETCH_LOCALLY{
-            switch data {
-                case .PDF:
-                let bundleUrl = ServiceManager.localPDFUrl(fileName: fileName)
-                completion(bundleUrl)
-                case .USDZ:
-                let bundleUrl = ServiceManager.localUSDZUrl(fileName: fileName)
-                completion(bundleUrl)
-            }
-        }
-        else{
-            switch data {
-                case .PDF:
-                downloadTentPdfFromStorage(fileName,completion: completion)
-                case .USDZ:
-                downloadTentModelFromStorage(fileName,completion: completion)
-            }
+        switch data {
+            case .PDF:
+            downloadTentPdfFromStorage(fileName,completion: completion)
+            case .USDZ:
+            downloadTentModelFromStorage(fileName,completion: completion)
         }
     }
    
